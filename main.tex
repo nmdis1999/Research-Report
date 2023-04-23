@@ -1,8 +1,117 @@
-\documentclass{article}
-
+%&preamble
+\endofdump
 \begin{document}
+\maketitle
 
-Hello, world!
+\begin{abstract}
+\noindent
+\end{abstract}
+
+
+\section{Introduction}
+# experiment report
+
+# **Introduction**
+
+***Problem Statement***
+
+Bolt, a post-link binary optimizer uses sampled based profiling data to optimize binary (reordering?), we want to see if using more precise data can help llvm-bolt to improve the performance of binary. We experiment with building and optimizing Clang binary  with the help of llvm-bolt, this binary is already optimized with PGO and LTO.
+
+**Background** 
+
+Modern compilers support many optimizations, but normally they operate with one hand tied behind their back by not knowing which code is hot and which is cold. They can use the basic block frequencies and branch target information to guide their optimizations, such as function inlining, and to do de-virtualization (inlining hot indirect method calls). Often important optimizations, such as function splitting to optimize instruction cache use, are only available with profile feedback.
+
+Traditionally such profiling information was collected with specially instrumented binaries, typically with counters for each basic block and other hooks to collect the targets of indirect jumps. Adding this instrumentation slows down the programs quite a bit, and it requires separate binaries, which can be hard to manage in a production environment.
+
+Getting profile feedback directly out of a profiler using a hardware profiling mechanism is better because it can be done directly on the production binary, with only the impact for collecting the data. This allows continuous optimization by regularly feeding back dynamic profiling data to a rebuild.
+
+Since the compiler primarily needs basic block frequencies, sampling LBRs is the best way to collect this information, as that gives good coverage of the branches with reasonable overhead. Google implemented such a scheme for GCC and LLVM with the [Automatic Feedback Directed Optimizer](https://gcc.gnu.org/wiki/AutoFDO) (AutoFDO) project. AutoFDO has been available in GCC since version 5.0 (or in a slightly improved form in the 4.9 Google branch), or in LLVM since 3.5.
+
+**Perf**
+
+Perf, also known as perf_event, is a lightweight Linux-based tool that offers an abstraction over hardware-specific capabilities, primarily for performance measurements. Commonly referred to as Performance Counters for Linux, it provides per-task, per-CPU, and per-workload counters, along with the ability to sample on top of these.
+
+Perf has four type of measurable events:
+
+The perf tool supports a list of measurable events. The tool and underlying kernel interface can measure events coming from different sources. Such as from pure kernel counters, in this case they are called **software events**. Examples include: context-switches, minor-faults.
+
+Another source of events is the processor itself and its Performance Monitoring Unit (PMU). It provides a list of events to measure micro-architectural events such as the number of cycles, instructions retired, L1 cache misses and so on. Those events are called **PMU hardware events** or **hardware events** for short. They vary with each processor type and model.
+
+**hardware cache events,** each processor gets mapped onto an actual events provided by the CPU, if they exists, otherwise the event cannot be used.
+
+And **tracepoint events** which are implemented by the kernel ftrace infrastructure
+
+The perf tool is in the **linux-tools-common** package. You can also build and add perf
+ from the Linux kernel source.
+
+perf or perf_events can instrument in following ways:
+
+- **counting** events in-kernel context. In counting modes, the occurrences of events are simply aggregated and presented on standard output at the end of an application run. This mode does not generate a perf.data file. We can use perf stat to generate statistics.
+- **sampling** events, which writes event data to a kernel buffer, which is read at a gentle asynchronous rate by the  command to write to the perf.data file. The period is expressed as the number of occurrences of an event, not the number of timer ticks. A sample is recorded when the sampling counter overflows, i.e., wraps from 2^64 back to 0. No PMU implements 64-bit hardware counters, but perf_events emulates such counters in software. The way perf_events emulates 64-bit counter is limited to expressing sampling periods using the number of bits in the actual hardware counters.On counter overflow, the kernel records information, i.e., a sample, about the execution of the program. What gets recorded depends on the type of measurement. This is all specified by the user and the tool. But the key information that is common in all samples is the instruction pointer, i.e. where was the program when it was interrupted.
+    
+    The generated file can be read by report and script commands.
+    
+    In Sampling mode with perf record , you'll need to be a little careful about the overheads, as the capture files can quickly become hundreds of Mbytes. It depends on the rate of the event you are tracing: the more frequent, the higher the overhead and larger the perf.data size.
+    
+
+Another way to instrument is by using BPF program on events which can execute custom user-defined programs in kernel space, and perform filters and summaries of the data. But we won’t be covering that in our experiments.
+
+By default perf records sample at **both** user and kernel levels using cycles events with average rate of 1000 samples/sec. We can adjust both frequency of collection samples and period i.e collecting sample every Nth occurence of an event by passing -F and -c flag respectively to perf record.
+
+**LBR**
+
+Intel’s Last Branch Record (LBR) are hardware registers used to records information about branch instructions that a CPU takes, it logs “From” and “To” addresses of each branch along with some additional metadata. The register has a ring buffer with most recent branch information, and is usually have stack depth of 8, 16, or 32 frames. LBRs have very less overhead in comparision to software methods such as gdb’s record btrace.
+
+**INTEL-PT**
+
+Default Period and rate for sampling: [https://stackoverflow.com/questions/62787994/what-is-the-sampling-rate-for-intel-pt-event-i-e-perf-record-e-intel-pt/62843450#62843450](https://stackoverflow.com/questions/62787994/what-is-the-sampling-rate-for-intel-pt-event-i-e-perf-record-e-intel-pt/62843450#62843450)
+
+**Background on Bolt**
+
+Bolt is a post link binary optimizer built on top of LLVM. It uses sample based profiling data to reorder function blocks 
+
+**Optiminzing Clang with Bolt** 
+
+Inbuilt clang 
+
+            Mean        Std.Dev.    Min         Median      Max
+real        0.269       0.031       0.259       0.263       0.438       
+user        0.247       0.014       0.228       0.246       0.311       
+sys         0.018       0.007       0.004       0.016       0.036     
+
+
+PT
+
+            Mean        Std.Dev.    Min         Median      Max
+real        0.240       0.002       0.236       0.240       0.245       
+user        0.226       0.007       0.208       0.226       0.238       
+sys         0.013       0.007       0.004       0.012       0.032    
+
+
+NOLBR
+            Mean        Std.Dev.    Min         Median      Max
+real        0.226       0.045       0.214       0.217       0.469       
+user        0.205       0.006       0.191       0.206       0.216       
+sys         0.013       0.006       0.004       0.012       0.032  
+
+
+LBR mode
+
+            Mean        Std.Dev.    Min         Median      Max
+real        0.214       0.002       0.210       0.214       0.221       
+user        0.200       0.006       0.187       0.201       0.209       
+sys         0.014       0.006       0.004       0.012       0.028    
+
+
+**Performance comparision:**
+
+Number of functions bolt reorders (\% of profiled data & \% of total number of functions)
+
+**Analysis of number of function executed during compilation, number of function perf shows in sampling mode and number of functions Bolt reorders**
+- Valgrind and llvm-cov analysis.
+
+The CPU has performance counters that can be programmed to count branches and raise an interrupt on every Nth branch. Linux perf can be configured to sample branches using performance counters. However, N cannot be too small because interrupts are expensive and doing them frequently would slow down the workload too much. Usually, we are interested in short sequences of branches (for example the loop body of a hot loop) where it is useful to see multiple consecutive branches.
+\bibliographystyle{plain}
+\bibliography{bib}
 
 \end{document}
-
