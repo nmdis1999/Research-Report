@@ -1,4 +1,9 @@
+bib.bib
 *.aux
+*.bbl
+*.fmt
 *.log
+*.log
+*.out
 *.pdf
 

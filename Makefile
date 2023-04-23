@@ -1,23 +1,18 @@
-.PHONY: all clean
+.SUFFIXES: .ltx .pdf
 
 all: main.pdf
 
-main.pdf: bib.bib main.tex preamble.fmt softdev.sty
-	pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
-	bibtex main
-	pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
-	pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
-
 clean:
 	rm -f *.aux *.log *.pdf
+	rm -rf main.log main.aux main.pdf main.out 
 
-preamble.fmt: preamble.tex softdev.sty
-	set -e; \
-	  tmptex=`mktemp`; \
-	  cat ${@:fmt=tex} > $${tmptex}; \
-	  grep -v "%&${@:_preamble.fmt=}" ${@:_preamble.fmt=.tex} >> $${tmptex}; \
-	  pdftex -ini -jobname="${@:.fmt=}" "&pdflatex" mylatexformat.tex $${tmptex}; \
-	  rm $${tmptex}
+main.pdf: bib.bib main.ltx preamble.fmt softdev.sty
+	pdflatex main.ltx
+	bibtex main
+	pdflatex main.ltx
+	pdflatex main.ltx
+
+preamble.fmt: preamble.ltx softdev.sty
 
 bib.bib: softdevbib/softdev.bib local.bib
 	softdevbib/bin/prebib -x month softdevbib/softdev.bib > bib.bib

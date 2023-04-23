@@ -1,0 +1,51 @@
+% Preamble
+\documentclass[10pt, a4paper]{article}
+
+% Language and font encoding
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+
+% Fonts
+\usepackage{mathptmx} % Times New Roman for both text and math
+\usepackage{helvet}   % Helvetica for sans-serif text
+\usepackage{courier}  % Courier for typewriter text
+
+% Additional packages
+\usepackage{geometry} % To modify margins
+\usepackage{graphicx} % To include images
+\usepackage{setspace} % To modify line spacing
+\usepackage{fancyhdr} % To modify headers and footers
+\usepackage{titlesec} % To modify section headings
+\usepackage{indentfirst} % To indent first paragraph of every section
+\usepackage{amsmath}  % For math environments and symbols
+\usepackage{amsfonts} % For math fonts
+\usepackage{amssymb}  % For additional math symbols
+\usepackage{booktabs} % For better tables
+\usepackage{array}    % For more flexible table columns
+\usepackage{caption}  % For customizing captions
+\usepackage{float}    % For better control over floating environments
+\usepackage{color}    % For colored text
+\usepackage{hyperref} % For hyperlinks
+
+% Page layout
+\geometry{left=3cm, right=3cm, top=3cm, bottom=3cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Spacing and formatting
+\setlength{\parindent}{0pt} % Remove paragraph indentation
+\setlength{\parskip}{0.5em}
+\onehalfspacing
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\bfseries}{\thesubsubsection}{1em}{}
+
+% Title, author, and date
+\title{Research Report}
+\author{}
+\date{\today}
