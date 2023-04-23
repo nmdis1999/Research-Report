@@ -15,8 +15,13 @@
 
 ***Problem Statement***
 
-Bolt, a post-link binary optimizer uses sampled based profiling data to optimize binary (reordering?), we want to see if using more precise data can help llvm-bolt to improve the performance of binary. We experiment with building and optimizing Clang binary  with the help of llvm-bolt, this binary is already optimized with PGO and LTO.
-
+LLVM-BOLT is a post-link static binary optimizer that enhances code layout utilizing 
+sample-based profiling data at the binary level. This study investigates whether providing
+more accurate data can improve LLVM-BOLT's performance in optimizing binaries. We conduct 
+experiments on building and optimizing Clang binaries using LLVM-BOLT with two data sources: 
+perf-captured sample data and Intel-PT captured data. The analysis aims to determine if supplying 
+finer-grained and more branching information to LLVM-BOLT results in further optimization
+of Clang binaries.
 **Background** 
 
 Modern compilers support many optimizations, but normally they operate with one hand tied behind their back by not knowing which code is hot and which is cold. They can use the basic block frequencies and branch target information to guide their optimizations, such as function inlining, and to do de-virtualization (inlining hot indirect method calls). Often important optimizations, such as function splitting to optimize instruction cache use, are only available with profile feedback.
@@ -25,10 +30,9 @@ Traditionally such profiling information was collected with specially instrument
 
 Getting profile feedback directly out of a profiler using a hardware profiling mechanism is better because it can be done directly on the production binary, with only the impact for collecting the data. This allows continuous optimization by regularly feeding back dynamic profiling data to a rebuild.
 
-Since the compiler primarily needs basic block frequencies, sampling LBRs is the best way to collect this information, as that gives good coverage of the branches with reasonable overhead. Google implemented such a scheme for GCC and LLVM with the [Automatic Feedback Directed Optimizer](https://gcc.gnu.org/wiki/AutoFDO) (AutoFDO) project. AutoFDO has been available in GCC since version 5.0 (or in a slightly improved form in the 4.9 Google branch), or in LLVM since 3.5.
+Since the compiler primarily needs basic block frequencies, sampling LBRs is the best way to collect this information, as that gives good coverage of the branches with reasonable overhead. 
 
 **Perf**
-
 Perf, also known as perf_event, is a lightweight Linux-based tool that offers an abstraction over hardware-specific capabilities, primarily for performance measurements. Commonly referred to as Performance Counters for Linux, it provides per-task, per-CPU, and per-workload counters, along with the ability to sample on top of these.
 
 Perf has four type of measurable events:
@@ -56,7 +60,9 @@ perf or perf_events can instrument in following ways:
 
 Another way to instrument is by using BPF program on events which can execute custom user-defined programs in kernel space, and perform filters and summaries of the data. But we won’t be covering that in our experiments.
 
-By default perf records sample at **both** user and kernel levels using cycles events with average rate of 1000 samples/sec. We can adjust both frequency of collection samples and period i.e collecting sample every Nth occurence of an event by passing -F and -c flag respectively to perf record.
+By default perf records sample at **both** user and kernel levels using cycles events with average rate of 1000 samples/sec or 4000 events / sec of thread execution.  With Sampling `perf record` asks PMU to count some events, for example cpu-cycles and generate an overflow interrupt after every *n*th event (e.g a million). On every interrupt perf_event records such as : PID/TID (Process/Thread ID), timestamp, command being executed, Instruction Pointer to the ring buffer and reset the counter to a new value.
+
+There is a limit to maximum frequency that can be set but we can adjust both frequency of collection samples and period i.e collecting sample every Nth occurence of an event by passing -F and -c flag respectively to perf record. Once the ring buffer is filled, perf will dump the data to `[perf.data](http://perf.data)` file which can be of several megabyte in size.
 
 **LBR**
 
