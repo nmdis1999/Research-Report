@@ -35,8 +35,7 @@ The perf tool is in the linux-tools-common package and can also build from the L
 perf or perf\_events can instrument in following ways:
 \begin{itemize}
 	\item \textbf{counting} events in-kernel context. In counting modes, the occurrences of events are simply aggregated and presented on standard output at the end of an application run. This mode does not generate a perf.data file. We can use perf stat to generate statistics.
-	\item \textbf{sampling} events, which writes event data to a kernel buffer, which is read at a gentle asynchronous rate by the command to write to the perf.data file. The period is expressed as the number of occurrences of an event, not the number of timer ticks. A sample is recorded when the sampling counter overflows,
-	      i.e., wraps from $2^{64}$ back to 0. No PMU implements 64-bit hardware counters, but perf\_events emulates such counters in software. The way perf\_events emulates 64-bit counter is limited to expressing sampling periods using the number of bits in the actual hardware counters. On counter overflow, the kernel records information, i.e., a sample, about the execution of the program. What gets recorded depends on the type of measurement. This is all specified by the user and the tool. But the key information that is common in all samples is the instruction pointer, i.e. where was the program when it was interrupted.
+	\item \textbf{sampling} events write event data to a kernel buffer, which is asynchronously read by the perf to write in perf.data file. Sampling periods are based on event occurrences and not timer ticks. perf\_event emulates 64-bit counter. And every time counter overflows (i.e wraps $2^64$ to $0$) a sample is recorded, including instruction pointer when the program was interrupted.
 \end{itemize}
 The generated file can be read by report and script commands.
 
