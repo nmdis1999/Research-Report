@@ -68,11 +68,11 @@ BOLT relies on using sample based profiling methods(i.e `perf` ) to get data, th
 
 {\fontsize{8}{10}\selectfont\textbf{Optimizing Clang with Bolt}}
 
-We decided to replicate optimizing Clang binary with LLVM-BOLT. For this experiment we built  of Clang( version 16.x.x) and later bootstrapped it with PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped version to collect profile for a new clang build in : No LBR, LBR and PT mode.
+We decided to replicate optimizing Clang binary with LLVM-BOLT. For this experiment we built  of Clang( version 16.0.3) and later bootstrapped it with PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped version to collect profile for a new clang build in : No LBR, LBR and PT mode.
 
 In LBR mode, LLVM-BOLT uses perf to fetch PID/TID, Instruction Pointer (IP) and Branch Stack (brstack). LLVM-BOLT expects branch flags to either predict or mispredict, but branch flags are not supported by Intel PT. 
 
-To make LLVM-BOLT work we need to add configuration option in perfconfig file which sets mispred flag on all branches. Simply adding following lines to ~/.perfconfig should let us get brstack information out of sampled data collected with PT
+To make LLVM-BOLT work we need to add configuration option in perfconfig file which sets mispred flag on all branches. Simply adding following lines to \~/.perfconfig should let us get brstack information out of sampled data collected with PT
 
 \begin{lstlisting}[language=bash]
 
@@ -86,18 +86,45 @@ We will need to modify the data aggregation code in LLVM-BOLT to utilize the -it
 
 [Add script to replicate the experiment?]
 
-We will be using multitime to run our benchmark, for both collecting profile and running the benchmark we will use extsmaild.c file.
+We will be using multitime to time the benchmark runs on compilation of gcc.c with baseline and optimized Clang builds.
 
-\begin{enumerate}
-  \item Baseline binary
-  \item No LBR Mode
-  \item LBR Mode
-  \item Intel-PT
-\end{enumerate}
+\begin{table}[ht]
+\centering
+\caption{Benchmarking of clang versions on gcc.c}
+\begin{tabular}{l|rrrrr}
+\hline
+\textbf{Category} & \textbf{Mean} & \textbf{Std.Dev.} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\ \hline
+Baseline clang & 8.938 & 0.187 & 8.771 & 8.843 & 9.199 \\
+(user) & 8.375 & 0.071 & 8.276 & 8.422 & 8.429 \\
+(sys) & 0.448 & 0.030 & 0.410 & 0.452 & 0.482 \\ \hline
+NoLBR & 6.790 & 0.039 & 6.735 & 6.810 & 6.824 \\
+(user) & 6.369 & 0.045 & 6.306 & 6.390 & 6.412 \\
+(sys) & 0.405 & 0.016 & 0.382 & 0.416 & 0.417 \\ \hline
+LBR & 6.764 & 0.005 & 6.757 & 6.767 & 6.768 \\
+(user) & 6.338 & 0.013 & 6.326 & 6.332 & 6.356 \\
+(sys) & 0.412 & 0.018 & 0.388 & 0.420 & 0.429 \\ \hline
+Intel PT & 6.649 & 0.070 & 6.550 & 6.692 & 6.704 \\
+(user) & 6.184 & 0.032 & 6.144 & 6.186 & 6.222 \\
+(sys) & 0.454 & 0.041 & 0.404 & 0.454 & 0.505 \\ \hline
+\end{tabular}
+\label{table:benchmark_analysis}
+\end{table}
 
 \textbf{Performance comparision:}
 
 Number of functions bolt reorders (\% of profiled data \& \% of total number of functions)
+\begin{table}[ht]
+\centering
+\caption{Analysis of function reordering by LLVM BOLT in different modes}
+\begin{tabular}{l|rrr}
+\hline
+\textbf{Profiled Functions} & \textbf{Function reordered} & \textbf{wrt profiled functions} & \textbf{wrt total functions} \\ \hline
+No LBR & 311 & 73.95\% & 0.13\% \\
+LBR & 1501 & 71.95\% & 0.62\% \\
+Intel PT & 4177 & 69.43\% & 1.65\% \\ \hline
+\end{tabular}
+\label{table:function_reordering}
+\end{table}
 
 \textbf{Analysis of number of function executed during compilation, number of function perf shows in sampling mode and number of functions Bolt reorders}
 \end{document}
