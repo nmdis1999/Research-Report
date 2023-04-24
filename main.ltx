@@ -59,19 +59,37 @@ The default rate is set at 4MiB/page size for privileged user and 128KiB/page si
 
 Another method which sometimes seems to be helpful in addition of setting AUX mmap size is re-running the workload to resolve overflow packets error. This will capture slightly less data(a couple of MiB) but you will either see no or fewer “Instruction errors” in captured data.
 \newline {\fontsize{10}{12}\selectfont\textbf{Background on Bolt}}
-
+\\
 LLVM-BOLT is a static post link binary optimizer built on top of LLVM compiler infrastructure. It uses sample based profiling data to reorder function blocks.
 
 BOLT requires profiles to be collected with relocation mode (by passing `—emit-relocs` flags) this helps BOLT to reorder basic blocks and split hot/cold blocks for improving code locality. Function discovery is initial step in order to modify the binaries. BOLT relies on ELF symbol table and function frame information (which contains functions boundaries) for function discovery.
 
 BOLT relies on using sample based profiling methods(i.e `perf` ) to get data, the major advantage of sample based method in comparision to instrumentation one is better (or more accurate) information with minimal operational complexity. 
 
+{\fontsize{8}{10}\selectfont\textbf{Optimizing Clang with Bolt}}
+
 We decided to replicate optimizing Clang binary with LLVM-BOLT. For this experiment we built  of Clang( version 16.x.x) and later bootstrapped it with PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped version to collect profile for a new clang build in : No LBR, LBR and PT mode.
+
+In LBR mode, LLVM-BOLT uses perf to fetch PID/TID, Instruction Pointer (IP) and Branch Stack (brstack). LLVM-BOLT expects branch flags to either predict or mispredict, but branch flags are not supported by Intel PT. 
+
+To make LLVM-BOLT work we need to add configuration option in perfconfig file which sets mispred flag on all branches. Simply adding following lines to ~/.perfconfig should let us get brstack information out of sampled data collected with PT
+
+\begin{lstlisting}[language=bash]
+
+[intel-pt]
+
+mispred-all = on
+
+\end{lstlisting}
+
+We will need to modify the data aggregation code in LLVM-BOLT to utilize the -itrace=i100usle option in conjunction with the perf script, which extracts the brstack field from the data gathered through Intel PT.
 
 [Add script to replicate the experiment?]
 
-Add line about changes required in BOLT to handle PT data.
+We will be using multitime to run our benchmark, for both collecting profile and running the benchmark we will use extsmaild.c file.
+
 \begin{enumerate}
+  \item Baseline binary
   \item No LBR Mode
   \item LBR Mode
   \item Intel-PT

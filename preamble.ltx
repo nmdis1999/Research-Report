@@ -27,6 +27,8 @@
 \usepackage{float}    % For better control over floating environments
 \usepackage{color}    % For colored text
 \usepackage{hyperref} % For hyperlinks
+\usepackage{listings} % For adding code styles
+\usepackage{xcolor}
 
 % Page layout
 \geometry{left=3cm, right=3cm, top=3cm, bottom=3cm}
@@ -36,6 +38,14 @@
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{0.5pt}
 \renewcommand{\footrulewidth}{0pt}
+\lstset{
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
 
 % Spacing and formatting
 \setlength{\parindent}{0pt} % Remove paragraph indentation
