@@ -127,4 +127,25 @@ Intel PT & 4177 & 69.43\% & 1.65\% \\ \hline
 \end{table}
 
 \textbf{Analysis of number of function executed during compilation, number of function perf shows in sampling mode and number of functions Bolt reorders}
+Out of 175120 functions in Clang binary, LLVM-BOLT seems to reorder 230 functions in NO LBR mode, 1080 functions in LBR mode and 2900 functions in Intel PT mode. What’s interesting is the more profiling data we capture LLVM BOLT reorders more functions but the performance improvement seems is not too much. 
+
+So, the NO LBR, LBR, and Intel PT  binaries are approximately 31.6\%, 32.1\%, and 34.4\% faster than the baseline binary, respectively. There is not too much improvement by feeding more profiling information with Intel PT.
+
+To understand the reason, we can observe the number of functions of Clang being executed during compilation of extsmaild.c file (the test file we are using to collect profiling information).
+
+We will be using two tools, Callgrind, a profiling tool included in Valgrind suite and llvm-cov to get the numbers of executed functions. 
+
+Callgrind tracks the callgraph (in simple terms function call hierarchy) of a program during its execution. It dumps information about number of times each function is called, number of instructions being executed and number of cycles consumed by each functions in a callgrind.out.PID file. We are only interested in number of functions being executed. To easily study the dumped data, we will be using QCachegrind (MacOS version KCachegrind).
+
+llvm-cov is part of LLVM project used for generating code coverage information for C/C++ and other LLVM supported languages(including but not limited to function coverage, which is more important for us). 
+
+[Difference between llvm-cov and Valgrind]
+
+Valgrind shows us that around x\% of functions are executed during Compilation and llvm-cov shows it to be around y\%.
+
+[Add image]
+
+We could only capture around 3874 i.e 15\% of executed functions with perf. But noticing at the performance improvement we can make a guess that captured profiles by perf which contibute most to BOLT for binary optimization. This mean, feeding BOLT more accurate data captured with Intel PT wouldn’t give any meaningful optimization. 
+
+(At runtime the counters are incremented and at exit the counters are dumped in gcda files. source: [https://clang.llvm.org/docs/UsersManual.html](https://clang.llvm.org/docs/UsersManual.html))
 \end{document}
