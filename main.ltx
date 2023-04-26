@@ -6,72 +6,153 @@
 \maketitle
 
 \section{Introduction}
-LLVM-BOLT is a post-link static binary optimizer that enhances code layout utilizing sample-based profiling data at the binary level.
-This study investigates whether providing more accurate data can improve LLVM-BOLT's performance in optimizing binaries. We conduct experiments
-on building and optimizing Clang binaries using LLVM-BOLT with two data sources: perf-captured sample data and Intel-PT captured data. The analysis
-aims to determine if supplying finer-grained and more branching information to
-LLVM-BOLT results in further optimization of Clang binaries.
+LLVM-BOLT is a post-link static binary optimizer that enhances code layout
+utilizing sample-based profiling data at the binary level.  This study
+investigates whether providing more accurate data can improve LLVM-BOLT's
+performance in optimizing binaries. We conduct experiments on building and
+optimizing Clang binaries using LLVM-BOLT with two data sources: perf-captured
+sample data and Intel-PT captured data. The analysis aims to determine if
+supplying finer-grained and more branching information to LLVM-BOLT results in
+further optimization of Clang binaries.
 
 \section{Background}
-Modern compilers have integrated a lot of compiler optimization techniques, such as using basic block frequencies and branch target information to perform function inlining.
-But they don’t have the capability of identifying hot or cold blocks of code which can help in function splitting to improve code locality or optimize instruction cache, fortunately
-this can be achieved using feedback-driven (FDO), or profile-guided optimizations (PGO). Traditional methods such as using instrumentation-based profilers have significant memory and
-performance costs for collecting profiles, and they might not be able to capture accurate profiling information. With FDO, we use unmodified binaries to capture profiling data and
-have only the overhead of collecting the data with much finer and accurate information. It is also easily adoptable in production environments, as one can do continuous optimization
-by regularly feeding dynamic profiling data to rebuild the binary. Facebook’s BOLT (which was moved to llvm-project) uses sampled profile using perf (with and without LBR) to perform
+Modern compilers have integrated a lot of compiler optimization techniques, such
+as using basic block frequencies and branch target information to perform
+function inlining.  But they don’t have the capability of identifying hot or
+cold blocks of code which can help in function splitting to improve code
+locality or optimize instruction cache, fortunately this can be achieved using
+feedback-driven (FDO), or profile-guided optimizations (PGO). Traditional
+methods such as using instrumentation-based profilers have significant memory
+and performance costs for collecting profiles, and they might not be able to
+capture accurate profiling information. With FDO, we use unmodified binaries to
+capture profiling data and have only the overhead of collecting the data with
+much finer and accurate information. It is also easily adoptable in production
+environments, as one can do continuous optimization by regularly feeding dynamic
+profiling data to rebuild the binary. Facebook’s BOLT (which was moved to
+llvm-project) uses sampled profile using perf (with and without LBR) to perform
 post-link FDO on binaries.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf, also known as perf\_event, is a lightweight Linux-based tool that offers an abstraction over hardware-specific capabilities, primarily for performance measurements.
-Commonly referred to as Performance Counters for Linux, it provides per-task, per-CPU, and per-workload counters, along with the ability to sample on top of these.
-Perf has four type of measurable events. Such as from pure kernel counters, in this case they are called \textbf{software events}. Examples include: context-switches, minor-faults.
-Another source of events is the processor itself and its Performance Monitoring Unit (PMU). It provides a list of events to measure micro-architectural events such as the number of cycles, instructions retired, L1 cache misses and so on. Those events are called \textbf{PMU hardware events} or
-hardware events. They vary with each processor type and model.
-In \textbf{hardware cache events}, each processor gets mapped onto an actual events provided by the CPU, if they exists, otherwise the event cannot be used.
-And \textbf{tracepoint events} which are implemented by the kernel ftrace infrastructure.
+Perf, also known as perf\_event, is a lightweight Linux-based tool that offers
+an abstraction over hardware-specific capabilities, primarily for performance
+measurements.  Commonly referred to as Performance Counters for Linux, it
+provides per-task, per-CPU, and per-workload counters, along with the ability to
+sample on top of these.  Perf has four type of measurable events. Such as from
+pure kernel counters, in this case they are called \textbf{software events}.
+Examples include: context-switches, minor-faults.  Another source of events is
+the processor itself and its Performance Monitoring Unit (PMU). It provides a
+list of events to measure micro-architectural events such as the number of
+cycles, instructions retired, L1 cache misses and so on. Those events are called
+\textbf{PMU hardware events} or hardware events. They vary with each processor
+type and model.  In \textbf{hardware cache events}, each processor gets mapped
+onto an actual events provided by the CPU, if they exists, otherwise the event
+cannot be used.  And \textbf{tracepoint events} which are implemented by the
+kernel ftrace infrastructure.
 
-The perf tool is in the linux-tools-common package and can also build from the Linux kernel source.
-perf or perf\_events can instrument in following ways:
+The perf tool is in the linux-tools-common package and can also build from the
+Linux kernel source.  perf or perf\_events can instrument in following ways:
 \begin{itemize}
-	\item \textbf{counting} events in-kernel context. In counting modes, the occurrences of events are simply aggregated and presented on standard output at the end of an application run. This mode does not generate a perf.data file. We can use perf stat to generate statistics.
-	\item \textbf{sampling} events write event data to a kernel buffer, which is asynchronously read by the perf to write in perf.data file. Sampling periods are based on event occurrences and not timer ticks. perf\_event emulates 64-bit counter. And every time counter overflows (i.e wraps $2^64$ to $0$) a sample is recorded, including instruction pointer when the program was interrupted.
+    \item \textbf{counting} events in-kernel context. In counting modes, the
+        occurrences of events are simply aggregated and presented on standard
+        output at the end of an application run. This mode does not generate a
+        perf.data file. We can use perf stat to generate statistics.
+    \item \textbf{sampling} events write event data to a kernel buffer, which is
+       asynchronously read by the perf to write in perf.data file. Sampling periods are
+       based on event occurrences and not timer ticks. perf\_event emulates 64-bit
+       counter. And every time counter overflows (i.e wraps $2^64$ to $0$) a sample is
+       recorded, including instruction pointer when the program was interrupted.
 \end{itemize}
+
 The generated file can be read by report and script commands.
 
-In Sampling mode with perf record , care needs to be taken about the overheads, as the capture files can quickly become
-hundreds of megabytes. It depends on the rate of the event you are tracing: the more frequent, the higher the overhead and larger the perf.data size.
+In Sampling mode with perf record , care needs to be taken about the overheads,
+as the capture files can quickly become hundreds of megabytes. It depends on the
+rate of the event you are tracing: the more frequent, the higher the overhead
+and larger the perf.data size.
 
-Another way to instrument is by using BPF program on events which can execute custom user-defined programs in kernel space, and perform filters and summaries of the data. But we won’t be covering that in our experiments.
+Another way to instrument is by using BPF program on events which can execute
+custom user-defined programs in kernel space, and perform filters and summaries
+of the data. But we won’t be covering that in our experiments.
 
-By default perf records sample at \textbf{both} user and kernel levels using cycles events with average rate of $1000$ samples/sec or $4000$ events / sec of thread execution.  With Sampling `perf record` asks PMU to count some events, for example cpu-cycles and generate an overflow interrupt after every $n$th event (e.g a million). On every interrupt perf\_event records such as : PID/TID (Process/Thread ID), timestamp, command being executed, Instruction Pointer to the ring buffer and reset the counter to a new value.
+By default perf records sample at \textbf{both} user and kernel levels using
+cycles events with average rate of $1000$ samples/sec or $4000$ events / sec of
+thread execution.  With Sampling `perf record` asks PMU to count some events,
+for example cpu-cycles and generate an overflow interrupt after every $n$th
+event (e.g a million). On every interrupt perf\_event records such as : PID/TID
+(Process/Thread ID), timestamp, command being executed, Instruction Pointer to
+the ring buffer and reset the counter to a new value.
 
-There is a limit to maximum frequency that can be set but we can adjust both frequency of collection samples and period i.e collecting sample every Nth occurance of an event by passing -F and -c flag respectively to perf record. Once the ring buffer is filled, perf will dump the data to `perf.data` file which can be of several megabyte in size.
+There is a limit to maximum frequency that can be set but we can adjust both
+frequency of collection samples and period i.e collecting sample every Nth
+occurance of an event by passing -F and -c flag respectively to perf record.
+Once the ring buffer is filled, perf will dump the data to `perf.data` file
+which can be of several megabyte in size.  
+
 \subsection*{LBR}
-Intel’s Last Branch Record (LBR) are hardware registers used to records information about branch instructions that a CPU takes, it logs “From” and “To” addresses of each branch along with some additional metadata. The register has a ring buffer with most recent branch information, and is usually have stack depth of 8, 16, or 32 frames.
+Intel’s Last Branch Record (LBR) are hardware registers used to records
+information about branch instructions that a CPU takes, it logs “From” and “To”
+addresses of each branch along with some additional metadata. The register has a
+ring buffer with most recent branch information, and is usually have stack depth
+of 8, 16, or 32 frames.  
+
 \subsection*{Intel-PT}
-Intel-PT is a hardware based tracing technique integrated into CPU hardware, generating data for every control flow instruction which can be later used to resconstruct the whole control flow of a program. The frequency of capturing data is same as number of calls, branches and returns executed per second by the program. This means that per CPU, Intel-PT can capture hundreds of megabytes of trace data.
+Intel-PT is a hardware based tracing technique integrated into CPU hardware,
+generating data for every control flow instruction which can be later used to
+resconstruct the whole control flow of a program. The frequency of capturing
+data is same as number of calls, branches and returns executed per second by the
+program. This means that per CPU, Intel-PT can capture hundreds of megabytes of
+trace data.  
+
 \subsubsection*{Buffer Handling:}
+In Intel-PT mode, perf\_events saves log to different ring buffer and perf’s
+user space tool will periodically save data from ring buffer for offline
+parsing, filtering and decoding.
 
-In Intel-PT mode, perf\_events saves log to different ring buffer and perf’s user space tool will periodically save data from ring buffer for offline parsing, filtering and decoding.
+The default rate is set at 4MiB/page size for privileged user and 128KiB/page
+size for unprivileged users. Passing the larger buffer size is possible, but it
+means that multiple buffers will be logically concatenated. To switch between
+these buffers, an interrupt is made; sometimes these interrupts are not made in
+time and buffer overflows which results in trace data lost. Sometimes passing
+larger auxtrace mmap size helps in resolving the trace data loss, which can be
+done by passing `-m` flag.So, passing `-m, 64M` means we can set trace buffer
+size to 64MiB . However, buffer size is set per CPU and we need to be careful
+with choosing auxtrace mmap size. So if we have 8 CPUs we are essentially
+setting total 512MiB of trace buffer size.
 
-The default rate is set at 4MiB/page size for privileged user and 128KiB/page size for unprivileged users. Passing the larger buffer size is possible, but it means that multiple buffers will be logically concatenated. To switch between these buffers, an interrupt is made; sometimes these interrupts are not made in time and buffer overflows which results in trace data lost. Sometimes passing larger auxtrace mmap size helps in resolving the trace data loss, which can be done by passing `-m` flag.So, passing `-m, 64M` means we can set trace buffer size to 64MiB . However, buffer size is set per CPU and we need to be careful with choosing auxtrace mmap size. So if we have 8 CPUs we are essentially setting total 512MiB of trace buffer size.
+Another method which sometimes seems to be helpful in addition of setting AUX
+mmap size is re-running the workload to resolve overflow packets error. This
+will capture slightly less data(a couple of MiB) but you will either see no or
+fewer “Instruction errors” in captured data.
 
-Another method which sometimes seems to be helpful in addition of setting AUX mmap size is re-running the workload to resolve overflow packets error. This will capture slightly less data(a couple of MiB) but you will either see no or fewer “Instruction errors” in captured data.
 \subsubsection*{Background on Bolt}
-LLVM-BOLT is a static post link binary optimizer built on top of LLVM compiler infrastructure. It uses sample based profiling data to reorder function blocks.
+LLVM-BOLT is a static post link binary optimizer built on top of LLVM compiler
+infrastructure. It uses sample based profiling data to reorder function blocks.
 
-BOLT requires profiles to be collected with relocation mode (by passing `—emit-relocs` flags) this helps BOLT to reorder basic blocks and split hot/cold blocks for improving code locality. Function discovery is initial step in order to modify the binaries. BOLT relies on ELF symbol table and function frame information (which contains functions boundaries) for function discovery.
+BOLT requires profiles to be collected with relocation mode (by passing
+`—emit-relocs` flags) this helps BOLT to reorder basic blocks and split hot/cold
+blocks for improving code locality. Function discovery is initial step in order
+to modify the binaries. BOLT relies on ELF symbol table and function frame
+information (which contains functions boundaries) for function discovery.
 
-BOLT relies on using sample based profiling methods(i.e `perf` ) to get data, the major advantage of sample based method in comparision to instrumentation one is better (or more accurate) information with minimal operational complexity.
+BOLT relies on using sample based profiling methods(i.e `perf` ) to get data,
+the major advantage of sample based method in comparision to instrumentation one
+is better (or more accurate) information with minimal operational complexity.
 
 \section {Optimizing Clang with Bolt}
+We decided to replicate optimizing Clang binary with LLVM-BOLT. For this
+experiment we built  of Clang( version 16.0.3) and later bootstrapped it with
+PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped
+version to collect profile for a new clang build in : No LBR, LBR and PT mode.
 
-We decided to replicate optimizing Clang binary with LLVM-BOLT. For this experiment we built  of Clang( version 16.0.3) and later bootstrapped it with PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped version to collect profile for a new clang build in : No LBR, LBR and PT mode.
+In LBR mode, LLVM-BOLT uses perf to fetch PID/TID, Instruction Pointer (IP) and
+Branch Stack (brstack). LLVM-BOLT expects branch flags to either predict or
+mispredict, but branch flags are not supported by Intel PT.
 
-In LBR mode, LLVM-BOLT uses perf to fetch PID/TID, Instruction Pointer (IP) and Branch Stack (brstack). LLVM-BOLT expects branch flags to either predict or mispredict, but branch flags are not supported by Intel PT.
-
-To make LLVM-BOLT work we need to add configuration option in perfconfig file which sets mispred flag on all branches. Simply adding following lines to \~/.perfconfig should let us get brstack information out of sampled data collected with PT
+To make LLVM-BOLT work we need to add configuration option in perfconfig file
+which sets mispred flag on all branches. Simply adding following lines to
+\~/.perfconfig should let us get brstack information out of sampled data
+collected with PT
 
 \begin{lstlisting}[language=bash]
 
@@ -81,11 +162,14 @@ mispred-all = on
 
 \end{lstlisting}
 
-We will need to modify the data aggregation code in LLVM-BOLT to utilize the -itrace=i100usle option in conjunction with the perf script, which extracts the brstack field from the data gathered through Intel PT.
+We will need to modify the data aggregation code in LLVM-BOLT to utilize the
+-itrace=i100usle option in conjunction with the perf script, which extracts the
+brstack field from the data gathered through Intel PT.
 
-	[Add script to replicate the experiment?]
+[Add script to replicate the experiment?]
 
-We will be using multitime to time the benchmark runs on compilation of gcc.c with baseline and optimized Clang builds.
+We will be using multitime to time the benchmark runs on compilation of gcc.c
+with baseline and optimized Clang builds.
 
 \begin{table}[ht]
 	\centering
@@ -103,7 +187,6 @@ We will be using multitime to time the benchmark runs on compilation of gcc.c wi
 \end{table}
 
 \subsection*{Performance comparision:}
-
 \begin{table}
     \centering
     \caption{BOLT Reordering Data}
@@ -119,25 +202,47 @@ We will be using multitime to time the benchmark runs on compilation of gcc.c wi
 \end{table}
 
 \subsubsection*{Analysis of number of function executed during compilation, number of function perf shows in sampling mode and number of functions Bolt reorders}
-Out of 175120 functions in Clang binary, LLVM-BOLT seems to reorder 230 functions in NO LBR mode, 1080 functions in LBR mode and 2900 functions in Intel PT mode. What’s interesting is the more profiling data we capture LLVM BOLT reorders more functions but the performance improvement seems is not too much.
+Out of 175120 functions in Clang binary, LLVM-BOLT seems to reorder 230
+functions in NO LBR mode, 1080 functions in LBR mode and 2900 functions in Intel
+PT mode. What’s interesting is the more profiling data we capture LLVM BOLT
+reorders more functions but the performance improvement seems is not too much.
 
-So, the NO LBR, LBR, and Intel PT  binaries are approximately 31.6\%, 32.1\%, and 34.4\% faster than the baseline binary, respectively. There is not too much improvement by feeding more profiling information with Intel PT.
+So, the NO LBR, LBR, and Intel PT  binaries are approximately 31.6\%, 32.1\%,
+and 34.4\% faster than the baseline binary, respectively. There is not too much
+improvement by feeding more profiling information with Intel PT.
 
-To understand the reason, we can observe the number of functions of Clang being executed during compilation of extsmaild.c file (the test file we are using to collect profiling information).
+To understand the reason, we can observe the number of functions of Clang being
+executed during compilation of extsmaild.c file (the test file we are using to
+collect profiling information).
 
-We will be using two tools, Callgrind, a profiling tool included in Valgrind suite and llvm-cov to get the numbers of executed functions.
+We will be using two tools, Callgrind, a profiling tool included in Valgrind
+suite and llvm-cov to get the numbers of executed functions.
 
-Callgrind tracks the callgraph (in simple terms function call hierarchy) of a program during its execution. It dumps information about number of times each function is called, number of instructions being executed and number of cycles consumed by each functions in a callgrind.out.PID file. We are only interested in number of functions being executed. To easily study the dumped data, we will be using QCachegrind (MacOS version KCachegrind).
+Callgrind tracks the callgraph (in simple terms function call hierarchy) of a
+program during its execution. It dumps information about number of times each
+function is called, number of instructions being executed and number of cycles
+consumed by each functions in a callgrind.out.PID file. We are only interested
+in number of functions being executed. To easily study the dumped data, we will
+be using QCachegrind (MacOS version KCachegrind).
 
-llvm-cov is part of LLVM project used for generating code coverage information for C/C++ and other LLVM supported languages(including but not limited to function coverage, which is more important for us).
+llvm-cov is part of LLVM project used for generating code coverage information
+for C/C++ and other LLVM supported languages(including but not limited to
+function coverage, which is more important for us).
+	
+[Difference between llvm-cov and Valgrind]
 
-	[Difference between llvm-cov and Valgrind]
-
-Valgrind shows us that around x\% of functions are executed during Compilation and llvm-cov shows it to be around y\%.
+Valgrind shows us that around x\% of functions are executed during Compilation
+and llvm-cov shows it to be around y\%.
 
 [Add image]
 
-We could only capture around 3874 i.e 15\% of executed functions with perf. But noticing at the performance improvement we can make a guess that captured profiles by perf which contibute most to BOLT for binary optimization. This mean, feeding BOLT more accurate data captured with Intel PT wouldn’t give any meaningful optimization.
+We could only capture around 3874 i.e 15\% of executed functions with perf. But
+noticing at the performance improvement we can make a guess that captured
+profiles by perf which contibute most to BOLT for binary optimization. This
+mean, feeding BOLT more accurate data captured with Intel PT wouldn’t give any
+meaningful optimization.
 
-(At runtime the counters are incremented and at exit the counters are dumped in gcda files. source: [https://clang.llvm.org/docs/UsersManual.html](https://clang.llvm.org/docs/UsersManual.html))
+(At runtime the counters are incremented and at exit the counters are dumped in
+gcda files. source:
+[https://clang.llvm.org/docs/UsersManual.html](https://clang.llvm.org/docs/UsersManual.html))
 \end{document}
