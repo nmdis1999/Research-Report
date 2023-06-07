@@ -4,7 +4,7 @@ all: main.pdf
 
 clean:
 	rm -f *.aux *.log *.pdf
-	rm -rf main.log main.bbl main.blg main.aux main.pdf main.out preamble.fmt
+	rm -rf main.log main.bbl main.blg main.aux main.pdf main.out main_preamble.fmt
 
 main.pdf: bib.bib main.ltx main_preamble.fmt softdev.sty
 	pdflatex main.ltx
