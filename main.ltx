@@ -272,7 +272,7 @@ sampling, consequently resulting in faster clang builds. }
         extsmaild.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 \\
         \hline
     \end{tabular}}
-    \caption{NO LBR - Benchmarked clang versions}
+    \caption{NO LBR - Benchmarked clang versions}m
     \label{table:1}
 \end{table}
 
@@ -293,6 +293,13 @@ sampling, consequently resulting in faster clang builds. }
     \label{table:2}
 \end{table}
 
+In Figure x Table y , we observe in the NO LBR mode that the range (Mean ± CI) for each
+run using clang binaries exhibits significant overlap. The delta, in this case,
+isn't substantial enough to infer a relationship between LOC and performance.
+However, in the LBR mode, an increase in LOC profiled function generally
+correlates with improved performance, exhibiting either equal or better performance. 
+There is trend of deminishing returns over increasing LOC after certain point.
+
 \begin{table}[ht]
     \centering
     \scalebox{0.7}{
@@ -310,17 +317,8 @@ sampling, consequently resulting in faster clang builds. }
     \label{table:3}
 \end{table}
 
-In Figure x Table y , we observe in the NO LBR mode that the range (Mean ± CI) for each
-run using clang binaries exhibits significant overlap. The delta, in this case,
-isn't substantial enough to infer a relationship between LOC and performance.
-However, in the LBR mode, an increase in LOC profiled function generally
-correlates with improved performance, exhibiting either equal or diminishing
-returns over increasing LOC. Despite this trend, the clang build trained with
-the extsmaild.c profile is less performant compared to the optimized clang
-builds.
-
 In the Intel PT mode, a similar trend to LBR is noticed - an increase in LOC
-tends to enhance performance, albeit with notably diminishing returns when the
-clang is profiled with larger files.
+tends to enhance performance, albeit with notably diminishing returns in comparision
+to files with lesser delta between loc.
 
 \end{document}
