@@ -5,6 +5,13 @@
 
 \maketitle
 
+\laurie{start with something like: ``The aim of my PhD is XYZ'' where `XYZ'
+might be something like ``Improve software performance by ABC''. Then say
+something like ``In this brief report, I outline my initial research into this
+area.'' Then give a rough summary of what you've done, and what you haven't yet
+done. That will give readers the context necessary to understand what they're
+about to read.}
+
 \section{Introduction}
 LLVM-BOLT is a post-link static binary optimizer that enhances code layout
 utilizing sample-based profiling data at the binary level.  This study
@@ -19,9 +26,9 @@ further optimization of Clang binaries.
 Modern compilers have integrated a lot of compiler optimization techniques, such
 as using basic block frequencies and branch target information to perform
 function inlining.  But they don’t have the capability of identifying hot or
-cold blocks of code which can help in function splitting to improve code
+cold blocks\laurie{what is a `hot' or `cold' block?} of code which can help in function splitting to improve code
 locality or optimize instruction cache, fortunately this can be achieved using
-feedback-driven (FDO), or profile-guided optimizations (PGO). Traditional
+feedback-driven (FDO), or profile-guided optimizations (PGO) \laurie{what's different between FDO and PGO?}. Traditional
 methods such as using instrumentation-based profilers have significant memory
 and performance costs for collecting profiles, and they might not be able to
 capture accurate profiling information. With FDO, we use unmodified binaries to
@@ -29,7 +36,7 @@ capture profiling data and have only the overhead of collecting the data with
 much finer and accurate information. It is also easily adoptable in production
 environments, as one can do continuous optimization by regularly feeding dynamic
 profiling data to rebuild the binary. Facebook’s BOLT (which was moved to
-llvm-project) uses sampled profile using perf (with and without LBR) to perform
+llvm-project) uses sampled profile using perf (with and without LBR \laurie{What is LBR?}) to perform
 post-link FDO on binaries.
 
 \subsection{Profiling Techniques}
@@ -104,7 +111,7 @@ data is same as number of calls, branches and returns executed per second by the
 program. This means that per CPU, Intel-PT can capture hundreds of megabytes of
 trace data.  
 
-\subsubsection*{Buffer Handling:}
+\subsubsection*{Buffer Handling}
 In Intel-PT mode, perf\_events saves log to different ring buffer and perf’s
 user space tool will periodically save data from ring buffer for offline
 parsing, filtering and decoding.
@@ -125,8 +132,8 @@ mmap size is re-running the workload to resolve overflow packets error. This
 will capture slightly less data(a couple of MiB) but you will either see no or
 fewer “Instruction errors” in captured data.
 
-\subsubsection*{Background on Bolt}
-LLVM-BOLT is a static post link binary optimizer built on top of LLVM compiler
+\subsubsection*{Bolt}
+LLVM-BOLT \laurie{is it called Bolt, BOLT, or LLVM-BOLT? choose one :)} is a static post link binary optimizer built on top of LLVM compiler
 infrastructure. It uses sample based profiling data to reorder function blocks.
 
 BOLT requires profiles to be collected with relocation mode (by passing
@@ -140,10 +147,10 @@ the major advantage of sample based method in comparision to instrumentation one
 is better (or more accurate) information with minimal operational complexity.
 
 \section {Optimizing Clang with Bolt}
-We decided to replicate optimizing Clang binary with llvm-bolt with some
-additional steps.We build clang( version 16.0.3) and bootstrapped it with PGO
+We decided to replicate \laurie{replicate whom/what?} optimizing Clang binary with llvm-bolt with some
+additional steps.We build clang (version 16.0.3) and bootstrapped it with PGO
 and LTO. Finally, we use the bootstraped version to collect profile for a new
-clang build in three modes NO LBR, LBR and Intel PT. llvm-bolt only supports
+clang build in three modes NO LBR, LBR and Intel PT \laurie{i think we can call this just `PT': LBR is also an Intel-only thing, I think}. llvm-bolt only supports
 first two, and to make Intel PT work we had to make few tweaks to llvm-bolt’s
 source code.
 
@@ -186,22 +193,23 @@ Within the table, the first column presents the testing set files, while the
 succeeding columns represent clangs, each built with the assistance of training
 set files and consequently named with the corresponding filename extension.
 
-Moving on to Table I, we will analyze the performance of the best clang build
+Moving on to Table I\laurie{use \LaTeX labels, not hardcoded references. I've put the cleverref package to make this even easier for you}, we will analyze the performance of the best clang build
 across the NO LBR, LBR, and Intel PT mode profiles. The following table
 represents the difference:
 
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{|c|c|c|c|c|}
+  \begin{tabular}{ccccc}
     \toprule
-    Testing file & Baseline & \multicolumn{1}{c|}{NO LBR} & \multicolumn{1}{c|}{LBR} & \multicolumn{1}{c|}{Intel PT} \\
-    \cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5}
+    Testing file & Baseline & NO LBR & LBR & Intel PT \\
+    \midrule
     format.c & & 0.735 ± 0.0005 & 0.723 ± 0.0005 & 0.701 ± 0.0008 \\
     tty.c & & 0.449 ± 0.0005 & 0.442 ± 0.0005 & 0.428 ± 0.0005 \\
     window-copy.c & & 0.715 ± 0.0008 & 0.704 ± 0.0008 & 0.680 ± 0.0008 \\
     extsmaild.c & & 0.209 ± 0.0005 & 0.205 ± 0.0005 & 0.201 ± 0.0005 \\
     \bottomrule
   \end{tabular}
+    \caption{\laurie{needs a caption}}
 \end{table}
 
 It can be observed that, on average, the Intel PT mode performs 4.76\% better
@@ -220,16 +228,16 @@ and analysize number of functions recorded duing compilation.
 
 \begin{table}
     \centering
-    \caption{BOLT Reordering Data}
     \begin{tabular}{lccc}
         \toprule
-        \textbf{Method} & \textbf{Perf Captured} & \textbf{BOLT Reorder Aim} & \textbf{BOLT Reordered \%} \\
+        Method & Perf Captured & BOLT Reorder Aim & BOLT Reordered \% \\
         \midrule
         NO LBR          & x                     & 311                       & 73.95\%                   \\
         LBR             & y                     & 1501                      & 71.95\%                   \\
         Intel PT        & z                     & 4177                      & 69.43\%                   \\
         \bottomrule
     \end{tabular}
+    \caption{BOLT Reordering Data}
 \end{table}
 
 Out of 175120 functions in Clang binary, llvm-bolt reorders 230
@@ -262,32 +270,32 @@ sampling, consequently resulting in faster clang builds. }
 \begin{table}[ht]
     \centering
     \scalebox{0.7}{
-    \begin{tabular}{|l|c|c|c|c|c|}
-        \hline
+    \begin{tabular}{lccccc}
+        \toprule
         Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
-        \hline
+        \midrule
         format.c & 0.907 ± 0.0008 & 0.737 ± 0.0061 & 0.739 ± 0.0074 & 0.739 ± 0.0089 & 0.735 ± 0.0005 \\
         tty.c & 0.557 ± 0.0008 & 0.449 ± 0.0005 & 0.451 ± 0.0005 & 0.451 ± 0.0005 & 0.450 ± 0.0005 \\
         window-copy.c & 0.880 ± 0.0008 & 0.715 ± 0.0008 & 0.718 ± 0.0005 & 0.717 ± 0.0008 & 0.717 ± 0.0005 \\
         extsmaild.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 \\
-        \hline
+        \bottomrule
     \end{tabular}}
-    \caption{NO LBR - Benchmarked clang versions}
+\caption{NO LBR - Benchmarked clang versions \laurie{what are the numbers in brackets?}}
     \label{table:1}
 \end{table}
 
 \begin{table}[ht]
     \centering
     \scalebox{0.7}{
-    \begin{tabular}{|l|c|c|c|c|c|}
-        \hline
+    \begin{tabular}{lccccc}
+        \toprule
         Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
-        \hline
+        \midrule
         format.c & 0.907 ± 0.0008 & 0.736 ± 0.0082 & 0.731 ± 0.0070 & 0.725 ± 0.0093 & 0.723 ± 0.0005 \\
         tty.c & 0.557 ± 0.0008 & 0.450 ± 0.0005 & 0.444 ± 0.0005 & 0.442 ± 0.0005 & 0.442 ± 0.0005 \\
         window-copy.c & 0.880 ± 0.0008 & 0.716 ± 0.0008 & 0.710 ± 0.0008 & 0.705 ± 0.0008 & 0.704 ± 0.0008 \\
         extsmail.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.207 ± 0.0005 & 0.205 ± 0.0005 & 0.206 ± 0.0005 \\
-        \hline
+        \bottomrule
     \end{tabular}}
     \caption{LBR - Benchmarked clang versions}
     \label{table:2}
@@ -296,15 +304,15 @@ sampling, consequently resulting in faster clang builds. }
 \begin{table}[ht]
     \centering
     \scalebox{0.7}{
-    \begin{tabular}{|l|c|c|c|c|c|}
-        \hline
+    \begin{tabular}{lccccc}
+        \toprule
         Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
-        \hline
+        \midrule
         format.c & 0.907 ± 0.0008 & 0.723 ± 0.006 & 0.709 ± 0.0009 & 0.701 ± 0.009 & 0.701 ± 0.0008 \\
         tty.c & 0.557 ± 0.0008 & 0.441 ± 0.0005 & 0.430 ± 0.0005 & 0.429 ± 0.0005 & 0.428 ± 0.0005 \\
         window-copy.c & 0.880 ± 0.0008 & 0.705 ± 0.0008 & 0.689 ± 0.0008 & 0.684 ± 0.0008 & 0.680 ± 0.0008 \\
         extsmail.c & 0.251 ± 0.0005 & 0.205 ± 0.0005 & 0.203 ± 0.0005 & 0.201 ± 0.0005 & 0.202 ± 0.0005 \\
-        \hline
+        \bottomrule
     \end{tabular}}
     \caption{Intel PT - Benchmarked clang versions}
     \label{table:3}
