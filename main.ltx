@@ -255,4 +255,72 @@ captured functions in a profile and a superior clang build (Hypothesis III)?
 
 In order to delve further, we will formulate some hypotheses:
 
+\subsubsection*{Hypothesis II: An increase in the number of lines of code (LOC)
+in testing files leads to an increased number of functions captured during perf
+sampling, consequently resulting in faster clang builds. }
+
+\begin{table}[ht]
+    \centering
+    \scalebox{0.7}{
+    \begin{tabular}{|l|c|c|c|c|c|}
+        \hline
+        Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
+        \hline
+        format.c & 0.907 ± 0.0008 & 0.737 ± 0.0061 & 0.739 ± 0.0074 & 0.739 ± 0.0089 & 0.735 ± 0.0005 \\
+        tty.c & 0.557 ± 0.0008 & 0.449 ± 0.0005 & 0.451 ± 0.0005 & 0.451 ± 0.0005 & 0.450 ± 0.0005 \\
+        window-copy.c & 0.880 ± 0.0008 & 0.715 ± 0.0008 & 0.718 ± 0.0005 & 0.717 ± 0.0008 & 0.717 ± 0.0005 \\
+        extsmaild.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 \\
+        \hline
+    \end{tabular}}
+    \caption{NO LBR - Benchmarked clang versions}
+    \label{table:1}
+\end{table}
+
+\begin{table}[ht]
+    \centering
+    \scalebox{0.7}{
+    \begin{tabular}{|l|c|c|c|c|c|}
+        \hline
+        Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
+        \hline
+        format.c & 0.907 ± 0.0008 & 0.736 ± 0.0082 & 0.731 ± 0.0070 & 0.725 ± 0.0093 & 0.723 ± 0.0005 \\
+        tty.c & 0.557 ± 0.0008 & 0.450 ± 0.0005 & 0.444 ± 0.0005 & 0.442 ± 0.0005 & 0.442 ± 0.0005 \\
+        window-copy.c & 0.880 ± 0.0008 & 0.716 ± 0.0008 & 0.710 ± 0.0008 & 0.705 ± 0.0008 & 0.704 ± 0.0008 \\
+        extsmail.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.207 ± 0.0005 & 0.205 ± 0.0005 & 0.206 ± 0.0005 \\
+        \hline
+    \end{tabular}}
+    \caption{LBR - Benchmarked clang versions}
+    \label{table:2}
+\end{table}
+
+\begin{table}[ht]
+    \centering
+    \scalebox{0.7}{
+    \begin{tabular}{|l|c|c|c|c|c|}
+        \hline
+        Benchmarked on / clang versions & Baseline clang & clang.extsmaild.c (1781) & clang.tty.c       (3026) & clang.format.c (5188) & clang.window-copy.c (5662) \\
+        \hline
+        format.c & 0.907 ± 0.0008 & 0.723 ± 0.006 & 0.709 ± 0.0009 & 0.701 ± 0.009 & 0.701 ± 0.0008 \\
+        tty.c & 0.557 ± 0.0008 & 0.441 ± 0.0005 & 0.430 ± 0.0005 & 0.429 ± 0.0005 & 0.428 ± 0.0005 \\
+        window-copy.c & 0.880 ± 0.0008 & 0.705 ± 0.0008 & 0.689 ± 0.0008 & 0.684 ± 0.0008 & 0.680 ± 0.0008 \\
+        extsmail.c & 0.251 ± 0.0005 & 0.205 ± 0.0005 & 0.203 ± 0.0005 & 0.201 ± 0.0005 & 0.202 ± 0.0005 \\
+        \hline
+    \end{tabular}}
+    \caption{Intel PT - Benchmarked clang versions}
+    \label{table:3}
+\end{table}
+
+In Figure x Table y , we observe in the NO LBR mode that the range (Mean ± CI) for each
+run using clang binaries exhibits significant overlap. The delta, in this case,
+isn't substantial enough to infer a relationship between LOC and performance.
+However, in the LBR mode, an increase in LOC profiled function generally
+correlates with improved performance, exhibiting either equal or diminishing
+returns over increasing LOC. Despite this trend, the clang build trained with
+the extsmaild.c profile is less performant compared to the optimized clang
+builds.
+
+In the Intel PT mode, a similar trend to LBR is noticed - an increase in LOC
+tends to enhance performance, albeit with notably diminishing returns when the
+clang is profiled with larger files.
+
 \end{document}
