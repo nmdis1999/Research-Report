@@ -140,19 +140,21 @@ the major advantage of sample based method in comparision to instrumentation one
 is better (or more accurate) information with minimal operational complexity.
 
 \section {Optimizing Clang with Bolt}
-We decided to replicate optimizing Clang binary with LLVM-BOLT. For this
-experiment we built  of Clang( version 16.0.3) and later bootstrapped it with
-PGO and LTO. (Add a line about PGO and LTO?). Finally, we use the bootstraped
-version to collect profile for a new clang build in : No LBR, LBR and PT mode.
+We decided to replicate optimizing Clang binary with llvm-bolt with some
+additional steps.We build clang( version 16.0.3) and bootstrapped it with PGO
+and LTO. Finally, we use the bootstraped version to collect profile for a new
+clang build in three modes NO LBR, LBR and Intel PT. llvm-bolt only supports
+first two, and to make Intel PT work we had to make few tweaks to llvm-bolt’s
+source code.
 
-In LBR mode, LLVM-BOLT uses perf to fetch PID/TID, Instruction Pointer (IP) and
-Branch Stack (brstack). LLVM-BOLT expects branch flags to either predict or
-mispredict, but branch flags are not supported by Intel PT.
+In LBR mode, llvm-bolt uses perf to fetch PID/TID, Instruction Pointer (IP) and
+Branch Stack (brstack). llvm-bolt expects branch flags to either predict or
+mispredict, however branch flags are not supported by Intel PT (why?)
 
-To make LLVM-BOLT work we need to add configuration option in perfconfig file
+To make llvm-bolt work we adjusted configuration option in perfconfig file
 which sets mispred flag on all branches. Simply adding following lines to
-\~/.perfconfig should let us get brstack information out of sampled data
-collected with PT
+~/.perfconfig lets us get brstack information out of sampled data
+collected with Intel PT
 
 \begin{lstlisting}[language=bash]
 
@@ -162,31 +164,60 @@ mispred-all = on
 
 \end{lstlisting}
 
-We will need to modify the data aggregation code in LLVM-BOLT to utilize the
--itrace=i100usle option in conjunction with the perf script, which extracts the
-brstack field from the data gathered through Intel PT.
 
-[Add script to replicate the experiment?]
+Next adjustment was modifying llvm-bolt’s source code for data aggregation,
+adding \texttt{—itrace=i100usle} option in conjuction with perf scripts lets us
+extract brstack field in PT mode. Throughout the report we have used multitime
+to benchmark runs, this helps us to collect sample mean and standard
+deviations.
 
-We will be using multitime to time the benchmark runs on compilation of gcc.c
-with baseline and optimized Clang builds.
+\subsection*{Single run comparisions}
+In this experiment, we established two distinct sets: a training set to
+generate the profiles for constructing the new version of clang, and a testing
+set to procure the mean wall-clock time and the 99\% confidence interval. The
+latter was used to compare the performances of various clangs, each operating
+the testing set file(s) one hundred times.
 
-\begin{table}[ht]
-	\centering
-	\caption{Benchmarking of clang versions on gcc.c}
-	\begin{tabular}{l|rrrrr}
-		\hline
-		\textbf{Category} & \textbf{Mean} & \textbf{Std.Dev.} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\ \hline
-		Baseline clang    & 8.938         & 0.187             & 8.771        & 8.843           & 9.199        \\
-		NoLBR             & 6.790         & 0.039             & 6.735        & 6.810           & 6.824        \\
-		LBR               & 6.764         & 0.005             & 6.757        & 6.767           & 6.768        \\
-		Intel PT          & 6.649         & 0.070             & 6.550        & 6.692           & 6.704        \\
+The experiment was conducted in three distinct modes: NO LBR, LBR, and Intel
+PT. The term 'mode' here refers to the specific flags employed, if any, during
+the profile capture of the training set file compilation.
 
-	\end{tabular}
-	\label{table:benchmark_analysis}
+Within the table, the first column presents the testing set files, while the
+succeeding columns represent clangs, each built with the assistance of training
+set files and consequently named with the corresponding filename extension.
+
+Moving on to Table I, we will analyze the performance of the best clang build
+across the NO LBR, LBR, and Intel PT mode profiles. The following table
+represents the difference:
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|}
+    \toprule
+    Testing file & Baseline & \multicolumn{1}{c|}{NO LBR} & \multicolumn{1}{c|}{LBR} & \multicolumn{1}{c|}{Intel PT} \\
+    \cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5}
+    format.c & & 0.735 ± 0.0005 & 0.723 ± 0.0005 & 0.701 ± 0.0008 \\
+    tty.c & & 0.449 ± 0.0005 & 0.442 ± 0.0005 & 0.428 ± 0.0005 \\
+    window-copy.c & & 0.715 ± 0.0008 & 0.704 ± 0.0008 & 0.680 ± 0.0008 \\
+    extsmaild.c & & 0.209 ± 0.0005 & 0.205 ± 0.0005 & 0.201 ± 0.0005 \\
+    \bottomrule
+  \end{tabular}
 \end{table}
 
-\subsection*{Performance comparision:}
+It can be observed that, on average, the Intel PT mode performs 4.76\% better
+than the NO LBR mode and 2.89\% better than the LBR mode. To probe into why the
+Intel PT mode clang outperforms the others, we will examine the number of
+functions that llvm-bolt aims to reorder and the actual percentage of functions
+reordered in the three modes.
+
+\subsubsection*{Analysis of number of function recorded during compilation,
+number of function perf captures in sampling mode and number of functions Bolt
+reorders}
+
+For training we used clang build with extsmaild.c file in all thre modes, and 
+for analysis we ran clang binaries on extsmaild.c to capture perf profiles 
+and analysize number of functions recorded duing compilation.
+
 \begin{table}
     \centering
     \caption{BOLT Reordering Data}
@@ -201,48 +232,27 @@ with baseline and optimized Clang builds.
     \end{tabular}
 \end{table}
 
-\subsubsection*{Analysis of number of function executed during compilation, number of function perf shows in sampling mode and number of functions Bolt reorders}
-Out of 175120 functions in Clang binary, LLVM-BOLT seems to reorder 230
+Out of 175120 functions in Clang binary, llvm-bolt reorders 230
 functions in NO LBR mode, 1080 functions in LBR mode and 2900 functions in Intel
-PT mode. What’s interesting is the more profiling data we capture LLVM BOLT
-reorders more functions but the performance improvement seems is not too much.
+PT mode. The unordered functions are ...
 
-So, the NO LBR, LBR, and Intel PT  binaries are approximately 31.6\%, 32.1\%,
-and 34.4\% faster than the baseline binary, respectively. There is not too much
-improvement by feeding more profiling information with Intel PT.
-
-To understand the reason, we can observe the number of functions of Clang being
-executed during compilation of extsmaild.c file (the test file we are using to
-collect profiling information).
+Functions captured during compilation (using valgrind) versus function 
+captured by perf during sampling.
 
 We will be using two tools, Callgrind, a profiling tool included in Valgrind
-suite and llvm-cov to get the numbers of executed functions.
+suite and perf which we use to capture profile and for profile guided optimization.
 
 Callgrind tracks the callgraph (in simple terms function call hierarchy) of a
 program during its execution. It dumps information about number of times each
 function is called, number of instructions being executed and number of cycles
 consumed by each functions in a callgrind.out.PID file. We are only interested
-in number of functions being executed. To easily study the dumped data, we will
-be using QCachegrind (MacOS version KCachegrind).
+in number of functions being recorded. We used QCachegrind to study the
+dumped data (MacOS version of KCachegrind).
 
-llvm-cov is part of LLVM project used for generating code coverage information
-for C/C++ and other LLVM supported languages(including but not limited to
-function coverage, which is more important for us).
-	
-[Difference between llvm-cov and Valgrind]
+The next question we aim to answer is the percentage of functions that perf
+successfully captures. Is there a correlation between a higher number of
+captured functions in a profile and a superior clang build (Hypothesis III)?
 
-Valgrind shows us that around x\% of functions are executed during Compilation
-and llvm-cov shows it to be around y\%.
+In order to delve further, we will formulate some hypotheses:
 
-[Add image]
-
-We could only capture around 3874 i.e 15\% of executed functions with perf. But
-noticing at the performance improvement we can make a guess that captured
-profiles by perf which contibute most to BOLT for binary optimization. This
-mean, feeding BOLT more accurate data captured with Intel PT wouldn’t give any
-meaningful optimization.
-
-(At runtime the counters are incremented and at exit the counters are dumped in
-gcda files. source:
-[https://clang.llvm.org/docs/UsersManual.html](https://clang.llvm.org/docs/UsersManual.html))
 \end{document}
