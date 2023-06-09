@@ -21,41 +21,49 @@ work of this research.}}
 
 \section{Introduction}
 llvm-bolt is a post-link static binary optimizer that enhances the code layout
-by utlizing sample-based profiling data at a binary level. My study investigates how much
+by utlizing sample-based profiling data at a binary level. This study investigates how much
 performance difference we can get by providing different profiling samples. In
 this report we discuss building clang binaries using llvm-bolt by providing
-llvm-bolt three types of sample data. The experiments were performed on \textbf{Intel(R)
-Xeon(R) CPU E3-1270 v5 @ 3.60GHz} to understand performance improvement done
-over baseline clang binary by llvm-bolt by providing fine-grained data, more
-branch information (tracing data), and a combination of two. We use three
-profile types (called as “mode” throughout the report), No Last Branch Record
-(NO LBR) which is default \texttt{perf record} collected sample i.e without any
-flags, Last Branch Record (LBR), and Intel PT (intel-pt or PT). Compared to
-baseline binary, clang built with NO LBR profile (NO LBR mode clang) performs
-\% better, LBR mode clang performs \% better and Intel-PT mode clang performs
-\% on single compilation run. Later we evaluate performance on running
-different version of clangs hundred times, clang binary has been trained of set
-of files (training set), and benchmark them on the same set of files (testing
+llvm-bolt three types of sample data. We used Intel machine \textbf{Intel(R)
+Xeon(R) CPU E3-1270 v5 @ 3.60GHz} to run the experiments. The aim is to
+understand performance improvement done over baseline clang binary (CLANG 16)
+by llvm-bolt by providing fine-grained data, more branch information (tracing
+data), and a combination of two. We use three profile types (called as “mode”
+throughout the report), No Last Branch Record (NO LBR) which is default
+\texttt{perf record} collected sample i.e without any flags, Last Branch Record
+(LBR), and Intel PT (intel-pt or PT). Compared to baseline binary, clang built
+with NO LBR profile (NO LBR mode clang) performs \% better, LBR mode clang
+performs \% better and Intel-PT mode clang performs \% on single compilation
+run. Later we evaluate performance different version of clangs running over 100
+times, taking mean values along with 99\% confidence interval. The baseline
+binary has been trained on four c programs (training set), and baseline along
+with optimized binaries were benchmarked on the same set of files (testing
 set).
 
 \section{Background}
-Modern compilers have integrated a lot of compiler optimization techniques, such
-as using basic block frequencies and branch target information to perform
-function inlining.  But they don’t have the capability of identifying hot or
-cold blocks\laurie{what is a `hot' or `cold' block?} of code which can help in 
-function splitting to improve code locality or optimize instruction cache, 
-fortunately this can be achieved using feedback-driven (FDO), 
-or profile-guided optimizations (PGO) \laurie{what's different between FDO and PGO?}. 
-Traditional methods such as using instrumentation-based profilers have significant memory
-and performance costs for collecting profiles, and they might not be able to
-capture accurate profiling information. With FDO, we use unmodified binaries to
-capture profiling data and have only the overhead of collecting the data with
-much finer and accurate information. It is also easily adoptable in production
-environments, as one can do continuous optimization by regularly feeding dynamic
-profiling data to rebuild the binary. Facebook’s BOLT (now known as llvm-bolt, 
-we'll use the same notation) uses sampled profile using perf 
-(with and without LBR \laurie{What is LBR?}) to perform
-post-link FDO on binaries.
+Modern compilers have integrated a lot of compiler optimization techniques,
+such as using basic block frequencies and branch target information to perform
+function inlining.  But they don’t have  runtime information and can’t
+differentiate \iti{hot code path (executed a lot) fromcold code paths (executed
+rarely)} . This often leads compilers to optimize cold code paths at the
+expense of hot ones. Sampling data can help us collect hot code path (at least
+most of the times) since show up more often. 
+
+Techniques Profile-Guided Optimization (PGO) also know as Feedback-directed
+Optimization (FDO) are known for optimizizing runtime performance with the help
+of profiling information using static program analysis. PGO / FDO helps in
+performing function splitting which helps in optimize code locality.
+Traditional methods such as instrumentation-based profilers have significant
+overhead of memory and performance for collecting profiling information,
+additionally they might not end up capturing accurate information. PGO is
+easily adoptable in production environment in form of continuous feeding
+dynamic profiling data to rebuild the binary. This report focuses experiments
+using Facebook’s BOLT (now known as llvm-bolt), a post-link FDO tool which uses
+sample based profiling information. Although, llvm-bolt supports accepts any
+profile which feeds it desired information for rebuilding binary we have used
+linux’s toolchain perf. Not just llvm-bolt provides tool to convert perf data
+into llvm-bolt friendly data but perf aslso let us capture different type of
+profiling information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
