@@ -1,16 +1,23 @@
 %&main_preamble
 \endofdump
+\newcommand{\myabstract}[1]{%
+  \noindent \textit{\small#1}
+  \vspace{2\baselineskip} % Creates some space after the abstract
+}
 
 \begin{document}
 
 \maketitle
-
-\laurie{start with something like: ``The aim of my PhD is XYZ'' where `XYZ'
-might be something like ``Improve software performance by ABC''. Then say
-something like ``In this brief report, I outline my initial research into this
-area.'' Then give a rough summary of what you've done, and what you haven't yet
-done. That will give readers the context necessary to understand what they're
-about to read.}
+\iti{\myabstract{%
+The aim of my PhD is to develop an efficient framework for Profile Guided Optimization (PGO).
+In this preliminary report, I have presented an analysis of Facebook’s BOLT, 
+a post-link binary optimizer which is now part of llvm project and called llvm-bolt.
+I have conducted an experimental investigation to discern how the use of varied types
+of profiling information influences the performance of the optimized binary.
+The performance metrics gathered in this study are derived from a relatively 
+small test set due to resource constraints. Expanding the scope of the test set to 
+obtain more comprehensive performance data forms part of the future 
+work of this research.}}
 
 \section{Introduction}
 llvm-bolt is a post-link static binary optimizer that enhances code layout
@@ -26,17 +33,19 @@ further optimization of Clang binaries.
 Modern compilers have integrated a lot of compiler optimization techniques, such
 as using basic block frequencies and branch target information to perform
 function inlining.  But they don’t have the capability of identifying hot or
-cold blocks\laurie{what is a `hot' or `cold' block?} of code which can help in function splitting to improve code
-locality or optimize instruction cache, fortunately this can be achieved using
-feedback-driven (FDO), or profile-guided optimizations (PGO) \laurie{what's different between FDO and PGO?}. Traditional
-methods such as using instrumentation-based profilers have significant memory
+cold blocks\laurie{what is a `hot' or `cold' block?} of code which can help in 
+function splitting to improve code locality or optimize instruction cache, 
+fortunately this can be achieved using feedback-driven (FDO), 
+or profile-guided optimizations (PGO) \laurie{what's different between FDO and PGO?}. 
+Traditional methods such as using instrumentation-based profilers have significant memory
 and performance costs for collecting profiles, and they might not be able to
 capture accurate profiling information. With FDO, we use unmodified binaries to
 capture profiling data and have only the overhead of collecting the data with
 much finer and accurate information. It is also easily adoptable in production
 environments, as one can do continuous optimization by regularly feeding dynamic
 profiling data to rebuild the binary. Facebook’s BOLT (now known as llvm-bolt, 
-we'll use the same notation) uses sampled profile using perf (with and without LBR \laurie{What is LBR?}) to perform
+we'll use the same notation) uses sampled profile using perf 
+(with and without LBR \laurie{What is LBR?}) to perform
 post-link FDO on binaries.
 
 \subsection{Profiling Techniques}
@@ -193,7 +202,7 @@ Within the table, the first column presents the testing set files, while the
 succeeding columns represent clangs, each built with the assistance of training
 set files and consequently named with the corresponding filename extension.
 
-Moving on to Table I\laurie{use \LaTeX labels, not hardcoded references. I've put the cleverref package to make this even easier for you}, we will analyze the performance of the best clang build
+Moving on to Table  \laurie{use \LaTeX labels, not hardcoded references. I've put the cleverref package to make this even easier for you}, we will analyze the performance of the best clang build
 across the NO LBR, LBR, and Intel PT mode profiles. The following table
 represents the difference:
 
@@ -342,19 +351,19 @@ which is not available in NO LBR mode. We can get more details about branches
 such as FROM and TO addresses of each branch with some additional meta-data
 such as timing packets. LBR during each sample only logs last 8-32 during each
 sample while Intel PT theoritically records every branch. However, both LBR and
-Intel PT feature of perf are currently on supported on Intel devices.
-Though tere seem to be ongoing development to add support for LBR on AMD devices. 
+Intel PT feature of perf are currently only supported on Intel devices.
+Though there seem to be ongoing development to add support for LBR on AMD devices. 
 
 One interesting outcome to see would be aggregating profiles recorded in the 
 LBR mode and compared the clang built from these new profiles to the 
-Intel PT mode clang. So, our next two hypothesis analyze this:
+Intel PT mode clang. So, our next two hypothesis capture this:
 
 \subsubsection*{Hypothesis III : Aggregating multiple profiles over n runs on the 
 same training file results in building faster clang binaries.}
 
 To test this, we aggregate profiles (collected with perf) over n runs on the same 
 training file and scrutinize the resulting performance variations. We have four bar 
-graphs,each benchmarked on our testing files.
+graphs,each graph represents benchmarking on testing file from our testing set.
 
 \begin{figure}[t!]
     \centering
@@ -381,14 +390,74 @@ graphs,each benchmarked on our testing files.
         \caption{Image 4}
         \label{fig:image4}
     \end{subfigure}
-    \caption{On the graph, the x-axis represents the clang build with different
+    \caption{\small\itshape On the graph, the x-axis represents the clang build with different
     training files, and the y-axis depicts the mean along with the 99\%
     confidence interval. The color, situated at the top right, indicates
     \texttt{number.mode} - 'number' signifies the counts of profiles that have
-    been aggregated and 'mode' pertains to the profiling mode.}
+    been aggregated and 'mode' pertains to the profiling mode. And the black lines
+    on top of colored bar are range(±) with confidence interval}
     \label{fig:images}
 \end{figure}
 
+Looking at Figure I graph I, it's quite evident that the performance of clang versions, 
+created with 5, 10, and 15 aggregated LBR profiles, matches or even 
+surpasses the performance of the clang generated with an Intel PT mode profile 
+The same trends seems to follow in other three graphs.
+
+\subsubsection*{Hypothesis IV: Aggregating profiles from different training files
+results in building faster clang binary.}
+
+\begin{table}[ht]
+    \centering
+    \scalebox{0.7}{
+    \begin{tabular}{lccccc}
+        \toprule
+        Clang versions/ benchmarked on & extsmaild.c & tty.c & format.c & window-copy.c \\
+        \midrule
+        clang.all-prog-aggr-lbr & 0.220 $\pm$ 0.0005 & 0.473 $\pm$ 0.0005 & 0.773 $\pm$ 0.0007 & 0.754 $\pm$ 0.0007 \\
+        clang.exts.pt & 0.223 $\pm$ 0.0005 & 0.488 $\pm$ 0.0007 & 0.794 $\pm$ 0.0005 & 0.776 $\pm$ 0.0007 \\
+        clang.tty.pt & 0.220 $\pm$ 0.0005 & 0.470 $\pm$ 0.0005 & 0.771 $\pm$ 0.0005 & 0.752 $\pm$ 0.0007 \\
+        clang.format.pt & 0.216 $\pm$ 0.0005 & 0.466 $\pm$ 0.0005 & 0.756 $\pm$ 0.0007 & 0.741 $\pm$ 0.0007 \\
+        clang.window-copy.pt & 0.217 $\pm$ 0.0005 & 0.467 $\pm$ 0.0005 & 0.736 $\pm$ 0.0007 & 0.759 $\pm$ 0.0007 \\
+        \bottomrule
+    \end{tabular}}
+    \caption{Benchmarked clang versions}
+    \label{table:4}
+\end{table}
+
+\cref{table:4} represents clang trained with two modes LBR and Intel PT, where for LBR mode
+we aggregated profile collected from 4 training files and Intel PT mode clangs 
+were we used training files individually. We tested them on the same files we trained 
+our clang on.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{images/line_graph.aggr_all.png}
+    \caption{Image 4}
+    \label{figure:2}
+\end{figure}
+
+\cref{figure:2} clearly indicates that aggregating profiles captured from the
+testing set doesn't seem to be enough to beat all clang builds with Intel PT 
+profiles using the testing set. Hypothesis II seems to be the reason for 
+this (expand on this).
+
+However, we will use another hypothesis to answer why aggregating multiple 
+LBR mode profiles helps in building clang variants that first start converging
+to performance values of clang produced with Intel PT mode profiles and later 
+even surpasses it.
+
+[Reference Intel PT manual about timing packets]
+
+By default, perf when recording in Intel PT mode uses MTC timing packets. 
+To use CYC timing packets, we would be using the following command:
+\texttt{perf record -e intel\_pt/cyc,cyc\_thres=value,mtc\_period=value/u -- }
+
+\begin{itemize}
+    \item \textit{cyc:}
+    \item \textit{cyc\_thres:}
+    \item \textit{mtc\_period:}
+\end{itemize}
 
 \end{document}
 
