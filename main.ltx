@@ -20,14 +20,23 @@ obtain more comprehensive performance data forms part of the future
 work of this research.}}
 
 \section{Introduction}
-llvm-bolt is a post-link static binary optimizer that enhances code layout
-utilizing sample-based profiling data at the binary level.  This study
-investigates whether providing more accurate data can improve llvm-bolt's
-performance in optimizing binaries. We conduct experiments on building and
-optimizing Clang binaries using llvm-bolt with two data sources: perf-captured
-sample data and Intel-PT captured data. The analysis aims to determine if
-supplying finer-grained and more branching information to llvm-bolt results in
-further optimization of Clang binaries.
+llvm-bolt is a post-link static binary optimizer that enhances the code layout
+by utlizing sample-based profiling data at a binary level. My study investigates how much
+performance difference we can get by providing different profiling samples. In
+this report we discuss building clang binaries using llvm-bolt by providing
+llvm-bolt three types of sample data. The experiments were performed on \textbf{Intel(R)
+Xeon(R) CPU E3-1270 v5 @ 3.60GHz} to understand performance improvement done
+over baseline clang binary by llvm-bolt by providing fine-grained data, more
+branch information (tracing data), and a combination of two. We use three
+profile types (called as “mode” throughout the report), No Last Branch Record
+(NO LBR) which is default \texttt{perf record} collected sample i.e without any
+flags, Last Branch Record (LBR), and Intel PT (intel-pt or PT). Compared to
+baseline binary, clang built with NO LBR profile (NO LBR mode clang) performs
+\% better, LBR mode clang performs \% better and Intel-PT mode clang performs
+\% on single compilation run. Later we evaluate performance on running
+different version of clangs hundred times, clang binary has been trained of set
+of files (training set), and benchmark them on the same set of files (testing
+set).
 
 \section{Background}
 Modern compilers have integrated a lot of compiler optimization techniques, such
