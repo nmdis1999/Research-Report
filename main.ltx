@@ -433,14 +433,39 @@ we aggregated profile collected from 4 training files and Intel PT mode clangs
 were we used training files individually. We tested them on the same files we trained 
 our clang on.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
+  \begin{subfigure}{0.5\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{images/line_graph.aggr_all.png}
-    \caption{Image 4}
-    \label{figure:2}
+    \includegraphics[width=\linewidth]{images/line_graph.aggr_all.png}
+    \caption{Caption for Image 1}
+    \label{fig:image1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{images/all_prof_aggr_ci.png}
+    \caption{Caption for Image 2}
+    \label{fig:image2}
+  \end{subfigure}
+  \caption{\iti{I need to pick one graph in this experiement, need your suggestion}}
+  \label{fig:image}
 \end{figure}
 
-\cref{figure:2} clearly indicates that aggregating profiles captured from the
+% \begin{figure}[t!]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/line_graph.aggr_all.png}
+%     \caption{Image 4}
+%     \label{figure:2}
+% \end{figure}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\textwidth]{images/all_prof_aggr_ci.png}
+%     \caption{Image 4}
+%     \label{figure:2}
+% \end{figure}
+
+\cref{fig:image} clearly indicates that aggregating profiles captured from the
 testing set doesn't seem to be enough to beat all clang builds with Intel PT 
 profiles using the testing set. Hypothesis II seems to be the reason for 
 this (expand on this).
@@ -449,6 +474,9 @@ However, we will use another hypothesis to answer why aggregating multiple
 LBR mode profiles helps in building clang variants that first start converging
 to performance values of clang produced with Intel PT mode profiles and later 
 even surpasses it.
+
+\subsubsection*{Hypothesis V: LBR mode collected profiles has finer-grained data than
+Intel PT mode collected profles}
 
 [Reference Intel PT manual about timing packets]
 
@@ -461,6 +489,27 @@ To use CYC timing packets, we would be using the following command:
     \item \textit{cyc\_thres:}
     \item \textit{mtc\_period:}
 \end{itemize}
+
+Running a comparision with (compare 20.lbr clang built from training set 
+and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
+
+\section*{Future Work}
+
+For future work, I intend to:
+\begin{itemize}
+    \item Expanding the scope of above experiements to
+    bigger training and testing set.
+    \item Investing cost of hybrid profiling technique, potentially
+    picking up fine-grained details like LBR with increased 
+    number of branch information/better control-flow
+    like Intel PT.
+    \item Exploring and assessing the PGO toolchain for potential application 
+    within web browsers, with a specific focus on Chromium or 
+    Chrome(?)\iti{Not sure about this but lmk if this sounds 
+    feasible/something we would want to do?}
+\end{itemize}
+
+\section*{Timeline}
 
 \end{document}
 
