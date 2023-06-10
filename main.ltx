@@ -125,7 +125,7 @@ irrespective of event type.
 \subsubsection*{Sample period and rate}
 
 By default perf records sample at \textbf{both} user and kernel levels
-using cycles events with average rate of 1000 samples/sec or 4000 events / sec
+using cycles events with average rate of ${1000} samples/sec or ${4000} events / sec
 of thread execution. With Sampling \texttt{perf record} asks PMU to count some
 events, for example cpu-cycles and generate an overflow interrupt after every
 $nth$ event (e.g a million). On every interrupt perf\_event records such as :
@@ -140,11 +140,16 @@ data to \texttt{perf.data} file which can vary in size depending upon frequency
 and period set.
 
 \subsection*{LBR}
-Intel’s Last Branch Record (LBR) are hardware registers used to records
-information about branch instructions that a CPU takes, it logs “From” and “To”
-addresses of each branch along with some additional metadata. The register has a
-ring buffer with most recent branch information, and is usually have stack depth
-of 8, 16, or 32 frames.  
+By default perf records only records basic performance counter and cannot
+follow indirect function call where target is only known at the runtime, this
+leads to forming incomplete control flow. Intel has additional support in their
+CPUs called Last Branch Record (LBR), a hardware register to record additonal
+information about branch instruction such as “from” and “to” address of each
+branch with some additional metadata. The retired branches are captured in
+rotating ring buffer.The stack depth (8, 16, or 32 frames) varies according to
+the Intel CPU. Using LBR can also help in building better control flow graph
+with hot code paths, the profile generated can be used for finding basic block
+frequency or profile-guided optimization.
 
 \subsection*{Intel-PT}
 Intel-PT is a hardware based tracing technique integrated into CPU hardware,
