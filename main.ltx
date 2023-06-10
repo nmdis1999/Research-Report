@@ -125,7 +125,7 @@ irrespective of event type.
 \subsubsection*{Sample period and rate}
 
 By default perf records sample at \textbf{both} user and kernel levels
-using cycles events with average rate of ${1000} samples/sec or ${4000} events / sec
+using cycles events with average rate of ${1000}$ samples/sec or ${4000}$ events / sec
 of thread execution. With Sampling \texttt{perf record} asks PMU to count some
 events, for example cpu-cycles and generate an overflow interrupt after every
 $nth$ event (e.g a million). On every interrupt perf\_event records such as :
@@ -152,33 +152,38 @@ with hot code paths, the profile generated can be used for finding basic block
 frequency or profile-guided optimization.
 
 \subsection*{Intel-PT}
-Intel-PT is a hardware based tracing technique integrated into CPU hardware,
-generating data for every control flow instruction which can be later used to
-resconstruct the whole control flow of a program. The frequency of capturing
-data is same as number of calls, branches and returns executed per second by the
-program. This means that per CPU, Intel-PT can capture hundreds of megabytes of
-trace data.  
+Intel-PT is a hardware based tracing technique integrated into Intel’s CPU
+hardware. It traces branch execution which theoritically can be used to build
+control flow for all executed code.
+
+Since Intel-PT captures huge amount of data standard processing such as PMU is
+not possible and thus it uses additional auxiliary buffer(AUX) which is
+associated with perf’s ring buffer.
+
+We can use Intel-PT with perf’s record command as: 
+
+\texttt{perf record -e intel-pt//u ls}
 
 \subsubsection*{Buffer Handling}
-In Intel-PT mode, perf\_events saves log to different ring buffer and perf’s
-user space tool will periodically save data from ring buffer for offline
-parsing, filtering and decoding.
+Intel-PT produces hundreds of megabytes of data per second per CPU and
+sometimes it encounters two errors: \textbf{trace data-loss} (generating data at
+faster rate than it can be recorded to file) and \textbf{overflow packet}
+(unable to record data to memory).
 
-The default rate is set at 4MiB/page size for privileged user and 128KiB/page
-size for unprivileged users. Passing the larger buffer size is possible, but it
-means that multiple buffers will be logically concatenated. To switch between
-these buffers, an interrupt is made; sometimes these interrupts are not made in
-time and buffer overflows which results in trace data lost. Sometimes passing
-larger auxtrace mmap size helps in resolving the trace data loss, which can be
-done by passing `-m` flag.So, passing `-m, 64M` means we can set trace buffer
-size to 64MiB . However, buffer size is set per CPU and we need to be careful
-with choosing auxtrace mmap size. So if we have 8 CPUs we are essentially
-setting total 512MiB of trace buffer size.
+Passing larger auxtrace \textbf{mmap} size seems to help in resolving the trace data
+loss, which can be done by passing \texttt{-m} flag.So, passing \texttt{-m,
+64M}  means we can set trace buffer size to 64MiB  per CPU. We would need to be
+careful with choosing auxtrace mmap size. For instance, if we have 8 CPUs we
+are essentially setting total 512MiB of trace buffer size.
 
-Another method which sometimes seems to be helpful in addition of setting AUX
-mmap size is re-running the workload to resolve overflow packets error. This
-will capture slightly less data(a couple of MiB) but you will either see no or
-fewer “Instruction errors” in captured data.
+To resolve overflow packets error in addition of setting AUX mmap size,
+re-running the workload helps. This might capture slightly less data(a couple
+of MiB) but you should be able to either see no or fewer “Instruction errors” in captured
+data.
+
+llvm-bolt fails to convert data into in a acceptable format if it encounters
+trace errors in \texttt{.data} file,  therefore it’s essential to remove the
+errors by following above workaround or using some other method.
 
 \subsubsection*{llvm-bolt}
 llvm-bolt is a static post link binary optimizer built on top of LLVM compiler
