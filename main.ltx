@@ -67,60 +67,77 @@ profiling information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf, also known as perf\_event, is a lightweight Linux-based tool that offers
-an abstraction over hardware-specific capabilities, primarily for performance
-measurements.  Commonly referred to as Performance Counters for Linux, it
-provides per-task, per-CPU, and per-workload counters, along with the ability to
-sample on top of these.  Perf has four type of measurable events. Such as from
-pure kernel counters, in this case they are called \textbf{software events}.
-Examples include: context-switches, minor-faults.  Another source of events is
-the processor itself and its Performance Monitoring Unit (PMU). It provides a
-list of events to measure micro-architectural events such as the number of
-cycles, instructions retired, L1 cache misses and so on. Those events are called
-\textbf{PMU hardware events} or hardware events. They vary with each processor
-type and model.  In \textbf{hardware cache events}, each processor gets mapped
-onto an actual events provided by the CPU, if they exists, otherwise the event
-cannot be used.  And \textbf{tracepoint events} which are implemented by the
-kernel ftrace infrastructure.
+Perf, also commonly known as perf\_event, is a lightweight linux toolchain that
+offers an abstraction over hardware-specific capabilities. It is primiarly used for
+performance measurements by instrumenting events, these events are unified
+interference from different parts of the kernel. Perf uses performance counters
+to capture events per-thread, per-cpu and per-cpu or system-wide and collect
+sample on top of these events.  
 
-The perf tool is in the linux-tools-common package and can also build from the
-Linux kernel source.  perf or perf\_events can instrument in following ways:
+Measurable events includes:
+
 \begin{itemize}
-    \item \textbf{counting} events in-kernel context. In counting modes, the
-        occurrences of events are simply aggregated and presented on standard
-        output at the end of an application run. This mode does not generate a
-        perf.data file. We can use perf stat to generate statistics.
-    \item \textbf{sampling} events write event data to a kernel buffer, which is
-       asynchronously read by the perf to write in perf.data file. Sampling periods are
-       based on event occurrences and not timer ticks. perf\_event emulates 64-bit
-       counter. And every time counter overflows (i.e wraps $2^64$ to $0$) a sample is
-       recorded, including instruction pointer when the program was interrupted.
+    \item PMU Hardware events: Performance Monitoring Unit or PMU contains
+        measurable events such as number of cycles, instruction retired, L1
+        cache and so on. They vary depending on processor and model type.
+    
+    \item Software events: low level events such as page-faults, cpu-clock and
+        so, base based on kernel counters.
+    
+    \item User Statically Defined Tracing: static trace points for user level program.
+    
+    \item Kernel Tracepoint Events: hardcoded kernel-level instrumentation point.
+    
+    \item Dynamic Tracing: for dynamically instrumenting software by creating
+        event(s) in any location.
+    
+    \item Timed Profiling: commonly used for capturing snapshot  by using
+        custom timer interrupt events and invoked using \texttt{perf record
+        -FHz}
 \end{itemize}
 
-The generated file can be read by report and script commands.
+The perf\_event tool is in the linux-tools -common package and can either be
+installed via \texttt{apt install linux-tools-generic} or be built from source. 
 
-In Sampling mode with perf record , care needs to be taken about the overheads,
-as the capture files can quickly become hundreds of megabytes. It depends on the
-rate of the event you are tracing: the more frequent, the higher the overhead
-and larger the perf.data size.
+perf works can instrument in following modes: a) Counting, using
+\texttt{perf stat} which keeps count of running process for supported events,
+unless specified \texttt{perf stat} runs in per-thread mode. Finally all
+occurence of events are aggregated and summary is presented on the standard
+output b) Sampling mode, using \texttt{perf record/report/annotate}. Event data
+is written to the kernel and then read at an asynchronous rate by
+\texttt{perf record} to write to the perf.data file. This file is then analyzed
+by the perf \texttt{report} or \texttt{script} commands.
 
 Another way to instrument is by using BPF program on events which can execute
 custom user-defined programs in kernel space, and perform filters and summaries
 of the data. But we won’t be covering that in our experiments.
 
-By default perf records sample at \textbf{both} user and kernel levels using
-cycles events with average rate of $1000$ samples/sec or $4000$ events / sec of
-thread execution.  With Sampling `perf record` asks PMU to count some events,
-for example cpu-cycles and generate an overflow interrupt after every $n$th
-event (e.g a million). On every interrupt perf\_event records such as : PID/TID
-(Process/Thread ID), timestamp, command being executed, Instruction Pointer to
-the ring buffer and reset the counter to a new value.
+\subsubsection*{How is a sample event recorded?}
+
+An event sample is recorded when sampling counter overflows, which means
+counters go from $2^{64}$ to 0. Since 64-bit hardware counters aren’t
+implemented in any PMU, perf emulated it in software. Hence, when using perf on
+32-bit system perf silently truncates the period. On every counter overflow,
+the sample contains record of program execution with additional information
+which depends on what user specified for and an instruction pointer
+irrespective of event type.
+
+\subsubsection*{Sample period and rate}
+
+By default perf records sample at \textbf{both} user and kernel levels
+using cycles events with average rate of 1000 samples/sec or 4000 events / sec
+of thread execution. With Sampling \texttt{perf record} asks PMU to count some
+events, for example cpu-cycles and generate an overflow interrupt after every
+$nth$ event (e.g a million). On every interrupt perf\_event records such as :
+PID/TID (Process/Thread ID), timestamp, command being executed, and instruction
+pointer to the ring buffer and reset the counter to a new value.
 
 There is a limit to maximum frequency that can be set but we can adjust both
-frequency of collection samples and period i.e collecting sample every Nth
-occurance of an event by passing -F and -c flag respectively to perf record.
-Once the ring buffer is filled, perf will dump the data to `perf.data` file
-which can be of several megabyte in size.  
+frequency of collection samples and period i.e collecting sample every $nth$
+occurance of an event by passing \texttt{-F} and \texttt{-c} flag respectively
+to \texttt{perf record}. Once the ring buffer is filled, perf will dump the
+data to \texttt{perf.data} file which can vary in size depending upon frequency
+and period set.
 
 \subsection*{LBR}
 Intel’s Last Branch Record (LBR) are hardware registers used to records
