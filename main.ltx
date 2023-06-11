@@ -7,7 +7,9 @@
 
 \begin{abstract}
 \noindent
-The aim of my PhD is to develop an efficient framework for Profile Guided Optimization (PGO).
+The aim of my PhD is to develop an efficient framework for Profile Guided Optimization (PGO)
+\laurie{what is an `efficient framework for PGO'? how would it be different than
+what exists currently?}.
 In this preliminary report, I have presented an analysis of Facebook’s BOLT, 
 a post-link binary optimizer which is now part of llvm project and called llvm-bolt.
 I have conducted an experimental investigation to discern how the use of varied types
@@ -19,7 +21,17 @@ work of this research.
 \end{abstract}
 
 \section{Introduction}
-llvm-bolt is a post-link static binary optimizer that enhances the code layout
+
+\laurie{this paragraph isn't an introduction to your report: it's a
+methodology. the methodology section needs to come later. the introduction
+needs to start with a summary of your phd: in other words you need to expand
+your abstract, in particular setting out an aim and a strategy for meeting that
+aim. neither needs to be perfect, but both need to be present. then you can say
+something like ``This report introduces my background research into bolt, the
+best known existing PGO. Despite its use by large organisations, even
+relatively simple experiments uncover surprising interactions between profiling
+and performance.''}
+llvm-bolt\laurie{when i look at the LLVM repo, BOLT is still called BOLT, not llvm-bolt. i'd suggest using BOLT as the name for this report.} is a post-link static binary optimizer that enhances the code layout
 by utlizing sample-based profiling data at a binary level. This study investigates how much
 performance difference we can get by providing different profiling samples. In
 this report we discuss building clang binaries using llvm-bolt by providing
@@ -49,7 +61,9 @@ expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since show up more often. 
 
 Techniques Profile-Guided Optimization (PGO) also know as Feedback-directed
-Optimization (FDO) are known for optimizizing runtime performance with the help
+Optimization (FDO) \laurie{what's different between FDO and PGO? if they mean
+exactly the same thing, make that clear.}
+are known for optimizizing runtime performance with the help
 of profiling information using static program analysis. PGO / FDO helps in
 performing function splitting which helps in optimize code locality.
 Traditional methods such as instrumentation-based profilers have significant
@@ -475,6 +489,9 @@ results in building faster clang binary.}
     \label{table:4}
 \end{table}
 
+\laurie{use descriptive labels, not `table:4' because that won't make sense
+if/when you reorder parts of the report. so for example, this label might be
+`clang\_benchmarks' or similar.}
 \cref{table:4} represents clang trained with two modes LBR and Intel PT, where for LBR mode
 we aggregated profile collected from 4 training files and Intel PT mode clangs 
 were we used training files individually. We tested them on the same files we trained 
@@ -494,7 +511,7 @@ our clang on.
     \caption{Caption for Image 2}
     \label{fig:image2}
   \end{subfigure}
-  \caption{\iti{I need to pick one graph in this experiement, need your suggestion}}
+    \caption{\iti{I need to pick one graph in this experiement, need your suggestion \laurie{it can't be a linegraph because the x-axis is not continuous}}}
   \label{fig:image}
 \end{figure}
 
@@ -543,6 +560,10 @@ and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
 \section*{Future Work}
 
 For future work, I intend to:
+
+\laurie{what is your aim? do you want to make BOLT better? do you want to
+understand why BOLT works as it does (e.g.~what the effect of different
+profiling makes on PGO)? do you want to make a new profiling tool? or ... ?}
 \begin{itemize}
     \item Expanding the scope of above experiements to
     bigger training and testing set.
