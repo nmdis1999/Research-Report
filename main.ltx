@@ -1,14 +1,12 @@
 %&main_preamble
 \endofdump
-\newcommand{\myabstract}[1]{%
-  \noindent \textit{\small#1}
-  \vspace{2\baselineskip} % Creates some space after the abstract
-}
 
 \begin{document}
 
 \maketitle
-\iti{\myabstract{%
+
+\begin{abstract}
+\noindent
 The aim of my PhD is to develop an efficient framework for Profile Guided Optimization (PGO).
 In this preliminary report, I have presented an analysis of Facebook’s BOLT, 
 a post-link binary optimizer which is now part of llvm project and called llvm-bolt.
@@ -17,7 +15,8 @@ of profiling information influences the performance of the optimized binary.
 The performance metrics gathered in this study are derived from a relatively 
 small test set due to resource constraints. Expanding the scope of the test set to 
 obtain more comprehensive performance data forms part of the future 
-work of this research.}}
+work of this research.
+\end{abstract}
 
 \section{Introduction}
 llvm-bolt is a post-link static binary optimizer that enhances the code layout
