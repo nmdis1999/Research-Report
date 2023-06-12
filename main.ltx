@@ -580,19 +580,30 @@ and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
 
 \section*{Future Work}
 
-\laurie{needs expanding into a paragraph}
+\laurie{need to expand what `hybrid' means by quite a bit! readers won't
+understand from one sentence what it means. why not give a bit more of an
+example? you can even take a couple of parargraphs to do so! explain why,
+perhaps, mixing LBR and PT might prove better/more practical than either in
+isolation}
 I plan to investigate how we can improve PGO tools with hybrid profiling
-information. The hybrid profile would be a combination of two or more different
-types of profiling method, which can result in improved accuracy or function
-coverage. It would be interesting to combine information from LBR and PT mode
+information. A hybrid profile is a combination of two or more different
+types of profiling method: the hope is that this will result in improved
+performance \laurie{because of ...}. It would be interesting to combine information from LBR and PT mode
 profiles. LBR accurate timing for branch instructions and PT detailed program's
 execution profiling can create a more accurate and comprehensive profiling
-technique. 
+technique.
 
-The next immediate next steps are : a) expanding the experiments from this
-report to a larger training and testing set b) determine the cost of the hybrid
-profiling technique using LBR and PT mode profiles with BOLT. c) Test the
-hybrid profiling technique with other PGO tool(s).
+The next steps are:
+
+\begin{enumerate}
+    \item Expand the experiments from this
+report to a larger training and testing set.
+
+    \item Determine the cost of the hybrid.
+profiling technique using LBR and PT mode profiles with BOLT
+
+    \item Test the hybrid profiling technique with other PGO tool(s).
+\end{enumerate}
 
 \section*{Timeline}
 \noindent
