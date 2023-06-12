@@ -22,7 +22,7 @@
 \end{abstract}
 
 \section{Introduction}
-\subsubsection*{\iti{Seperated introduction amd methodology}}
+\subsubsection*{\iti{Seperated introduction and methodology}}
 While Profile Guided Optimization (PGO) has been an active area of research for
 some time, it remains a field with space for futher exploration. This report
 delves into the effects of varying profiling methods on the performance of
@@ -66,8 +66,8 @@ set).
 Modern compilers have integrated a lot of compiler optimization techniques,
 such as using basic block frequencies and branch target information to perform
 function inlining.  But they don’t have  runtime information and can’t
-differentiate \iti{hot code path (executed a lot) fromcold code paths (executed
-rarely)} . This often leads compilers to optimize cold code paths at the
+differentiate hot code path (executed a lot) fromcold code paths (executed
+rarely) . This often leads compilers to optimize cold code paths at the
 expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since show up more often. 
 
@@ -226,8 +226,8 @@ a) it’s easy to record different mode of samples b) BOLT has a utility
 tool to convert perf data directly into BOLT friendly data.
 
 \section {Optimizing Clang with BOLT}
-We decided to replicate \iti{tutorial to optimize clang binary provided by
-llvm-bolt} and followed it with some additional experiments and benchmarking. 
+We decided to replicate tutorial to optimize clang binary provided by
+llvm-bolt and followed it with some additional experiments and benchmarking. 
 
 \textbf{Experiement Setup}
 
@@ -262,13 +262,13 @@ over hundred runs and the 99\% confidence interval.
         extsmaild.c & & 0.209 ± 0.0005 & 0.205 ± 0.0005  \\
         \bottomrule
     \end{tabular}
-    \caption{\iti{The first column presents the testing set files, while the
+    \caption{The first column presents the testing set files, while the
     succeeding columns represent clangs, each built with profiles collected using the training
-    set files and consequently named with the corresponding filename extension.}}
+    set files and consequently named with the corresponding filename extension.}
 \end{table}
 
 By above experiment we know that clang build with LBR mode profile is
-\texttt{2.89 \iti{change number}\%} faster than one which uses NO LBR mode profile. Thus, we wanted
+\texttt{2.89 \iti{note to self: change number here}\%} faster than one which uses NO LBR mode profile. Thus, we wanted
 PT data to run same optimization which llvm-bolt uses when we feed LBR mode
 profiling data into it. However, llvm-bolt doesn’t support processing of PT
 data and just deals with NO LBR and LBR type data format. Making some
@@ -281,7 +281,7 @@ LBR mode, exctracting these should be enough. The one trick thing to solve was
 getting branch flags which indicates misprediction, this flag is not available
 in PT mode thus we couldn’t extract brstack field from perf data. But with
 luck, perf team added feature to lets us add configuration option to set
-mispred flag on all branches by changing \textit{\~/.perfconfig\iti{correct the \~}}.
+mispred flag on all branches by changing \textit{\~/.perfconfig\iti{note to self: correct the \~}}.
 
 Simply adding following lines to \textit{\~/.perfconfig} lets us get brstack
 information out of sampled data collected with Intel PT
@@ -308,8 +308,8 @@ comparing baseline, NO LBR mode, LBR mode and PT mode clang.
         extsmaild.c & & 0.209 ± 0.0005 & 0.205 ± 0.0005 & 0.201 ± 0.0005 \\
         \bottomrule
     \end{tabular}
-    \caption{\laurie{PT mode clang performs 4.76\% better
-    than the NO LBR mode and 2.89\% better than the LBR mode}}
+    \caption{PT mode clang performs 4.76\% better
+    than the NO LBR mode and 2.89\% better than the LBR mode}
 \end{table}
 
 To probe into why PT mode clang outperforms the others, we will examine the
@@ -341,7 +341,7 @@ up reordering.
 
 Out of 135363 functions in Clang binary, BOLT reorders 495 in NO LBR mode, 2114
 functions in LBR mode  and 4109 functions in PT mode i.e 0.37\%,  1.56\%, and
-3.04\% of total functions respectively. \iti{check percentage numbers}
+3.04\% of total functions respectively. \iti{note to self:check percentage numbers}
 
 It is clear when collecting profile in LBR  we capture  4.2x more functions
 than NO LBR mode and PT capture almost 2x more function than LBR mode.
@@ -535,8 +535,11 @@ results in building faster clang binary.}
     \label{table:4}
 \end{table}
 
-\cref{table:4} represents clang trained with two modes LBR and PT, where for LBR mode
-we aggregated profile collected from 4 training files and PT mode clangs 
+\laurie{use descriptive labels, not `table:4' because that won't make sense
+if/when you reorder parts of the report. so for example, this label might be
+`clang\_benchmarks' or similar.}
+\cref{table:4} represents clang trained with two modes LBR and Intel PT, where for LBR mode
+we aggregated profile collected from 4 training files and Intel PT mode clangs 
 were we used training files individually. We tested them on the same files we trained 
 our clang on.
 
@@ -576,6 +579,7 @@ Running a comparision with (compare 20.lbr clang built from training set
 and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
 
 \section*{Future Work}
+\subsubsection*{\iti{added aim}}
 For future work, I intend to expand my understanding on whether we can improve
 PGO tools, with hybrid profiling information. We will start making experimental
 changes to BOLT, with aim to later expand it to a new PGO framework.
