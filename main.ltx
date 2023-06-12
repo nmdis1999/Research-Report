@@ -27,17 +27,17 @@ While Profile Guided Optimization (PGO) has been an active area of research for
 some time, it remains a field with space for futher exploration. This report
 delves into the effects of varying profiling methods on the performance of
 newly created binaries. Additionally, it investigates the potential for using a
-hybrid of these profiling methods to develop an enhanced PGO framework.
+hybrid \laurie{later in the report you'll need to define `hybrid' more specifically} of these profiling methods to develop an enhanced PGO framework.
 
 I start with doing background research on BOLT, the best known existing PGO
 tool.  Despite its extensive use by large corporations for complex
 applications, even relative simple experiments uncovers suprising interactions
 between profiling and performance.
 
-This report ultimately aims to determines which profiling methods would prove
+My PhD ultimately aims to determine which profiling methods would prove
 most effective and feasible in terms of enhancing PGO tools performance
-further, starting with BOLT. I conducted experiments with existing top known
-sampling mode profiling techniques and compared them. Future work will extend
+further, starting with BOLT. As a starting point, I conducted experiments with existing
+profiling techniques and compared them \laurie{to ... /}. Future work will extend
 the scope of these experiments to include a broader, more diverse range of
 files to collect and benchmark the profiling data.
 
@@ -579,9 +579,11 @@ Running a comparision with (compare 20.lbr clang built from training set
 and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
 
 \section*{Future Work}
-\subsubsection*{\iti{added aim}}
-For future work, I intend to expand my understanding on whether we can improve
-PGO tools, with hybrid profiling information. We will start making experimental
+
+\laurie{needs expanding into a paragraph}
+
+For future work, I intend to investigate how we can improve
+PGO tools with hybrid profiling information. We will start making experimental
 changes to BOLT, with aim to later expand it to a new PGO framework.
 
 The immediate next steps could be: 
