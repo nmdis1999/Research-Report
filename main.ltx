@@ -11,8 +11,8 @@
     Optimization (PGO) by better understanding what kind, and how many profiles
     are needed to achieve performance greater than best known existing PGO tool
     BOLT. In this preliminary report, I have presented an analysis of Facebook’s
-    BOLT,a post-link binary optimizer which is now part of llvm project and
-    called llvm-bolt. I have conducted an experimental investigation to discern
+    BOLT, a post-link binary optimizer which is now part of the LLVM project.
+    I have conducted an experimental investigation to discern
     how the use of varied types of profiling information influences the
     performance of the optimized binary. The performance metrics gathered in
     this study are derived from a relatively small test set due to resource
@@ -29,14 +29,14 @@ delves into the effects of varying profiling methods on the performance of
 newly created binaries. Additionally, it investigates the potential for using a
 hybrid of these profiling methods to develop an enhanced PGO framework.
 
-We start with doing background research on BOLT, the best known existing PGO
+I start with doing background research on BOLT, the best known existing PGO
 tool.  Despite its extensive use by large corporations for complex
 applications, even relative simple experiments uncovers suprising interactions
 between profiling and performance.
 
 This report ultimately aims to determines which profiling methods would prove
 most effective and feasible in terms of enhancing PGO tools performance
-further, starting with BOLT. We conducted experiments with existing top known
+further, starting with BOLT. I conducted experiments with existing top known
 sampling mode profiling techniques and compared them. Future work will extend
 the scope of these experiments to include a broader, more diverse range of
 files to collect and benchmark the profiling data.
