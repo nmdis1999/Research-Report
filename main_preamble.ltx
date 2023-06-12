@@ -13,6 +13,7 @@
 % Additional packages
 \usepackage{geometry} % To modify margins
 \usepackage{tabularx}
+\usepackage{enumitem}
 \usepackage{graphicx} % To include images
 \usepackage{setspace} % To modify line spacing
 \usepackage{fancyhdr} % To modify headers and footers
@@ -49,6 +50,11 @@
   frame=single,
   breaklines=true,
   showstringspaces=false
+}
+\newcommand{\tabitemize}[1]{%
+\begin{itemize}[leftmargin=*,nosep] 
+  #1
+\end{itemize}
 }
 
 % Spacing and formatting

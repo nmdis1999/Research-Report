@@ -22,7 +22,7 @@
 \end{abstract}
 
 \section{Introduction}
-
+\subsubsection*{\iti{Seperated introduction amd methodology}}
 While Profile Guided Optimization (PGO) has been an active area of research for
 some time, it remains a field with space for futher exploration. This report
 delves into the effects of varying profiling methods on the performance of
@@ -36,8 +36,10 @@ between profiling and performance.
 
 This report ultimately aims to determines which profiling methods would prove
 most effective and feasible in terms of enhancing PGO tools performance
-further. Future work will extend the scope of these experiments to include a
-broader, more diverse range of profiling data.
+further, starting with BOLT. We conducted experiments with existing top known
+sampling mode profiling techniques and compared them. Future work will extend
+the scope of these experiments to include a broader, more diverse range of
+files to collect and benchmark the profiling data.
 
 \subsection*{Methodology}
 BOLT is a post-link static binary optimizer that enhances the code layout by
@@ -539,21 +541,10 @@ were we used training files individually. We tested them on the same files we tr
 our clang on.
 
 \begin{figure}[htbp]
-  \begin{subfigure}{0.5\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{images/line_graph.aggr_all.png}
-    \caption{Caption for Image 1}
-    \label{fig:image1}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.5\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{images/all_prof_aggr_ci.png}
-    \caption{Caption for Image 2}
-    \label{fig:image2}
-  \end{subfigure}
-  \caption{\iti{I need to pick one graph in this experiement, need your suggestion}}
-  \label{fig:image}
+    \includegraphics[scale=0.6]{images/all_prof_aggr_ci.png}
+    \caption{\textit{Caption: Todo* will be changing images to pdf/svg format later}}
+    \label{fig:image}
 \end{figure}
 
 {reference img} clearly indicates that aggregating profiles captured from the
@@ -585,39 +576,47 @@ Running a comparision with (compare 20.lbr clang built from training set
 and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
 
 \section*{Future Work}
+For future work, I intend to expand my understanding on whether we can improve
+PGO tools, with hybrid profiling information. We will start making experimental
+changes to BOLT, with aim to later expand it to a new PGO framework.
 
-For future work, I intend to:
+The immediate next steps could be: 
 \begin{itemize}
-    \item Expanding the scope of above experiements to
-    bigger training and testing set.
-    \item Investing cost of hybrid profiling technique, potentially
-    picking up fine-grained details like LBR with increased 
-    number of branch information/better control-flow
-    like PT.
-    \item Exploring and assessing the PGO toolchain for potential application 
-    within web browsers, with a specific focus on Chromium or 
-    Chrome(?)\iti{Not sure about this but lmk if this sounds 
-    feasible/something we would want to do?}
+    \item expanding experiements from this report on bigger training and
+        testing set. 
+    
+    \item find cost of hybrid profiling technique, which can pick up
+        fine-grained details like LBR but have increased number of branch
+        information like Intel PT.
 \end{itemize}
 
 \section*{Timeline}
-\begin{tabularx}{\textwidth}{|X|X|X|}
-    \hline
-    Year & Month & Goals \\
-    \hline
-    2023 & July-December & Expanding the scale of experiment, data analysis, and modifying BOLT to adopt to new profiling information \\
-    \hline
-    2024 & January-June & Literature review on PGO tools. Form the research question. Benchmark the results to see whether we can work on top of BOLT to add additional capabilities or whether we will need to build a new tool. \\
-    \hline
-    2024 & July-December & Complete first version of experimental PGO framework. \\
-    \hline
-    2025 & January-June & Benchmarking and debugging of the new framework. Draft the initial findings. \\
-    \hline 
-    2025 & July-December & Identify areas to expand on the new framework, receive feedback and do revisions. \\
-    \hline
-\end{tabularx}
+\noindent
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{llp{10cm}}
+        \toprule
+        Year & Month & Goals \\
+        \midrule
+        2023 & July-December & Expanding the scale of experiment, analyzing the data,
+        and modifying BOLT to adopt to hybrid profiling information \\
 
-\cite{sison95simultaneous}
+        2024 & January-June & Literature review on PGO tools. Forming the research
+        question. Benchmarking the results to see whether we can work on top of
+        BOLT to add additional capabilities or should we build a
+        new tool/framework. \\
+
+        2024 & July-December & Complete first version of experimental PGO
+        framework. \\
+
+        2025 & January-June & Benchmarking and debugging of the new framework.
+        Drafting the initial findings. \\
+
+        2025 & July-December & Identifying areas which can be expanded on the new framework,
+        receive feedback and do revisions. \\
+        \bottomrule
+\end{tabular}
+} 
+
 \bibliographystyle{plain}
 \bibliography{bib}
 
