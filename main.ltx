@@ -373,15 +373,22 @@ thus captured BOLT}
     compilation of the following C programs. The column headers are C program
     we tested on and the number in bracket next to file name represents line of
     code values.}
+    \label{clang-benchmark:1}
 \end{table}
 
-Looking at values in Table, the number seems to working in the favor of our
-hypothesis. This brings us to our next hypothesis:
+Looking at values in Table \ref{clang-benchmark:1}, the number seems to working 
+in the favor of our hypothesis. This brings us to our next hypothesis:
 
 \subsubsection*{Hypothesis II: An increase in the number of lines of code (LOC)
 in testing files contributes to an increase in the number of functions recorded
 in the perf data. This, when processed by BOLT, could potentially lead to the
 generation of faster Clang builds. }
+
+The column header represents clang built with BOLT using profile collected
+during compilation of one of the training files. So, they are named as
+\textit{clang.training\_file} and ordered in ascending order of LOC.
+
+Row names are files used for benchmarking the four optimized clang binaries.
 
 \begin{table}[ht]
     \centering
@@ -397,10 +404,16 @@ generation of faster Clang builds. }
         \bottomrule
     \end{tabular}}
 \caption{NO LBR - Benchmarked Clang versions \laurie{what are the numbers in brackets?}}
-    \label{table:1}
+    \label{clang-benchmark:2}
 \end{table}
 
-\begin{table}[ht]
+Table \ref{clang-benchmark:2} represents Clang built using NO LBR mode profiles,
+it's easily noticable that the range (Mean ± CI) for each
+run using Clang binaries on individual testing files exhibits significant overlap. 
+The delta, in this case, isn't substantial enough to infer a relationship between LOC 
+and performance.
+
+\begin{table}[H]
     \centering
     \scalebox{0.7}{
     \begin{tabular}{lccccc}
@@ -414,15 +427,17 @@ generation of faster Clang builds. }
         \bottomrule
     \end{tabular}}
     \caption{LBR - Benchmarked Clang versions}
-    \label{table:2}
+    \label{clang-benchmark:3}
 \end{table}
 
-In Figure x Table y , we observe in the NO LBR mode that the range (Mean ± CI) for each
-run using Clang binaries exhibits significant overlap. The delta, in this case,
-isn't substantial enough to infer a relationship between LOC and performance.
-However, in the LBR mode, an increase in LOC profiled function generally
-correlates with improved performance, exhibiting either equal or better performance. 
-There is trend of diminishing returns over increasing LOC after certain point.
+However, in the LBR mode (Table \ref{clang-benchmark:3}), when using training
+file with higher LOC, showed some improvement. Exhibiting either best
+wall-clock time or closer value to best performing Clang.
+There is trend of diminishing returns over increasing LOC once the difference
+of in LOC is not too much. The two largest files in terms of LOC are format.c
+and window-copy.c with 5188 and 5662 LOC respectively. One example is,
+during benchmarking Clang built using profile from format.c compilation
+sometimes beats Clang built using profile from window-copy.c compilation. 
 
 \begin{table}[ht]
     \centering
@@ -441,14 +456,14 @@ There is trend of diminishing returns over increasing LOC after certain point.
     \label{table:3}
 \end{table}
 
-In the PT mode, a similar trend to LBR is noticed - an increase in LOC
+In the PT mode, a similar trend like LBR is noticed - an increase in LOC
 tends to enhance performance, albeit with notably diminishing returns 
-when we compare two files with lesser delta in loc.
+when we compare two files with lesser delta in LOC.
 
 Could the observed relative increase in Clang's performance with respect to 
 the line of code (LOC) in both LBR and PT modes be attributed to their 
 capacity to record more functions during sampling? This 
-brings us to our next hypothesis:
+brings us to the next hypothesis:
 
 \subsubsection*{Hypothesis II: perf in PT mode records more functions
 in the samples to built better control flow.}
@@ -462,43 +477,46 @@ PT feature of perf are currently only supported on Intel devices.
 Though there seem to be ongoing development to add support for LBR on AMD devices. 
 
 One interesting outcome to see would be aggregating profiles recorded in the 
-LBR mode and compared the Clang built from these new profiles to the 
-PT mode Clang. So, our next two hypothesis capture this:
+LBR mode and compared the Clang built from these new profiles to the single 
+profile built Clang in PT mode. My next two hypothesis capture this:
 
 \subsubsection*{Hypothesis III : Aggregating multiple profiles over n runs on the 
 same training file results in building faster Clang binaries.}
 
-To test this, we aggregate profiles (collected with perf) over n runs on the same 
-training file and scrutinize the resulting performance variations. We have four bar 
-graphs,each graph represents benchmarking on testing file from our testing set.
+To test this hypothesis, we aggregate profiles (collected with perf) over $n$
+runs on the same training file and analyze the resulting performance
+variations. Since testing file consists of four files: extsmaild.c, tty.c,
+format.c, and window-copy.c. There are four bar graphs in Figure
+\ref{barplot:images}, each representing Clang versions benchmarked on the
+testing file.
 
 \laurie{all these graphs need to be in a vector format. normally the easiest thing
 is to output them as pdfs, which pdflatex can then easily read in. svgs are also
 ok, as we can easily convert those to pdfs automatically in the makefile.}
-\begin{figure}[t!]
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{images/extsmaild.png}
-        \caption{Image 1}
-        \label{fig:image1}
+        \caption{Benchmark of Clang versions on extsmaild.c}
+        \label{barplot:1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{images/format.png}
-        \caption{Image 2}
-        \label{fig:image2}
+        \caption{Benchmark of Clang versions on format.c}
+        \label{barplot:2}
     \end{subfigure}
 
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{images/tty.png}
-        \caption{Image 3}
-        \label{fig:image3}
+        \caption{Benchmark of Clang versions on tty.c}
+        \label{barplot:3}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=\textwidth]{images/window-copy.png}
-        \caption{Image 4}
-        \label{fig:image4}
+        \caption{Benchmark of Clang versions on window-copy.c}
+        \label{barplot:4}
     \end{subfigure}
     \caption{\small\itshape On the graph, the x-axis represents the Clang build with different
     training files, and the y-axis depicts the mean along with the 99\%
@@ -506,7 +524,7 @@ ok, as we can easily convert those to pdfs automatically in the makefile.}
     \texttt{number.mode} - 'number' signifies the counts of profiles that have
     been aggregated and 'mode' pertains to the profiling mode. And the black lines
     on top of colored bar are range(±) with confidence interval}
-    \label{fig:images}
+    \label{barplot:images}
 \end{figure}
 
 Looking at Figure I graph I, it's quite evident that the performance of Clang versions, 
