@@ -1,40 +1,60 @@
 %&main_preamble
 \endofdump
-\newcommand{\myabstract}[1]{%
-  \noindent \textit{\small#1}
-  \vspace{2\baselineskip} % Creates some space after the abstract
-}
 
 \begin{document}
 
 \maketitle
-\iti{\myabstract{%
-The aim of my PhD is to develop an efficient framework for Profile Guided Optimization (PGO).
-In this preliminary report, I have presented an analysis of Facebook’s BOLT, 
-a post-link binary optimizer which is now part of llvm project and called BOLT.
-I have conducted an experimental investigation to discern how the use of varied types
-of profiling information influences the performance of the optimized binary.
-The performance metrics gathered in this study are derived from a relatively 
-small test set due to resource constraints. Expanding the scope of the test set to 
-obtain more comprehensive performance data forms part of the future 
-work of this research.}}
+
+\begin{abstract}
+    \noindent
+    \iti{The aim of my PhD is to develop an improved framework for Profile Guided
+    Optimization (PGO) by better understanding what kind, and how many profiles
+    are needed to achieve performance greater than best known existing PGO tool
+    BOLT.} In this preliminary report, I have presented an analysis of Facebook’s
+    BOLT,a post-link binary optimizer which is now part of llvm project and
+    called llvm-bolt. I have conducted an experimental investigation to discern
+    how the use of varied types of profiling information influences the
+    performance of the optimized binary. The performance metrics gathered in
+    this study are derived from a relatively small test set due to resource
+    constraints. Expanding the scope of the test set to obtain more
+    comprehensive performance data forms part of the future work of this
+    research.
+\end{abstract}
 
 \section{Introduction}
-BOLT is a post-link static binary optimizer that enhances the code layout
-by utlizing sample-based profiling data at a binary level. This study investigates how much
-performance difference we can get by providing different profiling samples. In
-this report we discuss building clang binaries using BOLT by providing
-BOLT three types of sample data. We used Intel machine \textbf{Intel(R)
-Xeon(R) CPU E3-1270 v5 @ 3.60GHz} to run the experiments. The aim is to
-understand performance improvement done over baseline clang binary (CLANG 16)
-by BOLT by providing fine-grained data, more branch information (tracing
-data), and a combination of two. We use three profile types (called as “mode”
-throughout the report), No Last Branch Record (NO LBR) which is default
+
+While Profile Guided Optimization (PGO) has been an active area of research for
+some time, it remains a field with space for futher exploration. This report
+delves into the effects of varying profiling methods on the performance of
+newly created binaries. Additionally, it investigates the potential for using a
+hybrid of these profiling methods to develop an enhanced PGO framework.
+
+We start with doing background research on BOLT, the best known existing PGO
+tool.  Despite its extensive use by large corporations for complex
+applications, even relative simple experiments uncovers suprising interactions
+between profiling and performance.
+
+This report ultimately aims to determines which profiling methods would prove
+most effective and feasible in terms of enhancing PGO tools performance
+further. Future work will extend the scope of these experiments to include a
+broader, more diverse range of profiling data.
+
+\subsection*{Methodology}
+BOLT is a post-link static binary optimizer that enhances the code layout by
+utlizing sample-based profiling data at a binary level. This study investigates
+how much performance difference we can get by providing different profiling
+samples. In this report we discuss building clang binaries using BOLT by
+providing BOLT three types of sample data. We used Intel machine
+\textbf{Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz} to run the experiments. The
+aim is to understand performance improvement done over baseline clang binary
+(CLANG 16) by BOLT by providing fine-grained data, more branch information
+(tracing data), and a combination of two. We use three profile types (called as
+“mode” throughout the report), No Last Branch Record (NO LBR) which is default
 \texttt{perf record} collected sample i.e without any flags, Last Branch Record
 (LBR), and Intel-PT (intel-pt or PT). Compared to baseline binary, clang built
 with NO LBR profile (NO LBR mode clang) performs \% better, LBR mode clang
-performs \% better and PT mode clang performs \% on single compilation
-run. Later we evaluate performance different version of clangs running over 100
+performs \% better and PT mode clang performs \% on single compilation run.
+Later we evaluate performance different version of clangs running over 100
 times, taking mean values along with 99\% confidence interval. The baseline
 binary has been trained on four c programs (training set), and baseline along
 with optimized binaries were benchmarked on the same set of files (testing
@@ -298,50 +318,68 @@ functions reordered in the three modes.
 number of function perf captures in sampling mode and number of functions BOLT
 reorders}
 
-For training we used clang build with extsmaild.c file in all thre modes, and 
-for analysis we ran clang binaries on extsmaild.c to capture perf profiles 
-and analysize number of functions recorded duing compilation.
+We used baseline clang to capture profiles by compiling extsmaild.c file and
+rebuilt the binary in three mode. Table shows us number of functions BOLT
+intends to reorder and percentage of clang’s total number of functions it ends
+up reordering.
 
-\begin{table}
+\begin{table}[H]
     \centering
     \begin{tabular}{lccc}
         \toprule
-        Method & Perf Captured & BOLT Reorder Aim & BOLT Reordered \% \\
+        Mode & Reordering Aim & \% of captured profile function reordered   \\
         \midrule
-        NO LBR          & x                     & 311                       & 73.95\%                   \\
-        LBR             & y                     & 1501                      & 71.95\%                   \\
-        PT        & z                     & 4177                      & 69.43\%                   \\
+        NO LBR            & 606                     & 81.68\%   \\
+        LBR               & 2638                    & 80.14\%   \\
+        PT                & 5202                    & 78.99\%   \\
         \bottomrule
     \end{tabular}
-    \caption{BOLT Reordering Data}
+    \caption{Profile functions reordered by BOLT}
 \end{table}
 
-Out of 175120 functions in Clang binary, BOLT reorders 230
-functions in NO LBR mode, 1080 functions in LBR mode and 2900 functions in Intel
-PT mode. The unordered functions are ...
+Out of 135363 functions in Clang binary, BOLT reorders 495 in NO LBR mode, 2114
+functions in LBR mode  and 4109 functions in PT mode i.e 0.37\%,  1.56\%, and
+3.04\% of total functions respectively. \iti{check percentage numbers}
 
-Functions captured during compilation (using valgrind) versus function 
-captured by perf during sampling.
+It is clear when collecting profile in LBR  we capture  4.2x more functions
+than NO LBR mode and PT capture almost 2x more function than LBR mode.
 
-We will be using two tools, Callgrind, a profiling tool included in Valgrind
-suite and perf which we use to capture profile and for profile guided optimization.
+Before we move onto investigating "Whether percentage of number of functions
+that perf successfully captures in different profiling modes affects
+performance of newer clang builds", let's try to verify small hypothesis. Is
+there a correlation between a higher number of captured functions in a profile
+and a superior clang build? 
 
-Callgrind tracks the callgraph (in simple terms function call hierarchy) of a
-program during its execution. It dumps information about number of times each
-function is called, number of instructions being executed and number of cycles
-consumed by each functions in a callgrind.out.PID file. We are only interested
-in number of functions being recorded. We used QCachegrind to study the
-dumped data (MacOS version of KCachegrind).
+\textbf{Hypothesis I: Increase in lines of code (loc) in testing file is
+directly proportional to increased number of functions recorded by perf and
+thus captured BOLT}
 
-The next question we aim to answer is the percentage of functions that perf
-successfully captures. Is there a correlation between a higher number of
-captured functions in a profile and a superior clang build (Hypothesis III)?
+\begin{table}[H]
+    \centering
+    \scalebox{0.7}{
+    \begin{tabular}{lcccc}
+        \toprule
+        Profiling mode  & extsmaild.c (1781) & tty.c
+        (3026) & format.c (5188) & window-copy (5662) \\
+        \midrule
+        NO LBR & 606 & 1141 & 1550 & 1635 \\
+        LBR  & 2638 & 3962 & 4981 & 4965 \\
+        PT & 5202 & 6678 & 7911 & 8045 \\
+        \bottomrule
+    \end{tabular}}
+    \caption{Profiled functions captured by BOLT using baseline clang
+    compilation of the following C programs. The column headers are C program
+    we tested on and the number in bracket next to file name represents line of
+    code values.}
+\end{table}
 
-In order to delve further, we will formulate some hypotheses:
+Looking at values in Table, the number seems to working in the favor of our
+hypothesis. This brings us to our next hypothesis:
 
-\subsubsection*{Hypothesis I: An increase in the number of lines of code (LOC)
-in testing files leads to an increased number of functions captured during perf
-sampling, consequently resulting in faster clang builds. }
+\subsubsection*{Hypothesis II: An increase in the number of lines of code (LOC)
+in testing files contributes to an increase in the number of functions recorded
+in the perf data. This, when processed by BOLT, could potentially lead to the
+generation of faster clang builds. }
 
 \begin{table}[ht]
     \centering
@@ -518,21 +556,7 @@ our clang on.
   \label{fig:image}
 \end{figure}
 
-% \begin{figure}[t!]
-%     \centering
-%     \includegraphics[width=\textwidth]{images/line_graph.aggr_all.png}
-%     \caption{Image 4}
-%     \label{figure:2}
-% \end{figure}
-
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=\textwidth]{images/all_prof_aggr_ci.png}
-%     \caption{Image 4}
-%     \label{figure:2}
-% \end{figure}
-
-\cref{fig:image} clearly indicates that aggregating profiles captured from the
+{reference img} clearly indicates that aggregating profiles captured from the
 testing set doesn't seem to be enough to beat all clang builds with PT 
 profiles using the testing set. Hypothesis II seems to be the reason for 
 this (expand on this).
@@ -577,6 +601,25 @@ For future work, I intend to:
 \end{itemize}
 
 \section*{Timeline}
+\begin{tabularx}{\textwidth}{|X|X|X|}
+    \hline
+    Year & Month & Goals \\
+    \hline
+    2023 & July-December & Expanding the scale of experiment, data analysis, and modifying BOLT to adopt to new profiling information \\
+    \hline
+    2024 & January-June & Literature review on PGO tools. Form the research question. Benchmark the results to see whether we can work on top of BOLT to add additional capabilities or whether we will need to build a new tool. \\
+    \hline
+    2024 & July-December & Complete first version of experimental PGO framework. \\
+    \hline
+    2025 & January-June & Benchmarking and debugging of the new framework. Draft the initial findings. \\
+    \hline 
+    2025 & July-December & Identify areas to expand on the new framework, receive feedback and do revisions. \\
+    \hline
+\end{tabularx}
+
+\cite{sison95simultaneous}
+\bibliographystyle{plain}
+\bibliography{bib}
 
 \end{document}
 
