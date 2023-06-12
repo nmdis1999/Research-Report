@@ -71,11 +71,10 @@ rarely) . This often leads compilers to optimize cold code paths at the
 expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since show up more often. 
 
-Profile-Guided Optimization (PGO) is known for optimizizing program's runtime
+Profile-Guided Optimization (PGO)\footnote{Sometimes known as Feedback-Driven Optimization (FDO): both
+terms refer to the same concept.}, optimises a program's runtime
 performance with the help of profiling information collected using static
-program analysis. Sometimes the term profile-guided optimization is used
-interchangeably with term feedback-driven optimization (FDO), both means the
-same thing. PGO helps in performing function splitting which leads to optimize
+program analysis \laurie{static program analysis?}. PGO helps in performing function splitting which leads to optimize
 code locality. Traditional methods such as instrumentation-based profilers have
 significant overhead of memory and performance for collecting profiling
 information, additionally they might not end up capturing accurate information.
