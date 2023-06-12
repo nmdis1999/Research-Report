@@ -24,7 +24,7 @@
 \section{Introduction}
 
 While Profile Guided Optimization (PGO) has been an active area of research for
-some time, it remains a field with space for futher exploration. This report
+some time, it remains a field with space for further exploration. This report
 delves into the effects of varying profiling methods on the performance of
 newly created binaries. Additionally, it investigates the potential for using a
 hybrid \laurie{later in the report you'll need to define `hybrid' more specifically} 
@@ -32,7 +32,7 @@ of these profiling methods to develop an enhanced PGO framework.
 
 I start with doing background research on BOLT, the best known existing PGO
 tool.  Despite its extensive use by large corporations for complex
-applications, even relative simple experiments uncovers suprising interactions
+applications, even relative simple experiments uncovers surprising interactions
 between profiling and performance.
 
 My PhD ultimately aims to determine which profiling methods would prove most
@@ -45,7 +45,7 @@ profiling data.
 
 \subsection*{Methodology}
 BOLT is a post-link static binary optimizer that enhances the code layout by
-utlizing sample-based profiling data at a binary level. This study investigates
+utilizing sample-based profiling data at a binary level. This study investigates
 how much performance difference can be achieved by providing different
 profiling sampling data into BOLT to optimize the binary. This report discusses
 optimizing source-build Clang binary (CLANG 16) using BOLT by feeding three
@@ -66,7 +66,7 @@ binaries were benchmarked on the same set of files (testing set).
 Modern compilers have integrated a lot of compiler optimization techniques,
 such as using basic block frequencies and branch target information to perform
 function inlining.  But they don’t have  runtime information and can’t
-differentiate hot code path (executed a lot) fromcold code paths (executed
+differentiate hot code path (executed a lot) from cold code paths (executed
 rarely) . This often leads compilers to optimize cold code paths at the
 expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since show up more often. 
@@ -83,14 +83,14 @@ dynamic profiling data to rebuild the binary. This report focuses experiments
 using Facebook’s BOLT (now known as BOLT), a post-link FDO tool which uses
 sample based profiling information. Although, BOLT supports accepts any profile
 which feeds it desired information for rebuilding binary we have used linux’s
-toolchain perf. Not just BOLT provides tool to convert perf data into BOLT
-friendly data but perf aslso let us capture different type of profiling
+tool-chain perf. Not just BOLT provides tool to convert perf data into BOLT
+friendly data but perf also let us capture different type of profiling
 information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf, also commonly known as perf\_event, is a lightweight linux toolchain that
-offers an abstraction over hardware-specific capabilities. It is primiarly used for
+Perf, also commonly known as perf\_event, is a lightweight linux tool-chain that
+offers an abstraction over hardware-specific capabilities. It is primarily used for
 performance measurements by instrumenting events, these events are unified
 interference from different parts of the kernel. Perf uses performance counters
 to capture events per-thread, per-cpu and per-cpu or system-wide and collect
@@ -124,7 +124,7 @@ installed via \texttt{apt install linux-tools-generic} or be built from source.
 perf works can instrument in following modes: a) Counting, using
 \texttt{perf stat} which keeps count of running process for supported events,
 unless specified \texttt{perf stat} runs in per-thread mode. Finally all
-occurence of events are aggregated and summary is presented on the standard
+occurrence of events are aggregated and summary is presented on the standard
 output b) Sampling mode, using \texttt{perf record/report/annotate}. Event data
 is written to the kernel and then read at an asynchronous rate by
 \texttt{perf record} to write to the perf.data file. This file is then analyzed
@@ -156,7 +156,7 @@ pointer to the ring buffer and reset the counter to a new value.
 
 There is a limit to maximum frequency that can be set but we can adjust both
 frequency of collection samples and period i.e collecting sample every $nth$
-occurance of an event by passing \texttt{-F} and \texttt{-c} flag respectively
+occurrence of an event by passing \texttt{-F} and \texttt{-c} flag respectively
 to \texttt{perf record}. Once the ring buffer is filled, perf will dump the
 data to \texttt{perf.data} file which can vary in size depending upon frequency
 and period set.
@@ -165,7 +165,7 @@ and period set.
 By default perf records only records basic performance counter and cannot
 follow indirect function call where target is only known at the runtime, this
 leads to forming incomplete control flow. Intel has additional support in their
-CPUs called Last Branch Record (LBR), a hardware register to record additonal
+CPUs called Last Branch Record (LBR), a hardware register to record additional 
 information about branch instruction such as “from” and “to” address of each
 branch with some additional metadata. The retired branches are captured in
 rotating ring buffer.The stack depth (8, 16, or 32 frames) varies according to
@@ -175,7 +175,7 @@ frequency or profile-guided optimization.
 
 \subsection*{PT}
 PT is a hardware based tracing technique integrated into Intel’s CPU
-hardware. It traces branch execution which theoritically can be used to build
+hardware. It traces branch execution which theoretically can be used to build
 control flow for all executed code.
 
 Since PT captures huge amount of data standard processing such as PMU is
@@ -207,7 +207,7 @@ BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file,  therefore it’s essential to remove the
 errors by following above workaround or using some other method.
 
-\subsubsection*{BOLT}
+\subsection*{BOLT}
 BOLT is a static post link binary optimizer that is built on top of LLVM
 compiler infrastructure.
 
@@ -229,10 +229,10 @@ tool to convert perf data directly into BOLT friendly data.
 We decided to replicate tutorial to optimize Clang binary provided as an example
 in the BOLT's github repository and followed it with some additional experiments and benchmarking. 
 
-\textbf{Experiement Setup}
+\textbf{Experiment Setup}
 
 For benchmarking, we used  {Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on
-debian OS and baseline CLANG 16 (without any optimization). The files were
+Debian OS and baseline CLANG 16 (without any optimization). The files were
 executed hundred times using multitime, which is extension of linux times to
 run file multiple times and present mean, standard deviation, mins, medians,
 and maxs values on standard output. We the used the sample mean and standard
@@ -276,8 +276,8 @@ adjustment to BOLT’s data aggregator source code let us use PT collected
 profile information work.
 
 Since BOLT cares only three fields as: process id (pid)/ thread id (tid),
-instruction pointe(ip), and branch stack (brstack) input to process binary in
-LBR mode, exctracting these should be enough. The one trick thing to solve was
+instruction pointer(ip), and branch stack (brstack) input to process binary in
+LBR mode, extracting these should be enough. The one trick thing to solve was
 getting branch flags which indicates misprediction, this flag is not available
 in PT mode thus we couldn’t extract brstack field from perf data. But with
 luck, perf team added feature to lets us add configuration option to set
@@ -292,7 +292,7 @@ mispred-all = on
 \end{lstlisting}
 
 After this adjusting data aggregator source code to use
-\texttt{—itrace=i100usle} option in conjuction with perf scripts will lets us
+\texttt{—itrace=i100usle} option in conjunction with perf scripts will lets us
 extract brstack field in PT mode to feed into BOLT. We have now a table
 comparing baseline, NO LBR mode, LBR mode and PT mode Clang.
 
@@ -422,7 +422,7 @@ run using Clang binaries exhibits significant overlap. The delta, in this case,
 isn't substantial enough to infer a relationship between LOC and performance.
 However, in the LBR mode, an increase in LOC profiled function generally
 correlates with improved performance, exhibiting either equal or better performance. 
-There is trend of deminishing returns over increasing LOC after certain point.
+There is trend of diminishing returns over increasing LOC after certain point.
 
 \begin{table}[ht]
     \centering
@@ -457,7 +457,7 @@ in the samples to built better control flow.}
 which is not available in NO LBR mode. We can get more details about branches
 such as FROM and TO addresses of each branch with some additional meta-data
 such as timing packets. LBR during each sample only logs last 8-32 during each
-sample while PT theoritically records every branch. However, both LBR and
+sample while PT theoretically records every branch. However, both LBR and
 PT feature of perf are currently only supported on Intel devices.
 Though there seem to be ongoing development to add support for LBR on AMD devices. 
 
@@ -561,7 +561,7 @@ to performance values of Clang produced with PT mode profiles and later
 even surpasses it.
 
 \subsubsection*{Hypothesis V: LBR mode collected profiles has finer-grained data than
-PT mode collected profles}
+PT mode collected profiles}
 
 [Reference PT manual about timing packets]
 
