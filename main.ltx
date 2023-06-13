@@ -666,12 +666,18 @@ understand from one sentence what it means. why not give a bit more of an
 example? you can even take a couple of parargraphs to do so! explain why,
 perhaps, mixing LBR and PT might prove better/more practical than either in
 isolation}
-I plan to investigate how I can improve PGO tools with hybrid profiling
-information. A hybrid profile is a combination of two or more different
-types of profiling method: the hope is that this will result in improved
-performance \laurie{because of ...}. It would be interesting to combine information from LBR and PT mode
-profiles. LBR accurate timing for branch instructions and PT detailed program's
-execution profiling can create a more accurate and comprehensive profiling
+Results of Hypothesis V indicates that when profiles are aggregated both in
+LBR and PT mode they tend to give better wall-clock timings. However, there is
+a trade-off for using one profiling mode. LBR gives finer-timing by default
+but have very small number of branches logged. And although, in cycle-accurate
+mode PT mode Clang beats the best LBR mode Clang (Figure \ref{barplot:images})
+the data captured is 3 times larger in PT mode.
+
+Finding a hybrid approach, which uses LBR's capability to record finer timing 
+for branch instructions along with PT's capability to have detailed program execution
+profiles can create a more accurate and comprehensive profiling
+technique.
+Going forward, I plan to investigate how to improve PGO tools with hybrid profiling
 technique.
 
 The next steps are:
