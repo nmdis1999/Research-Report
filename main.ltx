@@ -496,46 +496,51 @@ ok, as we can easily convert those to pdfs automatically in the makefile.}
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{images/extsmaild.png}
+        \includegraphics[width=\textwidth]{images/extsmaild_ci.pdf}
         \caption{Benchmark of Clang versions on extsmaild.c}
         \label{barplot:1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{images/format.png}
+        \includegraphics[width=\textwidth]{images/format_ci.pdf}
         \caption{Benchmark of Clang versions on format.c}
         \label{barplot:2}
     \end{subfigure}
 
     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{images/tty.png}
+        \includegraphics[width=\textwidth]{images/tty_ci.pdf}
         \caption{Benchmark of Clang versions on tty.c}
         \label{barplot:3}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=\textwidth]{images/window-copy.png}
+        \includegraphics[width=\textwidth]{images/window-copy_ci.pdf}
         \caption{Benchmark of Clang versions on window-copy.c}
         \label{barplot:4}
     \end{subfigure}
-    \caption{\small\itshape On the graph, the x-axis represents the Clang build with different
+    \caption{\small\itshape On the graph, the x-axis represents the Clang versions build with different
     training files, and the y-axis depicts the mean along with the 99\%
     confidence interval. The color, situated at the top right, indicates
     \texttt{number.mode} - 'number' signifies the counts of profiles that have
-    been aggregated and 'mode' pertains to the profiling mode. And the black lines
-    on top of colored bar are range(±) with confidence interval}
+    been aggregated and 'mode' pertains to the profiling mode used to build the
+    optimized Clang variant. And the black lines
+    on top of colored bar are range(±) of confidence interval.}
     \label{barplot:images}
 \end{figure}
 
-Looking at Figure I graph I, it's quite evident that the performance of Clang versions, 
+Looking at Figure \ref{barplot:images}, it's quite evident that the performance of Clang versions, 
 created with 5, 10, and 15 aggregated LBR profiles, matches or even 
 surpasses the performance of the Clang generated with an PT mode profile 
-The same trends seems to follow in other three graphs.
+The same trends seems to follow in other three graphs. This seems to be
+proving my hypothesis right.
 
 \subsubsection*{Hypothesis IV: Aggregating profiles from different training files
 results in building faster Clang binary.}
 
-\begin{table}[ht]
+Next, instead of aggregating profiles from run on the same file I captured
+profiles from run on different files to aggregate and feed them into BOLT.
+
+\begin{table}[H]
     \centering
     \scalebox{0.7}{
     \begin{tabular}{lccccc}
@@ -550,50 +555,109 @@ results in building faster Clang binary.}
         \bottomrule
     \end{tabular}}
     \caption{Benchmarked Clang versions}
-    \label{table:4}
+    \label{clang-benchmark:4}
 \end{table}
 
 \laurie{use descriptive labels, not `table:4' because that won't make sense
 if/when you reorder parts of the report. so for example, this label might be
 `Clang\_benchmarks' or similar.}
-\cref{table:4} represents Clang trained with two modes LBR and Intel PT, where for LBR mode
-I aggregated profile collected from 4 training files and Intel PT mode Clang 
-where I used training files individually. I tested them on the same files I trained Clang on.
+\ref{clang-benchmark:4} represents Clang trained with two modes LBR and PT, where in LBR mode
+I aggregated profile collected from 4 training files and for used the same
+files individually to capture and build Clang in PT mode. 
+I have benchmarked sample mean and 99\% confidence interval
+on the same files I trained Clang variantsm on.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[scale=0.6]{images/all_prof_aggr_ci.png}
-    \caption{\textit{Caption: Todo* will be changing images to pdf/svg format later}}
-    \label{fig:image}
+    \includegraphics[scale=0.6]{images/all_prof_aggr_ci.pdf}
+    \caption{Comparision of Clang version built with aggregated LBR profiles
+    to Clang's built with PT mode profile.}
+    \label{aggregator-profiles}
 \end{figure}
 
-{reference img} clearly indicates that aggregating profiles captured from the
-testing set doesn't seem to be enough to beat all Clang builds with PT 
-profiles using the testing set. Hypothesis II seems to be the reason for 
-this (expand on this).
+Figure \ref{aggregator-profiles} clearly indicates that aggregating
+four profiles captured from seperate file compilation isn't enough to beat 
+all the Clang builds with PT mode profiles.
 
-However, I will use another hypothesis to answer why aggregating multiple 
-LBR mode profiles helps in building Clang variants that first start converging
-to performance values of Clang produced with PT mode profiles and later 
-even surpasses it.
+I will present another hypothesis to analyze why in Hypothesis III, aggregating LBR profiles collected over 
+5 or more runs on same file first converges to the performance of
+PT mode Clang and later even beats it.
 
 \subsubsection*{Hypothesis V: LBR mode collected profiles has finer-grained data than
 PT mode collected profiles}
 
+Linux Perf's wiki state that "LBR can provide finer timing than PT."
+
+
+
 [Reference PT manual about timing packets]
 
-By default, perf when recording in PT mode uses MTC timing packets. 
-To use CYC timing packets, I would be using the following command:
+PT logs are packetized. PT traces uses three types of timing
+packets: Packet stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
+Mini Time Counter (MTC) and Cycle (CYC). 
+PSB although being coarse grained ,is the basic synchronization 
+of the trace and provides a full TSC time stamp. 
+The MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
+Running Timer). Lastyly, Cycle accurate mode (CYC) packets
+which updates relative to the last send MTC packet.
+
+By default perf when operating in PT mode uses MTC packets, with
+period of 3, which means there is an ART timing update ever $2^3=8$ times, 
+so roughly every 300ns. This is quite coarse, I tried to use CYC packet
+in conjuction with MTC. However, since the data generated increases
+with decrease in MTC period and difficult to prcoesss. I have only
+To use CYC timing packets in conjuction with MTC without changing 
+the period, 
+
+In case modification is needed in MTC period, following command can be used:
+
 \texttt{perf record -e intel\_pt/cyc,cyc\_thres=value,mtc\_period=value/u -- }
 
 \begin{itemize}
-    \item \textit{cyc:}
-    \item \textit{cyc\_thres:}
-    \item \textit{mtc\_period:}
+    \item \textit{cyc: cycle accurate mode timing packets}
+    \item \textit{cyc\_thres: minimum number of cycles which must pass before the
+next CYC packet is sent. }
+    \item \textit{mtc\_period: flag to set value for MTC period}
 \end{itemize}
 
-Running a comparision with (compare 20.lbr Clang built from training set 
-and 1.pt, 5.pt, 15.pt, and 20.pt cyc acc mode)
+\begin{table}[H]
+    \centering
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        Clang versions & Mean ± CI \\ 
+        \midrule
+        Clang.exts.15.lbr & 6.879 ± 0.0167 \\
+        Clang.exts.pt & 7.158 ± 0.0167 \\
+        Clang.exts.1.pt & 7.140 ± 0.0178 \\
+        Clang.exts.5.pt & 6.777 ± 0.0167 \\
+        Clang.exts.10.pt & 6.699 ± 0.0201 \\
+        Clang.exts.15.pt & 6.633 ± 0.0183 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Clang benchmark with LBR, PT and PT with cycle accurate mode.}
+    \label{clang-benchmark:cyc-mode}
+\end{table}
+
+Taking best performing Clang from Hypothesis III (Figure \ref{} (a)) i.e 
+Clang.exts.15.lbr, where Clang binary was optimized by aggregating
+profile collected from 15 runs of extsmaild.c compilation, we compare
+it with Clang built using single PT mode profile (no cycle accurate mode),
+single PT mode profile (with cycle accurate mode), 5, 10, and 15 aggregared
+profiles from PT mode profiling.
+
+Figure \ref{compare-cyc-acc-mode} clearly shows that when aggregating
+profiles in PT (cycle accurate mode), starting from Clang.exts.5.pt the performance
+of PT cycle accurate mode Clang when aggregated performs better than Clang built
+with LBR aggregated profiles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{images/pt_cyc_acc.pdf}
+    \caption{Comparision of Clang version built with aggregated LBR profiles
+    to Clang's built with PT mode profile.}
+    \caption{Clang.exts.$n$.pt are Clang built in cycle accurate mode.}
+    \label{compare-cyc-acc-mode}
+\end{figure}
 
 \section*{Future Work}
 
