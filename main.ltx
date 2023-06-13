@@ -51,9 +51,9 @@ profiling sampling data into BOLT to optimize the binary. This report discusses
 optimizing source-build Clang binary (CLANG 16) using BOLT by feeding three
 type of sample profiling data into BOLT. All the experiments are conducted
 using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz}. I used three types of
-sample profiles (called as“mode” throughout the report), No Last Branch Record
+sample profiles (called as“mode” throughout the report): No Last Branch Record
 (NO LBR) which is the default \texttt{perf record} collected sample i.e without
-any flags, Last Branch Record (LBR), and Intel-PT (intel-pt or PT) these are
+any flags, Last Branch Record (LBR), and Intel-PT (intel-pt or PT); these are
 explained in background section. Compared to baseline binary, Clang built with
 NO LBR profile (NO LBR mode Clang) performs \% better, LBR mode Clang performs
 \% better and PT mode Clang performs \% on single compilation run. Later we
@@ -66,7 +66,7 @@ binaries were benchmarked on the same set of files (testing set).
 Modern compilers have integrated a lot of compiler optimization techniques,
 such as using basic block frequencies and branch target information to perform
 function inlining.  But they don’t have  runtime information and can’t
-differentiate hot code path (executed a lot) from cold code paths (executed
+differentiate hot code path (executed a lot) from  cold code paths (executed
 rarely) . This often leads compilers to optimize cold code paths at the
 expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since show up more often. 
@@ -82,7 +82,7 @@ PGO is easily adoptable in production environment in form of continuous feeding
 dynamic profiling data to rebuild the binary. This report focuses experiments
 using Facebook’s BOLT (now known as BOLT), a post-link FDO tool which uses
 sample based profiling information. Although, BOLT supports accepts any profile
-which feeds it desired information for rebuilding binary we have used linux’s
+which feeds it desired information for rebuilding binary I have used linux’s
 tool-chain perf. Not just BOLT provides tool to convert perf data into BOLT
 friendly data but perf also let us capture different type of profiling
 information very easily.
@@ -132,7 +132,7 @@ by the perf \texttt{report} or \texttt{script} commands.
 
 Another way to instrument is by using BPF program on events which can execute
 custom user-defined programs in kernel space, and perform filters and summaries
-of the data. But we won’t be covering that in our experiments.
+of the data. But I won’t be covering that in my experiments.
 
 \subsubsection*{How is a sample event recorded?}
 
@@ -149,12 +149,12 @@ irrespective of event type.
 By default perf records sample at \textbf{both} user and kernel levels
 using cycles events with average rate of ${1000}$ samples/sec or ${4000}$ events / sec
 of thread execution. With Sampling \texttt{perf record} asks PMU to count some
-events, for example cpu-cycles and generate an overflow interrupt after every
+events, for example cpu-cycles, and generate an overflow interrupt after every
 $nth$ event (e.g a million). On every interrupt perf\_event records such as :
 PID/TID (Process/Thread ID), timestamp, command being executed, and instruction
 pointer to the ring buffer and reset the counter to a new value.
 
-There is a limit to maximum frequency that can be set but we can adjust both
+There is a limit to maximum frequency that can be set but one can adjust both
 frequency of collection samples and period i.e collecting sample every $nth$
 occurrence of an event by passing \texttt{-F} and \texttt{-c} flag respectively
 to \texttt{perf record}. Once the ring buffer is filled, perf will dump the
@@ -168,7 +168,7 @@ leads to forming incomplete control flow. Intel has additional support in their
 CPUs called Last Branch Record (LBR), a hardware register to record additional 
 information about branch instruction such as “from” and “to” address of each
 branch with some additional metadata. The retired branches are captured in
-rotating ring buffer.The stack depth (8, 16, or 32 frames) varies according to
+rotating ring buffer. The stack depth (8, 16, or 32 frames) varies according to
 the Intel CPU. Using LBR can also help in building better control flow graph
 with hot code paths, the profile generated can be used for finding basic block
 frequency or profile-guided optimization.
@@ -193,7 +193,7 @@ faster rate than it can be recorded to file) and \textbf{overflow packet}
 (unable to record data to memory).
 
 Passing larger auxtrace \textbf{mmap} size seems to help in resolving the trace data
-loss, which can be done by passing \texttt{-m} flag.So, passing \texttt{-m,
+loss, which can be done by passing the \texttt{-m} flag. So, passing \texttt{-m,
 64M}  means we can set trace buffer size to 64MiB  per CPU. We would need to be
 careful with choosing auxtrace mmap size. For instance, if we have 8 CPUs we
 are essentially setting total 512MiB of trace buffer size.
@@ -205,7 +205,7 @@ data.
 
 BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file,  therefore it’s essential to remove the
-errors by following above workaround or using some other method.
+errors by following the above workaround or using some other method.
 
 \subsection*{BOLT}
 BOLT is a static post link binary optimizer that is built on top of LLVM
@@ -226,26 +226,26 @@ a) it’s easy to record different mode of samples b) BOLT has a utility
 tool to convert perf data directly into BOLT friendly data.
 
 \section {Optimizing Clang with BOLT}
-We decided to replicate tutorial to optimize Clang binary provided as an example
+I decided to replicate the tutorial to optimize Clang binary provided as an example
 in the BOLT's github repository and followed it with some additional experiments and benchmarking. 
 
 \textbf{Experiment Setup}
 
-For benchmarking, we used  {Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on
+For benchmarking, I used  {Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on
 Debian OS and baseline CLANG 16 (without any optimization). The files were
 executed hundred times using multitime, which is extension of linux times to
 run file multiple times and present mean, standard deviation, mins, medians,
-and maxs values on standard output. We the used the sample mean and standard
+and maxs values on standard output. I used the sample mean and standard
 deviation values and later converted standard deviation into 99\% confidence
-interval to plot the graphs in this report. 
+interval to plot the graphs in this report.
 
 \textbf{NO LBR vs LBR vs PT}
 
-In this section, we experiment collecting profiles in three modes namely NO
+In this section, I experiment collecting profiles in three modes namely NO
 LBR, LBR and PT and using the information to recompile Clang binary. 
 
-Let’s do a small experiment to compare performance of baseline Clang with Clang
-build using NO LBR mode profile and LBR mode profiling data. We use two
+I conducted small experiment to compare performance of baseline Clang with Clang
+build using NO LBR mode profile and LBR mode profiling data. I used two
 distinct sets: a training set to generate the profiles for constructing the new
 version of Clang, and a testing set to procure then sample mean wall-clock time
 over hundred runs and the 99\% confidence interval.
@@ -267,20 +267,20 @@ over hundred runs and the 99\% confidence interval.
     set files and consequently named with the corresponding filename extension.}
 \end{table}
 
-By above experiment we know that Clang build with LBR mode profile is
-\texttt{2.89 \iti{note to self: change number here}\%} faster than one which uses NO LBR mode profile. Thus, we wanted
-PT data to run same optimization which BOLT uses when we feed LBR mode
+The above experiment shows that the Clang build with LBR mode profile is
+\texttt{2.89 \iti{note to self: change number here}\%} faster than one which uses NO LBR mode profile. {\iti{TODO: check this sentence}}Thus, we wanted
+PT data to run same optimization which BOLT uses when we feed the LBR mode
 profiling data into it. However, BOLT doesn’t support processing of PT
 data and just deals with NO LBR and LBR type data format. Making some
 adjustment to BOLT’s data aggregator source code let us use PT collected
 profile information work.
 
-Since BOLT cares only three fields as: process id (pid)/ thread id (tid),
+Since BOLT cares about only three fields as: process id (pid)/ thread id (tid),
 instruction pointer(ip), and branch stack (brstack) input to process binary in
-LBR mode, extracting these should be enough. The one trick thing to solve was
-getting branch flags which indicates misprediction, this flag is not available
-in PT mode thus we couldn’t extract brstack field from perf data. But with
-luck, perf team added feature to lets us add configuration option to set
+LBR mode, extracting these should be enough. The one tricky part to solve was
+getting branch flags which indicates misprediction; this flag is not available
+in PT mode thus I could not extract brstack field from perf data. But with
+luck, perf team added the feature to let us add a configuration option to set
 mispred flag on all branches by changing \textit{\~/.perfconfig\iti{note to self: correct the \~}}.
 
 Simply adding following lines to \textit{\~/.perfconfig} lets us get brstack
@@ -312,7 +312,7 @@ comparing baseline, NO LBR mode, LBR mode and PT mode Clang.
     than the NO LBR mode and 2.89\% better than the LBR mode}
 \end{table}
 
-To probe into why PT mode Clang outperforms the others, we will examine the
+To probe into why PT mode Clang outperforms the others, I examined the
 number of functions that BOLT aims to reorder and the actual percentage of
 functions reordered in the three modes.
 
@@ -320,7 +320,7 @@ functions reordered in the three modes.
 number of function perf captures in sampling mode and number of functions BOLT
 reorders}
 
-We used baseline Clang to capture profiles by compiling extsmaild.c file and
+I used baseline Clang to capture profiles by compiling extsmaild.c file and
 rebuilt the binary in three mode. Table shows us number of functions BOLT
 intends to reorder and percentage of clang’s total number of functions it ends
 up reordering.
@@ -343,12 +343,12 @@ Out of 135363 functions in Clang binary, BOLT reorders 495 in NO LBR mode, 2114
 functions in LBR mode  and 4109 functions in PT mode i.e 0.37\%,  1.56\%, and
 3.04\% of total functions respectively. \iti{note to self:check percentage numbers}
 
-It is clear when collecting profile in LBR  we capture  4.2x more functions
-than NO LBR mode and PT capture almost 2x more function than LBR mode.
+It is clear that collecting profile in LBR captures 4.2x more functions
+than NO LBR mode and PT captures almost 2x more function than LBR mode.
 
-Before we move onto investigating "Whether percentage of number of functions
+Before I move onto investigating "Whether percentage of number of functions
 that perf successfully captures in different profiling modes affects
-performance of newer Clang builds", let's try to verify small hypothesis. Is
+performance of newer Clang builds", let's try to verify a small hypothesis. Is
 there a correlation between a higher number of captured functions in a profile
 and a superior Clang build? 
 
@@ -371,13 +371,13 @@ thus captured BOLT}
     \end{tabular}}
     \caption{Profiled functions captured by BOLT using baseline Clang
     compilation of the following C programs. The column headers are C program
-    we tested on and the number in bracket next to file name represents line of
+    I tested on and the number in bracket next to file name represents line of
     code values.}
     \label{clang-benchmark:1}
 \end{table}
 
 Looking at values in Table \ref{clang-benchmark:1}, the number seems to working 
-in the favor of our hypothesis. This brings us to our next hypothesis:
+in the favor of our hypothesis. This brings me to my next hypothesis:
 
 \subsubsection*{Hypothesis II: An increase in the number of lines of code (LOC)
 in testing files contributes to an increase in the number of functions recorded
@@ -430,8 +430,8 @@ and performance.
     \label{clang-benchmark:3}
 \end{table}
 
-However, in the LBR mode (Table \ref{clang-benchmark:3}), when using training
-file with higher LOC, showed some improvement. Exhibiting either best
+However, in the LBR mode (Table \ref{clang-benchmark:3}), using training
+file with higher LOC showed some improvement: exhibiting either best
 wall-clock time or closer value to best performing Clang.
 There is trend of diminishing returns over increasing LOC once the difference
 of in LOC is not too much. The two largest files in terms of LOC are format.c
@@ -458,18 +458,18 @@ sometimes beats Clang built using profile from window-copy.c compilation.
 
 In the PT mode, a similar trend like LBR is noticed - an increase in LOC
 tends to enhance performance, albeit with notably diminishing returns 
-when we compare two files with lesser delta in LOC.
+when two files with lesser delta in LOC are compared.
 
 Could the observed relative increase in Clang's performance with respect to 
 the line of code (LOC) in both LBR and PT modes be attributed to their 
 capacity to record more functions during sampling? This 
-brings us to the next hypothesis:
+brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis II: perf in PT mode records more functions
 in the samples to built better control flow.}
 
 \texttt{perf record} in LBR and PT mode has some additional information
-which is not available in NO LBR mode. We can get more details about branches
+which is not available in NO LBR mode. More details can be fetched about branches
 such as FROM and TO addresses of each branch with some additional meta-data
 such as timing packets. LBR during each sample only logs last 8-32 during each
 sample while PT theoretically records every branch. However, both LBR and
@@ -483,7 +483,7 @@ profile built Clang in PT mode. My next two hypothesis capture this:
 \subsubsection*{Hypothesis III : Aggregating multiple profiles over n runs on the 
 same training file results in building faster Clang binaries.}
 
-To test this hypothesis, we aggregate profiles (collected with perf) over $n$
+To test this hypothesis, I aggregated profiles (collected with perf) over $n$
 runs on the same training file and analyze the resulting performance
 variations. Since testing file consists of four files: extsmaild.c, tty.c,
 format.c, and window-copy.c. There are four bar graphs in Figure
@@ -557,9 +557,8 @@ results in building faster Clang binary.}
 if/when you reorder parts of the report. so for example, this label might be
 `Clang\_benchmarks' or similar.}
 \cref{table:4} represents Clang trained with two modes LBR and Intel PT, where for LBR mode
-we aggregated profile collected from 4 training files and Intel PT mode Clang 
-were we used training files individually. We tested them on the same files we trained 
-our Clang on.
+I aggregated profile collected from 4 training files and Intel PT mode Clang 
+where I used training files individually. I tested them on the same files I trained Clang on.
 
 \begin{figure}[htbp]
     \centering
@@ -573,7 +572,7 @@ testing set doesn't seem to be enough to beat all Clang builds with PT
 profiles using the testing set. Hypothesis II seems to be the reason for 
 this (expand on this).
 
-However, we will use another hypothesis to answer why aggregating multiple 
+However, I will use another hypothesis to answer why aggregating multiple 
 LBR mode profiles helps in building Clang variants that first start converging
 to performance values of Clang produced with PT mode profiles and later 
 even surpasses it.
@@ -584,7 +583,7 @@ PT mode collected profiles}
 [Reference PT manual about timing packets]
 
 By default, perf when recording in PT mode uses MTC timing packets. 
-To use CYC timing packets, we would be using the following command:
+To use CYC timing packets, I would be using the following command:
 \texttt{perf record -e intel\_pt/cyc,cyc\_thres=value,mtc\_period=value/u -- }
 
 \begin{itemize}
@@ -603,7 +602,7 @@ understand from one sentence what it means. why not give a bit more of an
 example? you can even take a couple of parargraphs to do so! explain why,
 perhaps, mixing LBR and PT might prove better/more practical than either in
 isolation}
-I plan to investigate how we can improve PGO tools with hybrid profiling
+I plan to investigate how I can improve PGO tools with hybrid profiling
 information. A hybrid profile is a combination of two or more different
 types of profiling method: the hope is that this will result in improved
 performance \laurie{because of ...}. It would be interesting to combine information from LBR and PT mode
@@ -634,8 +633,8 @@ profiling technique using LBR and PT mode profiles with BOLT
         and modifying BOLT to adopt to hybrid profiling information \\
 
         2024 & January-June & Literature review on PGO tools. Forming the research
-        question. Benchmarking the results to see whether we can work on top of
-        BOLT to add additional capabilities or should we build a
+        question. Benchmarking the results to see whether I can work on top of
+        BOLT to add additional capabilities or should I build a
         new tool/framework. \\
 
         2024 & July-December & Complete first version of experimental PGO
