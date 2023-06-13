@@ -9,8 +9,9 @@
     \noindent
     The aim of my PhD is to develop an improved framework for Profile Guided
     Optimization (PGO) by better understanding what kind, and how many profiles
-    are needed to achieve performance greater than best known existing PGO tool
-    BOLT. In this preliminary report, I have presented an analysis of Facebook’s
+    are needed to achieve more optimal performance than existing PGO tools such
+    as BOLT. In this preliminary report, I have presented an analysis of
+    Facebook’s
     BOLT, a post-link binary optimizer which is now part of the LLVM project.
     I have conducted an experimental investigation to discern
     how the use of varied types of profiling information influences the
@@ -26,18 +27,20 @@
 While Profile Guided Optimization (PGO) has been an active area of research for
 some time, it remains a field with space for further exploration. This report
 delves into the effects of varying profiling methods on the performance of
-newly created binaries. Additionally, it investigates the potential for using a
+newly created binaries\edd{what is the significance of the binary being newly
+created?}. Additionally, it investigates the potential for using a
 hybrid of these profiling methods to develop an enhanced PGO framework.
 
 I start with doing background research on BOLT, the best known existing PGO
 tool.  Despite its extensive use by large corporations for complex
-applications, even relative simple experiments uncovers surprising interactions
+applications, even relatively simple experiments uncover surprising interactions
 between profiling and performance.
 
 My PhD ultimately aims to determine which profiling methods would prove most
-effective and feasible in terms of enhancing PGO tools performance further,
-starting with BOLT. As a starting point, I conducted experiments with existing
-profiling techniques on Clang binary and compared them to baseline Clang binary. 
+effective and feasible in terms of enhancing the performance of PGO tools further,
+starting with BOLT. As a starting point, I conducted experiments using existing
+profiling techniques on the Clang\edd{cite} compiler binary, comparing against
+a baseline Clang binary.
 Future work will extend the scope of these experiments to
 include a broader, more diverse range of files to collect and benchmark the
 profiling data.
@@ -47,16 +50,19 @@ BOLT\cite{bolt} is a post-link static binary optimizer that enhances the code la
 utilizing sample-based profiling data at a binary level. This study investigates
 how much performance difference can be achieved by providing different
 profiling sampling data into BOLT to optimize the binary. This report discusses
-optimizing source-build Clang binary (CLANG 16) using BOLT by feeding three
-type of sample profiling data into BOLT. All the experiments are conducted
+optimizing\edd{choose optimizing (USA) or optimising (UK) spelling and be
+consistent} a manually-compiled Clang binary (CLANG 16) using BOLT by feeding
+it three
+types of sample profiling data. All the experiments are conducted
 using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz}. I used three types of
-sample profiles (called as“mode” throughout the report): No Last Branch Record
+sample profiles (referred to as “modes” throughout the report): No Last Branch Record
 (NO LBR) which is the default \texttt{perf record} collected sample i.e without
-any flags, Last Branch Record (LBR), and Intel-PT (intel-pt or PT); these are
-explained in background section. Compared to baseline binary, Clang build with
+any flags \edd{what are the flags?}, Last Branch Record (LBR), and Intel-PT (intel-pt or PT); these are
+explained in background section. Compared to baseline binary, Clang built with
 NO LBR profile (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang performs
-19.82\% better and PT mode Clang performs 22.1\% on single compilation run. Later we
-evaluate performance different version of Clang running over 100 times, taking
+19.82\% better and PT mode Clang performs 22.1\% better on single compilation
+run\edd{the reader won't understand what "single compilation run" means here}. Later we
+evaluate the performance of a different version of Clang running over 100 times, taking
 mean values along with 99\% confidence interval. The baseline binary has been
 trained on four C programs (training set), and baseline along with optimized
 binaries were benchmarked on the same set of files (testing set).
