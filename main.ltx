@@ -308,7 +308,7 @@ option\footnote{https://www.uwsg.indiana.edu/hypermail/linux/kernel/1509.3/03186
 This configuration change helps setting the mispred flag on all branches by
 altering the \~/.perfconfig file\iti{correct the tilde}.
 
-Simply adding following lines to \textit{\~/.perfconfig} extracts brstack
+Adding following lines to \textit{\~/.perfconfig} extracts brstack
 information out of sampled data collected with PT
 
 \begin{lstlisting}[language=bash]
@@ -316,10 +316,14 @@ information out of sampled data collected with PT
 mispred-all = on
 \end{lstlisting}
 
-After this adjusting data aggregator source code to use
-\texttt{—itrace=i100usle} option in conjunction with perf scripts will lets us
-extract brstack field in PT mode to feed into BOLT. We have now a table
+After this I adjusted data aggregator source code to use
+\texttt{—itrace=i100usle} option in conjunction with perf scripts to
+filter brstack field data in PT mode. To check performance of Clang
+build in three mode I captured profile in all three mode from extsmaild.c
+and ran benchmark using multitime on the same file.
 comparing baseline, NO LBR mode, LBR mode and PT mode Clang.
+
+Table \ref{clang-benchmark:0a} shows the results:
 
 \begin{table}[htbp]
     \centering
@@ -336,6 +340,7 @@ comparing baseline, NO LBR mode, LBR mode and PT mode Clang.
     \caption{Compares Clang build with three modes to Baseline Clang.
     PT mode Clang on average performs 22.1\% better than Baseline 4.5\% better
     than the NO LBR mode and 2.9\% better than the LBR mode}
+    \label{clang-benchmark:0a}
 \end{table}
 
 To probe into why PT mode Clang outperforms the others, I examined the
@@ -347,9 +352,9 @@ number of function perf captures in sampling mode and number of functions BOLT
 reorders}
 
 I used baseline Clang to capture profiles by compiling extsmaild.c file and
-rebuild the binary in three mode. Table shows us number of functions BOLT
-intends to reorder and percentage of Clang’s total number of functions it ends
-up reordering.
+rebuild the binary in three mode. Table \ref{clang-benchmark:0b} shows us
+number of functions BOLT intends to reorder and percentage of Clang’s total
+number of functions it ends up reordering.
 
 \begin{table}[H]
     \centering
@@ -364,6 +369,7 @@ up reordering.
     \end{tabular}
     \caption{Number of functions identified and reordered by BOLT 
     while processing profile captured from extsmaild.c compilation.}
+    \label{clang-benchmark:0b}
 \end{table}
 
 Out of 135363 functions in Clang binary, BOLT reorders 495 in NO LBR mode, 2114
