@@ -532,13 +532,13 @@ Looking at Figure \ref{barplot:images}, it's quite evident that the performance 
 created with 5, 10, and 15 aggregated LBR profiles, matches or even 
 surpasses the performance of the Clang generated with an PT mode profile 
 The same trends seems to follow in other three graphs. This seems to be
-proving my hypothesis right.
+proving my hypothesis correct.
 
 \subsubsection*{Hypothesis IV: Aggregating profiles from different training files
 results in building faster Clang binary.}
 
 Next, instead of aggregating profiles from run on the same file I captured
-profiles from run on different files to aggregate and feed them into BOLT.
+profiles from runs on different files to aggregate and feed them into BOLT.
 
 \begin{table}[H]
     \centering
@@ -562,10 +562,10 @@ profiles from run on different files to aggregate and feed them into BOLT.
 if/when you reorder parts of the report. so for example, this label might be
 `Clang\_benchmarks' or similar.}
 \ref{clang-benchmark:4} represents Clang trained with two modes LBR and PT, where in LBR mode
-I aggregated profile collected from 4 training files and for used the same
+I aggregated profiles collected from 4 training files and used the same
 files individually to capture and build Clang in PT mode. 
 I have benchmarked sample mean and 99\% confidence interval
-on the same files I trained Clang variantsm on.
+on the same files I trained Clang variants on.
 
 \begin{figure}[htbp]
     \centering
@@ -576,17 +576,17 @@ on the same files I trained Clang variantsm on.
 \end{figure}
 
 Figure \ref{aggregator-profiles} clearly indicates that aggregating
-four profiles captured from seperate file compilation isn't enough to beat 
+four profiles captured from seperate file compilation is not enough to beat 
 all the Clang builds with PT mode profiles.
 
 I will present another hypothesis to analyze why in Hypothesis III, aggregating LBR profiles collected over 
 5 or more runs on same file first converges to the performance of
-PT mode Clang and later even beats it.
+PT mode Clang, and later even beats it.
 
 \subsubsection*{Hypothesis V: LBR mode collected profiles has finer-grained data than
 PT mode collected profiles}
 
-Linux Perf's wiki state that "LBR can provide finer timing than PT."
+Linux Perf's wiki states that "LBR can provide finer timing than PT."
 
 
 
@@ -594,22 +594,22 @@ Linux Perf's wiki state that "LBR can provide finer timing than PT."
 
 PT logs are packetized. PT traces uses three types of timing
 packets: Packet stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
-Mini Time Counter (MTC) and Cycle (CYC). 
-PSB although being coarse grained ,is the basic synchronization 
+Mini Time Counter (MTC), and Cycle (CYC). 
+PSB although being coarse grained, is the basic synchronization 
 of the trace and provides a full TSC time stamp. 
 The MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
-Running Timer). Lastyly, Cycle accurate mode (CYC) packets
-which updates relative to the last send MTC packet.
+Running Timer). Lastly, Cycle accurate mode (CYC) packets
+are updated relative to the last send MTC packet.
 
-By default perf when operating in PT mode uses MTC packets, with
-period of 3, which means there is an ART timing update ever $2^3=8$ times, 
-so roughly every 300ns. This is quite coarse, I tried to use CYC packet
-in conjuction with MTC. However, since the data generated increases
-with decrease in MTC period and difficult to prcoesss. I have only
+By default, perf when operating in PT mode uses MTC packets with
+period of 3. This means there is an ART timing update ever $2^3=8$ times, 
+so roughly every 300ns. This is quite coarse, so I tried to use CYC packet
+in conjuction with MTC. However, the data generated increases
+with decrease in MTC period and is difficult to prcoesss. \iti{TODO: check this sentence} I have only
 To use CYC timing packets in conjuction with MTC without changing 
 the period, 
 
-In case modification is needed in MTC period, following command can be used:
+In case modification is needed in MTC period, the following command can be used:
 
 \texttt{perf record -e intel\_pt/cyc,cyc\_thres=value,mtc\_period=value/u -- }
 
@@ -640,7 +640,7 @@ next CYC packet is sent. }
 
 Taking best performing Clang from Hypothesis III (Figure \ref{barplot:1}) i.e 
 Clang.exts.15.lbr, where Clang binary was optimized by aggregating
-profile collected from 15 runs of extsmaild.c compilation, we compare
+profile collected from 15 runs of extsmaild.c compilation, I compare
 it with Clang built using single PT mode profile (no cycle accurate mode),
 single PT mode profile (with cycle accurate mode), 5, 10, and 15 aggregared
 profiles from PT mode profiling.
@@ -666,11 +666,11 @@ understand from one sentence what it means. why not give a bit more of an
 example? you can even take a couple of parargraphs to do so! explain why,
 perhaps, mixing LBR and PT might prove better/more practical than either in
 isolation}
-Results of Hypothesis V indicates that when profiles are aggregated both in
+Results of Hypothesis V indicate that when profiles are aggregated both in
 LBR and PT mode they tend to give better wall-clock timings. However, there is
 a trade-off for using one profiling mode. LBR gives finer-timing by default
-but have very small number of branches logged. And although, in cycle-accurate
-mode PT mode Clang beats the best LBR mode Clang (Figure \ref{barplot:images})
+but have very small number of branches logged. And although in cycle-accurate
+mode PT mode, Clang beats the best LBR mode Clang (Figure \ref{barplot:images})
 the data captured is 3 times larger in PT mode.
 
 Finding a hybrid approach, which uses LBR's capability to record finer timing 
