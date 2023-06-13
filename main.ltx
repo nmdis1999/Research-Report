@@ -53,7 +53,7 @@ using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz}. I used three types of
 sample profiles (called as“mode” throughout the report): No Last Branch Record
 (NO LBR) which is the default \texttt{perf record} collected sample i.e without
 any flags, Last Branch Record (LBR), and Intel-PT (intel-pt or PT); these are
-explained in background section. Compared to baseline binary, Clang built with
+explained in background section. Compared to baseline binary, Clang build with
 NO LBR profile (NO LBR mode Clang) performs \% better, LBR mode Clang performs
 \% better and PT mode Clang performs \% on single compilation run. Later we
 evaluate performance different version of Clang running over 100 times, taking
@@ -118,7 +118,7 @@ Measurable events includes:
 \end{itemize}
 
 The perf\_event tool is in the linux-tools -common package and can either be
-installed via \texttt{apt install linux-tools-generic} or be built from source. 
+installed via \texttt{apt install linux-tools-generic} or be build from source. 
 
 perf works can instrument in following modes: a) Counting, using
 \texttt{perf stat} which keeps count of running process for supported events,
@@ -207,7 +207,7 @@ trace errors in \texttt{.data} file,  therefore it’s essential to remove the
 errors by following the above workaround or using some other method.
 
 \subsection*{BOLT}
-BOLT is a static post link binary optimizer that is built on top of LLVM
+BOLT is a static post link binary optimizer that is build on top of LLVM
 compiler infrastructure.
 
 It uses sample based profiling data and relocations mode (by passing
@@ -265,7 +265,7 @@ files.
     \end{tabular}
     \caption{The first column presents the testing set files, while the
     succeeding columns represent performance of Clang variants, each 
-    built with profiles collected during extsmaild.c compilation}
+    build with profiles collected during extsmaild.c compilation}
 \end{table}
 
 The above experiment shows that the Clang build with LBR mode profile is
@@ -310,21 +310,22 @@ comparing baseline, NO LBR mode, LBR mode and PT mode Clang.
         extsmaild.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.205 ± 0.0005 & 0.201 ± 0.0005 \\
         \bottomrule
     \end{tabular}
-    \caption{PT mode Clang performs 4.76\% better
-    than the NO LBR mode and 2.89\% better than the LBR mode}
+    \caption{Compares Clang build with three modes to Baseline Clang.
+    PT mode Clang on average performs 22.1\% better than Baseline 4.5\% better
+    than the NO LBR mode and 2.9\% better than the LBR mode}
 \end{table}
 
 To probe into why PT mode Clang outperforms the others, I examined the
 number of functions that BOLT aims to reorder and the actual percentage of
-functions reordered in the three modes.
+functions it ends up reordering in all three modes.
 
 \subsubsection*{Analysis of number of function recorded during compilation,
 number of function perf captures in sampling mode and number of functions BOLT
 reorders}
 
 I used baseline Clang to capture profiles by compiling extsmaild.c file and
-rebuilt the binary in three mode. Table shows us number of functions BOLT
-intends to reorder and percentage of clang’s total number of functions it ends
+rebuild the binary in three mode. Table shows us number of functions BOLT
+intends to reorder and percentage of Clang’s total number of functions it ends
 up reordering.
 
 \begin{table}[H]
@@ -338,23 +339,23 @@ up reordering.
         PT                & 5202                    & 78.99\%   \\
         \bottomrule
     \end{tabular}
-    \caption{Profile functions reordered by BOLT}
+    \caption{Number of functions identified and reordered by BOLT 
+    while processing profile captured from extsmaild.c compilation.}
 \end{table}
 
 Out of 135363 functions in Clang binary, BOLT reorders 495 in NO LBR mode, 2114
 functions in LBR mode  and 4109 functions in PT mode i.e 0.37\%,  1.56\%, and
-3.04\% of total functions respectively. \iti{note to self:check percentage numbers}
+3.04\% of total functions respectively. 
 
-It is clear that collecting profile in LBR captures 4.2x more functions
-than NO LBR mode and PT captures almost 2x more function than LBR mode.
+Clearly, LBR mode profile captures 4.2x more functions
+than NO LBR mode while PT mode profile captures almost 2x more function 
+than LBR mode.
 
-Before I move onto investigating "Whether percentage of number of functions
-that perf successfully captures in different profiling modes affects
-performance of newer Clang builds", let's try to verify a small hypothesis. Is
-there a correlation between a higher number of captured functions in a profile
-and a superior Clang build? 
+Does increase in number of functions captured in the profile results in
+faster Clang variant?
+Before answering the question above, I'll present a small hypothesis:
 
-\textbf{Hypothesis I: Increase in lines of code (loc) in testing file is
+\textbf{Hypothesis I: Increase in lines of code (LOC) in testing file is
 directly proportional to increased number of functions recorded by perf and
 thus captured BOLT}
 
@@ -374,12 +375,13 @@ thus captured BOLT}
     \caption{Profiled functions captured by BOLT using baseline Clang
     compilation of the following C programs. The column headers are C program
     I tested on and the number in bracket next to file name represents line of
-    code values.}
+    code(LOC) values.}
     \label{clang-benchmark:1}
 \end{table}
 
 Looking at values in Table \ref{clang-benchmark:1}, the number seems to 
-hold for small set of test files.
+hold for small set of test files. This might however, not be true when testing
+on bigger testing set. [Reference?]
 
 \subsubsection*{Hypothesis II: The larger inputs helps capturing more functions using perf.
 This, when processed by BOLT, could potentially lead to the faster Clang builds. }
@@ -397,15 +399,15 @@ This, when processed by BOLT, could potentially lead to the faster Clang builds.
         extsmaild.c & 0.251 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 & 0.209 ± 0.0005 \\
         \bottomrule
     \end{tabular}}
-\caption{NO LBR - The column header represents Clang built with BOLT using profile collected
+\caption{NO LBR - The column header represents Clang build with BOLT using profile collected
 during compilation of training files. So, they are named as
 \textit{clang.training\_file (LOC)} and ordered in ascending order of LOC.
-Row names are files used for benchmarking the four optimized clang binaries.
+Row names are files used for benchmarking the four optimized Clang binaries.
 }
     \label{clang-benchmark:2}
 \end{table}
 
-Table \ref{clang-benchmark:2} represents Clang built using NO LBR mode profiles,
+Table \ref{clang-benchmark:2} represents Clang build using NO LBR mode profiles,
 it's easily noticable that the range (Mean ± CI) for each
 run using Clang binaries on individual testing files exhibits significant overlap. 
 The delta, in this case, isn't substantial enough to infer a relationship between LOC 
@@ -434,8 +436,8 @@ wall-clock time or closer value to best performing Clang.
 There is trend of diminishing returns over increasing LOC once the difference
 of in LOC is not too much. The two largest files in terms of LOC are format.c
 and window-copy.c with 5188 and 5662 LOC respectively. One example is,
-during benchmarking Clang built using profile from format.c compilation
-sometimes beats Clang built using profile from window-copy.c compilation. 
+during benchmarking Clang build using profile from format.c compilation
+sometimes beats Clang build using profile from window-copy.c compilation. 
 
 \begin{table}[ht]
     \centering
@@ -464,7 +466,7 @@ capacity to record more functions during sampling? This
 brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis III: perf in PT mode records more functions
-in the samples than LBR mode to built better control flow.}
+in the samples than LBR mode to build better control flow.}
 
 \texttt{perf record} in LBR and PT mode has some additional information
 which is not available in NO LBR mode. More details can be fetched about branches
@@ -475,8 +477,8 @@ PT feature of perf are currently only supported on Intel devices.
 Though there seem to be ongoing development to add support for LBR on AMD devices. 
 
 One interesting outcome to see would be aggregating profiles recorded in the 
-LBR mode and compared the Clang built from these new profiles to the single 
-profile built Clang in PT mode. My next two hypothesis capture this:
+LBR mode and compared the Clang build from these new profiles to the single 
+profile build Clang in PT mode. My next two hypothesis capture this:
 
 \subsubsection*{Hypothesis IV : Aggregating multiple profiles over n runs on the 
 same training file results in building faster Clang binaries.}
@@ -519,7 +521,8 @@ testing file.
     \texttt{number.mode} - 'number' signifies the counts of profiles that have
     been aggregated and 'mode' pertains to the profiling mode used to build the
     optimized Clang variant. And the black lines
-    on top of colored bar are range(±) of confidence interval.}
+    on top of colored bar are range(±) of confidence interval. In most cases,
+    clang.\textit{filename}.15.lbr surpasses clang.\textit{filename}.pt}
     \label{barplot:images}
 \end{figure}
 
@@ -532,7 +535,7 @@ proving my hypothesis correct.
 \subsubsection*{Hypothesis V: Aggregating profiles from different training files
 results in building faster Clang binary.}
 
-Next, instead of aggregating profiles from run on the same file I captured
+Next, instead of aggregating profiles from run on the same file, I captured
 profiles from runs on different files to aggregate and feed them into BOLT.
 
 \begin{table}[H]
@@ -549,11 +552,15 @@ profiles from runs on different files to aggregate and feed them into BOLT.
         Clang.window-copy.pt & 0.217 $\pm$ 0.0005 & 0.467 $\pm$ 0.0005 & 0.736 $\pm$ 0.0007 & 0.759 $\pm$ 0.0007 \\
         \bottomrule
     \end{tabular}}
-    \caption{Benchmarked Clang versions}
+    \caption{When comparing a Clang build in LBR mode, which uses aggregated
+    profiles from different file compilations, with a Clang build in PT mode
+    that uses a profile from a single file compilation, there doesn't seem to
+    be much advantage in aggregating profiles captured from different file
+    compilations.}
     \label{clang-benchmark:4}
 \end{table}
 
-\ref{clang-benchmark:4} represents Clang trained with two modes LBR and PT, where in LBR mode
+Table \ref{clang-benchmark:4} represents Clang trained with two modes LBR and PT, where in LBR mode
 I aggregated profiles collected from 4 training files and used the same
 files individually to capture and build Clang in PT mode. 
 I have benchmarked sample mean and 99\% confidence interval
@@ -562,16 +569,17 @@ on the same files I trained Clang variants on.
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.6]{images/all_prof_aggr_ci.pdf}
-    \caption{Comparision of Clang version built with aggregated LBR profiles
-    to Clang's built with PT mode profile.}
+    \caption{Comparison of Clang build with aggregated LBR profiles
+    to Clangs' build with PT mode profile.Where \textit{clang.all-prof-aggr-lbr} 
+    is build using profile from compiling 4 separate C source files.}
     \label{aggregator-profiles}
 \end{figure}
 
 Figure \ref{aggregator-profiles} clearly indicates that aggregating
-four profiles captured from seperate file compilation is not enough to beat 
+four profiles captured from separate file compilation is not enough to beat 
 all the Clang builds with PT mode profiles.
 
-I will present another hypothesis to analyze why in Hypothesis III, aggregating LBR profiles collected over 
+I will present another hypothesis to analyse why in Hypothesis III, aggregating LBR profiles collected over 
 5 or more runs on same file first converges to the performance of
 PT mode Clang, and later even beats it.
 
@@ -579,8 +587,8 @@ PT mode Clang, and later even beats it.
 PT mode collected profiles}
 
 Linux Perf's wiki states that "LBR can provide finer timing than PT."[Reference PT manual about timing packets]
-This explains why in Figure \ref{barplot:images} Clang built with LBR aggregated data outperforms 
-Clang built using PT profile. 
+This explains why in Figure \ref{barplot:images} Clang build with LBR aggregated data outperforms 
+Clang build using PT profile. 
 
 In PT, logs are packetized. PT traces uses three types of timing
 packets: Packet stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
@@ -623,28 +631,30 @@ next CYC packet is sent.
         Clang.exts.15.pt & 6.633 ± 0.0183 \\
         \bottomrule
     \end{tabular}
-    \caption{Clang benchmark with LBR, PT and PT with cycle accurate mode.}
+    \caption{Clang build with LBR, PT and PT with cycle accurate mode benchmarked on
+    bootstrapped single source gcc.c file.}
     \label{clang-benchmark:cyc-mode}
 \end{table}
 
 Taking best performing Clang from Hypothesis IV (Figure \ref{barplot:1}) i.e 
 Clang.exts.15.lbr, where Clang binary was optimized by aggregating
 profile collected from 15 runs of extsmaild.c compilation, I compare
-it with Clang built using single PT mode profile (no cycle accurate mode),
+it with Clang build using single PT mode profile (no cycle accurate mode),
 single PT mode profile (with cycle accurate mode), 5, 10, and 15 aggregared
-profiles from PT mode profiling.
+profiles from PT mode profiling. All optimized Clang version were run 
+gcc.c which was bootstrapped from gcc source code into single C file.
 
 Figure \ref{compare-cyc-acc-mode} shows that when aggregating
 profiles in PT (cycle accurate mode), starting from Clang.exts.5.pt the performance
-of PT cycle accurate mode Clang when aggregated performs better than Clang built
+of PT cycle accurate mode Clang when aggregated performs better than Clang build
 with LBR aggregated profiles.
 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.6]{images/pt_cyc_acc.pdf}
-    \caption{Comparision of Clang version built with aggregated LBR profiles
-    to Clang's built with PT mode profile. Clang.exts.$n$.pt are Clang built
-    in cycle accurate mode.}
+    \caption{Here we compare a Clang version built with aggregated LBR profiles
+    to a Clang build using a PT mode profile.'$n$.pt'
+    refers to a Clang build conducted in cycle-accurate mode.}
     \label{compare-cyc-acc-mode}
 \end{figure}
 
