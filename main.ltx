@@ -25,13 +25,13 @@
 
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
-2017 \iti{cite here}. Further, with adoption of monorepo approach, while
+2017 \cite{codestitcher}. Further, with adoption of monorepo approach, while
 collaborations increased it meant that applications started relying on
 dependencies for a lot of tasks. Thus, the slower the dependency the slower the
 application would be.
 
 But can't we make these optimisations in the compiler itself? Yes, we can. In
-fact, compilers like \texttt{gcc} and \texttt{Clang} have already integrated a
+fact, compilers like \texttt{gcc}\cite{gcc} and \texttt{Clang} have already integrated a
 lot of optimisation techniques including Profile-Guided Optimisation(PGO) and
 Link Time Optimisation (LTO). However, compilers don't have runtime information
 to make accurate decisions\iti{cite here}. For such situations capturing program's
@@ -52,8 +52,10 @@ While Profile Guided Optimisation (PGO) has been an active area of research for
 some time, it remains a field with space for further exploration. This report
 delves into the effects of varying profiling methods on the performance of
 optimised binaries created by PLO tool BOLT. Additionally, it investigates the
-potential for using a hybrid\footnote{add here} of these profiling methods to
-develop an enhanced PGO framework.
+potential for using a hybrid\footnote{Hybrid profiling method is a technique
+that combines two or more profiling methods to produce a more comprehensive and
+accurate profiling report.} of these profiling methods to develop an enhanced
+PGO framework.
  
 I start with doing background research on BOLT, the best known existing PGO
 tool.  Despite its extensive use by large corporations for complex
@@ -105,6 +107,22 @@ optimiser that enhances the code layout by utilizing sample-based profiling
 data at the binary level. This study investigates how much performance difference
 can be achieved by feeding BOLT different types of data (sampling or tracing)
 to optimise the source build Clang binary.
+
+BOLT is a PLO which takes source code and profile collected with hardware
+counters as input, performs function discovery, disassembles the binary, and later
+run some analysis to reconstruct the control-flow graph. BOLT make some
+optimisation passes such as code layout, alignment, peephole optimisation( such
+as conditional branch reversal) among others. Finally it emits and links the
+functions to resolve references left among functions and local symbols such as basic
+block. In the end it rewrites and emits the optimised  binary.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{images/PLO_BOLT.pdf}
+    \caption{\small BOLT's Optimisation pipeline. 
+    \iti{add caption}}
+    \label{aggregator-profiles}
+\end{figure}
 
 \iti{add PLO BOLT image}
 
@@ -728,11 +746,41 @@ Clang build with Clang build with LBR aggregated profiles.
 \section*{Future Work}
 
 Results of Hypothesis VI indicate that when profiles are aggregated both in
-LBR and PT mode they tend to give better wall-clock timings. However, there is
-a trade-off for using one profiling mode. While LBR gives finer-timing
-by default it has very small number of branches logged. And although in cycle-accurate
-mode PT mode, Clang beats the best LBR mode Clang (Figure \ref{barplot:images})
-the data captured is 3 times larger than that in LBR mode.
+LBR and PT mode they tend to give better runtime timings. However, there is
+a trade-off for using one profiling mode over the other. While with LBR, perf
+captures fine details with smaller size profile size, it uses sampling.
+Whereas PT does full trace of execution program, so accurate or complete
+control flow graph can be constructed. LBR also has limited call-stack depth of
+max 32 frames which is not the case for PT.
+
+\begin{table}[H]
+    \centering
+    \scalebox{0.85}{
+    \begin{tabular}{lcc}
+        \toprule
+         & LBR & PT \\
+        \midrule
+        Easy decoding of data? & Yes & No \\
+        Timings for non-taken branches? & No & Yes \\
+        Captures profile data with & Sampling & Detailed execution trace \\
+        Call-Stack depth & Limited (max 32) & Unlimited \\
+        \bottomrule
+    \end{tabular}}
+    \caption{\small Comparison between LBR and PT profiling techniques.}
+    \label{lbr-pt:comparison}
+\end{table}
+
+Overall PT in cycle-accurate mode despite producing the fastest Clang binary
+results in huge amounts of profiling data which is very difficult to process,
+LBR with such less data is able to give a very good performance number. Using a
+hybrid profiling technique which combines profiling information from two or
+more profiling method such that it can utilise LBR’s strength of capturing
+easily decodable precise and detailed information, while benefiting PT’s
+capabilities of building accurate CFGs seems to have potential for producing
+comprehensive profiling information and techniques to build better PGO
+framework.
+
+
 
 Finding a hybrid approach, which combines two or more profiling method such
 that we can use both LBR's capability to record finer timing for branch
