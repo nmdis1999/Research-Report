@@ -25,7 +25,7 @@
 
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
-2017 \cite{codestitcher}. Further, with adoption of monorepo approach, while
+2017 \cite{cs}. Further, with adoption of monorepo approach, while
 collaborations increased it meant that applications started relying on
 dependencies for a lot of tasks. Thus, the slower the dependency the slower the
 application would be.
@@ -34,7 +34,7 @@ But can't we make these optimisations in the compiler itself? Yes, we can. In
 fact, compilers like \texttt{gcc}\cite{gcc} and \texttt{Clang} have already integrated a
 lot of optimisation techniques including Profile-Guided Optimisation(PGO) and
 Link Time Optimisation (LTO). However, compilers don't have runtime information
-to make accurate decisions\iti{cite here}. For such situations capturing program's
+to make accurate decisions\cite{chen}. For such situations capturing program's
 runtime information and using at different stages of compilation can be useful.
 That is where Profile-Guided Optimisation are useful.
 
@@ -96,8 +96,10 @@ code compactness among others to emit a newly optimised binary.
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.07]{images/PLO.pdf}
-    \caption{\small Pipeline for Post Link Optimisation, 
-    \iti{add caption}}
+    \caption{\small Figure shows how Post Link Optimisers work. PLO 
+    takes an input binary and capture profile data from its run. In next step,
+    both the binary executable and profile data are fed into PLO and it performs
+    some optimisation passes to build a new binary.}
     \label{aggregator-profiles}
 \end{figure}
 
@@ -119,19 +121,21 @@ block. In the end it rewrites and emits the optimised  binary.
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.3]{images/PLO_BOLT.pdf}
-    \caption{\small BOLT's Optimisation pipeline. 
-    \iti{add caption}}
+    \caption{\small Shows steps taken by BOLT after receiving the binary
+    executable and profile data. BOLT first works on disassembly on the binary
+    and reconstruction of CFG using profile data annotated on top of it.
+    Later it performs optimisation passes such as Identical Code Folding,
+    reordering function/basic blocks, and peephole optimisations. Finally,
+    BOLT emits and links the functions}.
     \label{aggregator-profiles}
 \end{figure}
-
-\iti{add PLO BOLT image}
 
 All the experiments are conducted using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5
 @ 3.60GHz}. I used three types of sample profiles (referred to as “modes”
 throughout the report): No Last Branch Record (NO LBR) which is the default
 \texttt{perf record} collected sample, Last Branch Record (LBR), and Intel-PT
 (intel-pt or PT); these are explained in background section. I have presented
-a Table \iti{add label} later in report which indicates that compared to
+a Table \ref{clang-benchmark:0a} later in report which indicates that compared to
 baseline binary, Clang built without intel specific feature (NO LBR mode Clang) performs
 18.45\% better, LBR mode Clang performs 19.82\% better and PT mode Clang
 performs 22.1\% better . 
@@ -294,9 +298,49 @@ However, for easier workflow using perf is recommended since a) it’s easy to
 record different mode of samples b) BOLT has a utility tool to convert perf
 data directly into BOLT friendly data.
 
+\subsubsection*{Optimisation passes}
+
+BOLT runs code transformation or analysis in the form of passes. Some passes
+heavily uses LLVM's Machine Code (MC) Class for disassembly , analysis and
+modification of binary files. BOLT also access LLVM's MCContext class for both
+processing the binary, creating Labels and handling of
+BinaryBasicBlocks\footnote{A BinaryFunction can exist in various states as
+defined in the function. When it's in the disassembled state, it holds a
+sequence of instructions along with their offsets. In the Control Flow Graph
+(CFG) state, it houses a set of BinaryBasicBlocks that construct a control-flow
+graph.}
+
+Other optimisation passes are where BOLT performs function splitting (in
+hot/cold sections), implements the ExtTsp and HFSort algorithms to rearrange
+basic blocks and functions, respectively.
+
+Table \ref{BOLT:LLVM} shows passes handled by BOLT or by LLVM's library.
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{ccc}
+        \toprule
+        \textbf{Optimisation passes} & \textbf{BOLT} & \textbf{LLVM} \\
+        \midrule
+        Discover functions & & \checkmark \\
+        Disassemble functions & & \checkmark \\
+        Build CFG & \checkmark & \\
+        Identical Code Folding & \checkmark & \\
+        Reorder Basic blocks & \checkmark & \\
+        Split functions & \checkmark & \\
+        Reorder functions (using HFSort) & \checkmark & \\
+        Aligner & \checkmark & \\
+        Frame analysis \& opt & & \checkmark \\
+        Shrink wrapping & & \checkmark \\
+        Emit \& Link & & \checkmark \\
+        \bottomrule
+    \end{tabular}
+    \caption{\small Column II shows optimisations handled mostly by BOLT and column III shows
+    optimisations handled mostly by LLVM objects.}
+    \label{BOLT:LLVM}
+\end{table}
+
 \section {Optimising Clang with BOLT}
-I decided to replicate the tutorial to optimise Clang binary provided as an
-example in the BOLT's
+I decided to replicate BOLT's tutorial to optimise Clang binary presented in their
 github\footnote{https://github.com/llvm/llvm-project/blob/main/bolt/docs/OptimizingClang.md}
 repository and followed it with some additional experiments and benchmarking.
 
@@ -745,13 +789,12 @@ Clang build with Clang build with LBR aggregated profiles.
 
 \section*{Future Work}
 
-Results of Hypothesis VI indicate that when profiles are aggregated both in
-LBR and PT mode they tend to give better runtime timings. However, there is
-a trade-off for using one profiling mode over the other. While with LBR, perf
-captures fine details with smaller size profile size, it uses sampling.
-Whereas PT does full trace of execution program, so accurate or complete
-control flow graph can be constructed. LBR also has limited call-stack depth of
-max 32 frames which is not the case for PT.
+Results of Hypothesis VI indicate that when profiles are aggregated both in LBR
+and PT mode they tend to give better runtime timings. However, there is a
+trade-off for using one profiling mode over the other. While with LBR, perf
+captures fine details in a smaller size profile, it uses sampling. Whereas
+with PT it is possible to creates complete control flow graph. LBR also has
+limited call-stack depth of max 32 frames which is not the case for PT.
 
 \begin{table}[H]
     \centering
@@ -771,25 +814,24 @@ max 32 frames which is not the case for PT.
 \end{table}
 
 Overall PT in cycle-accurate mode despite producing the fastest Clang binary
-results in huge amounts of profiling data which is very difficult to process,
-LBR with such less data is able to give a very good performance number. Using a
-hybrid profiling technique which combines profiling information from two or
-more profiling method such that it can utilise LBR’s strength of capturing
-easily decodable precise and detailed information, while benefiting PT’s
-capabilities of building accurate CFGs seems to have potential for producing
-comprehensive profiling information and techniques to build better PGO
-framework.
+captures huge amounts of profiling data which is very difficult to process.
 
+\subsubsection*{Hybrid Profiling}
+Hybrid profiling method is a technique that combines two or more profiling
+methods to produce a more comprehensive and accurate profiling report.
 
+The goal of hybrid profiling is to overcome the limitation of individual
+profiling methods,for example we can use detailed tracing information of PT
+in combination with low overhead data of LBR by aggregating profiles from single
+run of PT data (in cycle-accurate mode) with data captured by LBR.
 
-Finding a hybrid approach, which combines two or more profiling method such
-that we can use both LBR's capability to record finer timing for branch
-instructions and PT's capability to capture detailed program execution in profiles
-can create a more accurate and comprehensive profiling technique. Going
-forward, I plan to investigate how to improve PGO tools with such hybrid
+Another method could be capturing data in both PT and LBR mode and filtering
+them to collect specific fields/information for new profile.
+
+Going forward, I plan to investigate how to improve PGO tools with such hybrid
 profiling technique.
 
-The next steps are:
+The next immediate steps are:
 
 \begin{enumerate}
     \item Expand the experiments from this
@@ -798,8 +840,8 @@ report to a larger training and testing set.
     \item Determine the cost of the hybrid.
 profiling technique using LBR and PT mode profiles with BOLT
 
-    \item Test the hybrid profiling technique with other PGO tool(s).
-\end{enumerate}
+    \item Test the hybrid profiling technique with other PGO tool(s) such as
+    Google's Propeller\cite{gp}. \end{enumerate}
 
 \section*{Timeline}
 \noindent
@@ -827,6 +869,7 @@ profiling technique using LBR and PT mode profiles with BOLT
         \bottomrule
 \end{tabular}
 } 
+
 \bibliographystyle{plain}
 \bibliography{bib}
 
