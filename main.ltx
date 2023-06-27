@@ -6,11 +6,12 @@
 
 \begin{abstract}
     \noindent
+    \laurie{change from past to present tense (i.e.~``I have presented`` -> ``I present``)}
+
     The aim of my PhD is to develop an improved framework for Profile Guided
     Optimisation (PGO) by better understanding types and quantity of data
     required to achieve more optimal performance than existing PGO tools such
     as BOLT. In this preliminary report, I have presented an analysis of
-    Facebook’s
     BOLT, a post-link binary optimiser which is now part of the LLVM project.
     I have conducted set of experiments to investigate how 
     different types of profiling information impacts performance of optimised
@@ -25,12 +26,12 @@
 
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
-2017 \cite{cs}. Further, with adoption of monorepo approach, while
+2017 \cite{cs}. \laurie{sentence doesn't parse. also, i don't think monorepo's are relevant here (and if they are, it needs a citation). delete the sentence imho} Further, with adoption of monorepo approach, while
 collaborations increased it meant that applications started relying on
 dependencies for a lot of tasks. Thus, the slower the dependency the slower the
-application would be.
+application would be \laurie{this is a vague claim, and has an obvious rebuttal: what happens if i don't call the dependency very much?}
 
-But can't we make these optimisations in the compiler itself? Yes, we can. In
+But can't we make these \laurie{what's ``these``?} optimisations in the compiler itself? Yes, we can. In
 fact, compilers like \texttt{gcc}\cite{gcc} and \texttt{Clang} have already integrated a
 lot of optimisation techniques including Profile-Guided Optimisation(PGO) and
 Link Time Optimisation (LTO). However, compilers don't have runtime information
@@ -39,20 +40,20 @@ runtime information and using at different stages of compilation can be useful.
 That is where Profile-Guided Optimisation are useful.
 
 PGO\footnote{Sometimes known as Feedback-Driven Optimisation (FDO): both terms
-refer to the same concept.}, helps in optimising a program's runtime
+refer to the same concept.} helps in optimising a program's runtime
 performance by reducing branch mispredictions, reducing instruction-cache
 problems by reordering code layout with help of function splitting, and
-shrinking code size.Traditional methods such as instrumentation-based profilers
+shrinking code size. Traditional methods such as instrumentation-based profilers
 are tedious and have significant overhead of memory and performance for
 collecting profiling information. Additionally, they might not end up capturing
 accurate information. PGO is easily adoptable in production environment such as
-by continuous feeding of dynamic profiling data to rebuild the binary. 
+by continuous feeding of dynamic profiling data to rebuild the binary.
 
 While Profile Guided Optimisation (PGO) has been an active area of research for
-some time, it remains a field with space for further exploration. This report
+some time, it remains a field with space for further exploration \laurie{how do we know this?}. This report
 delves into the effects of varying profiling methods on the performance of
 optimised binaries created by PLO tool BOLT. Additionally, it investigates the
-potential for using a hybrid\footnote{Hybrid profiling method is a technique
+potential for using a hybrid\footnote{\laurie{this should be in the main text}Hybrid profiling method is a technique
 that combines two or more profiling methods to produce a more comprehensive and
 accurate profiling report.} of these profiling methods to develop an enhanced
 PGO framework.
@@ -72,10 +73,10 @@ benchmark the profiling data.
 
 \section{Background}
 Modern compilers have integrated a lot of compiler optimisation techniques,
-such as using basic block frequencies and branch target information to perform
+such as using basic block frequencies \laurie{how can normal AOT compilers use basic block frequencies for optimisatins?} and branch target information to perform
 function inlining.  But they don’t have  runtime information and can’t
 differentiate hot code path (executed a lot) from  cold code paths (executed
-rarely) . This often leads compilers to optimise cold code paths at the
+rarely) \laurie{not exactly true: they can make quite good guesses. but it's definitely true that they can't be 100\% sure in most cases}. This often leads compilers to optimise cold code paths at the
 expense of hot ones. Sampling data can help us collect hot code path (at least
 most of the times) since they show up more often. 
 
@@ -85,10 +86,10 @@ inputs suitable for training, and profile data is collected from this run. The
 second build step compiles the binary again with the profile collected from the
 first run. The profile data obtained through sampling can be retrofitted at
 multiple stages in the compilation pipeline, my report focuses on Post Link
-optimisation (also called static binary optimiser) which directly operates on
+Optimisers (PLOs) (also called static binary optimiser) which directly operate on
 the executable files. 
 
-Post Link Optimisers (PLO) takes the binary executable and a profile either
+PLOs take the binary executable and a profile either
 captured with instrumentation of source code or with hardware counters and
 performs some optimisation such as reordering function and/or basic blocks,
 code compactness among others to emit a newly optimised binary. 
@@ -96,7 +97,7 @@ code compactness among others to emit a newly optimised binary.
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.07]{images/PLO.pdf}
-    \caption{\small Figure shows how Post Link Optimisers work. PLO 
+    \caption{\small How Post Link Optimisers work. A PLO 
     takes an input binary and capture profile data from its run. In next step,
     both the binary executable and profile data are fed into PLO and it performs
     some optimisation passes to build a new binary.}
@@ -131,9 +132,9 @@ block. In the end it rewrites and emits the optimised  binary.
 \end{figure}
 
 All the experiments are conducted using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5
-@ 3.60GHz}. I used three types of sample profiles (referred to as “modes”
+@ 3.60GHz}. I used three types of sample profiles (referred to as \emph{modes}
 throughout the report): No Last Branch Record (NO LBR) which is the default
-\texttt{perf record} collected sample, Last Branch Record (LBR), and Intel-PT
+\texttt{perf record} collected sample \laurie{what *is* is NO LBR? it's not explained anywhere!}, Last Branch Record (LBR), and Intel-PT
 (intel-pt or PT); these are explained in background section. I have presented
 a Table \ref{clang-benchmark:0a} later in report which indicates that compared to
 baseline binary, Clang built without intel specific feature (NO LBR mode Clang) performs
@@ -144,18 +145,17 @@ I have presented benchmarking numbers using multitime\cite{multitime}, running e
 100 times, taking mean value and converting standard deviation to 99\%
 confidence interval values. The baseline binary has been trained on four C
 programs (training set), and baseline along with optimised binaries were
-benchmarked on the same set of files (testing set).
+benchmarked on the same set of files (testing set) \laurie{normally the training and testing set should be distinct. explain why they aren't -- it's fine to say ``i chose these files because they are quite big, and i'd like to use more files in the future'' or similar}.
 
 BOLT accepts specific format to rebuild the binary. It doesn't matter how we
 capture the sample profile as long as we can convert it into BOLT friendly
-format before rebuilding the binary. I have used linux’s tool-chain perf. Not
+format \laurie{what is a ``BOLT friendly'' format?} before rebuilding the binary. I have used linux’s tool-chain perf. Not
 just BOLT provides tool to convert perf data into BOLT friendly data but perf
 also let us capture different type of profiling information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf\cite{perf}, also commonly known as perf\_event, is a lightweight
-linux tool-chain that offers an abstraction over hardware-specific
+Perf\cite{perf}, also commonly known as perf\_event \laurie{i've never heard it called this! i think perf\_event is a sub-part of perf?}, offers an abstraction over hardware-specific
 capabilities. It is primarily used for performance measurements by
 instrumenting events, these events are unified interference from different
 parts of the kernel. Perf uses performance counters to capture events
@@ -182,15 +182,15 @@ Measurable events includes:
     
     \item Timed Profiling: commonly used for capturing snapshot  by using
         custom timer interrupt events and invoked using \texttt{perf record
-        -FHz}
+        -FHz} \laurie{what does ``-FHz'' mean?}
 \end{itemize}
 
 The perf\_event tool is part of linux-tools-common package and can either be
 installed via \texttt{apt install linux-tools-generic} or be build from source.
-For this report, I have used in-built perf on my OS.
+For this report, I have used in-built perf on my OS \laurie{what is ``my OS''?}.
 
 perf can instrument in following modes: a) Counting, using \texttt{perf stat}
-which keeps count of running process for supported events. Unless specified
+which keeps count of running process for supported events \laurie{huh?}. Unless specified
 \texttt{perf stat} runs in per-thread mode. Once all occurrence of events are
 aggregated the summary is presented on the standard output b) Sampling mode,
 using \texttt{perf record/report/annotate}. With \texttt{perf record} event
@@ -207,15 +207,15 @@ on the data. But I won’t be covering that in my experiments.
 An event sample is recorded when sampling counter overflows, which means
 counters go from $2^{64}$ to 0. Since 64-bit hardware counters aren’t
 implemented in any PMU, perf emulated it in software. Hence, when using perf on
-32-bit system perf silently truncates the period. On every counter overflow,
-the sample contains record of program execution with some additional information.
+32-bit system perf silently truncates the period \laurie{surely it can overflow 64 bits too?}. On every counter overflow,
+the sample contains record of program execution with some additional information \laurie{not sure what this means}.
 The content of recorded data depends on what user specified for,
-but contains instruction pointer by default, irrespective of event type.
+but contains instruction pointer by default \laurie{huh}, irrespective of event type.
 
 \subsubsection*{Sample period and rate}
 
 By default perf records sample at \textbf{both} user and kernel levels
-using cycles events with average rate of ${1000}$ samples / sec or ${4000}$ events / sec.
+using cycles events with average rate of ${1000}$ samples / sec or ${4000}$ events / sec \laurie{which? why two?}.
 During Sampling \texttt{perf record} asks PMU to count some
 events, for example cpu-cycles, and generate an overflow interrupt after every
 $nth$ event (e.g a million). On every interrupt perf\_event records fields such as :
@@ -259,7 +259,7 @@ We can use PT with perf’s record command as:
 
 \subsubsection*{Buffer Handling}
 PT produces hundreds of megabytes of data per second per CPU and
-sometimes it often encounters two types of errors: \textbf{trace data-loss} (generating data at
+it often encounters two types of errors: \textbf{trace data-loss} (generating data at
 faster rate than it can be recorded to file) and \textbf{overflow packet}
 (unable to record data to memory).
 
@@ -272,7 +272,7 @@ are essentially setting total 512MiB of trace buffer size.
 To resolve overflow packets error in addition of setting AUX mmap size,
 re-running the workload helps, or reducing MTC (Mini Time Counter) packets in
 PT (which I have elaborated on later in this report). This will capture lesser
-data(a couple of MiB) but is helpful to remove “Instruction trace errors” in captured
+data(a couple of MiB) but is helpful to remove “Instruction trace errors” \laurie{what are these?} in captured
 data.
 
 It is important that we get rid of any "Instruction trace errors"
@@ -280,7 +280,7 @@ as BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file.
 
 \subsection*{BOLT}
-BOLT is a static post link binary optimiser that is build on top of LLVM
+BOLT is a static post link binary optimiser that is built on top of LLVM
 compiler infrastructure.
 
 It uses sample based profiling data and relocations mode (by passing
@@ -346,8 +346,8 @@ repository and followed it with some additional experiments and benchmarking.
 
 \textbf{Experiment Setup}
 
-For benchmarking, I used  {Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on Debian
-OS and baseline CLANG 16 (without any optimisation). The files were executed
+For benchmarking, I used  Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on Debian
+OS and baseline CLANG \laurie{should be spelt `Clang'} 16 (without any optimisation). The files were executed
 hundred times using multitime \cite{multitime}, which is extension of linux
 times to run file multiple times and present mean, standard deviation, mins,
 medians, and maxs values on standard output. I used the sample mean and
@@ -392,7 +392,7 @@ The above experiment demonstrates that a Clang build with an LBR mode profile
 is approximately 1.66\% faster than a Clang build using a NO LBR mode profile.
 I intended for the PT data to run the same optimisation as BOLT when it is fed
 LBR mode profiling data. However, BOLT does not support the processing of PT
-data and only handles NO LBR and LBR data formats. By making some adjustments
+data and only handles NO LBR and LBR data formats. By making some adjustments \laurie{be specific}
 to BOLT’s data aggregator source code, we can enable it to use of PT-collected
 profile information.
 
@@ -449,6 +449,7 @@ functions it ends up reordering in all three modes.
 \subsubsection*{Analysis of the Number of Functions Recorded During
 Compilation, Number of Functions Captured in profile that BOLT identified, and Number of
 Functions Reordered by BOLT}
+\laurie{way too long subsubsection title!}
 
 I used the baseline Clang to gather profiles through the compilation of the
 extsmaild.c file and subsequently rebuilt the binary in three modes.Table
@@ -712,14 +713,14 @@ performance of PT mode Clang, and later even beats it.
 PT mode collected profiles}
 
 Linux Perf's wiki states that "perf with LBR can provide finer timing than
-PT." \cite{perf} This might explain why in Figure
+PT." \laurie{need to explain what this means --- the quote isn't sufficient} \cite{perf} This might explain why in Figure
 \ref{barplot:images} Clang build with LBR aggregated data outperforms Clang
 build using PT profile. However, it is not clear whether the statement holds 
 true when we tune cycle-accurate mode on in PT mode profiling.
 I intend to verify this as future work, by collecting profiling data for specific set of address,
 both in LBR and PT (cycle-accurate) mode. 
 
-In PT, logs are packetised. PT traces uses three types of timing
+In PT, logs are packetised \laurie{what does this mean?}. PT traces uses three types of timing
 packets: Packet stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
 Mini Time Counter (MTC), and Cycle (CYC). 
 PSB although being coarse grained, is the basic synchronization 
@@ -789,6 +790,7 @@ Clang build with Clang build with LBR aggregated profiles.
 
 \section*{Future Work}
 
+\laurie{this paragraph needs expanding a bit}
 Results of Hypothesis VI indicate that when profiles are aggregated both in LBR
 and PT mode they tend to give better runtime timings. However, there is a
 trade-off for using one profiling mode over the other. While with LBR, perf
@@ -813,11 +815,12 @@ limited call-stack depth of max 32 frames which is not the case for PT.
     \label{lbr-pt:comparison}
 \end{table}
 
+\laurie{rephrase}
 Overall PT in cycle-accurate mode despite producing the fastest Clang binary
 captures huge amounts of profiling data which is very difficult to process.
 
 \subsubsection*{Hybrid Profiling}
-Hybrid profiling method is a technique that combines two or more profiling
+\laurie{``I am proposing hybrid profiling as a method for ...''} Hybrid profiling method is a technique that combines two or more profiling
 methods to produce a more comprehensive and accurate profiling report.
 
 The goal of hybrid profiling is to overcome the limitation of individual
