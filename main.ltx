@@ -24,30 +24,30 @@
 
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
-2017 ~\cite{cs}. Existing compiler optimisations do give performance gains, but
-often come at the cost of usability \laurie{why do optimisations affect usability?}. They often \laurie{very few optimisations require changes to build processes -- in fact the only one I can think of is PGO!} require change to build process,
-\laurie{instrumentation is temporary, so why does this matter} further the code injected for instrumenting the application can lead to performance
-degradation~\cite{SPGO}.
+2017~\cite{cs}. Existing compiler optimisations do give performance gains, but
+they are uncertain in their optimisation decisions. Since compilers are limited
+by their static heuristics they can often make optimisation in less
+significant parts of code. Questions like which function will be 
+called the most, and can benefit from inlining is easier to know
+using program's runtime information.
 
-For many applications, the most executed code paths (``hot paths'') rarely change
-from one run to another~\cite{exe}. By focusing on most executed code paths, existing
-binary rewriter tools such as BOLT and Propeller were able to achieve
-significant performance gains(about 3\% to 15\%\cite{weibin}. One of the
-optimisation that takes advantage of this is profile-guided optimization
-(PGO); it offers more optimization opportunities, typically hard to obtain
-with static heuristics and methods.
+For many applications, the most executed code paths (``hot paths'') rarely
+change from one run to another~\cite{SPGO}. By focusing on most executed code
+paths, existing binary rewriter tools such as BOLT~\cite{bolt} and
+Propeller~\cite{gp} were able to achieve significant performance gains(about
+3\% to 15\%\cite{weibin}. And although compilers can make a decent guess about
+taken branches they don't have runtime information to make accurate branch
+prediction.~\cite{chen}. One of the optimisation that takes advantage of this
+is profile-guided optimization (PGO); it offers more optimization
+opportunities, which typically is hard to obtain with static heuristics 
+and methods.
 
-But can't we identify hot paths and use the information to make optimisations
-in the compiler itself \laurie{compilers have been performing optimisations for
-decades, so i'm not sure what this means}? Yes, we can. In fact, compilers like
-gcc~\cite{gcc} and Clang have already integrated substantial optimisation
-techniques utilizing Profile-Guided Optimisation(PGO) and Link Time
-Optimisation (LTO) \laurie{most optimisations are not PGO or LTO}. However,
-compilers don't have runtime information to make accurate decisions
-\laurie{about ... ?}~\cite{chen}. For such situations, capturing a program's
-runtime information and using it at different stages of compilation can be useful.
-That is where Profile-Guided Optimisation tools are useful.
-
+While PGO exists in compilers like LLVM and GCC, they collect profile data by
+instrumenting the code. This can cause a mismatch between profile data and code
+being optimised as code progress in the compiler's optimisation
+pipeline.~\cite{gp}. For such situations, capturing a program's runtime
+information and using it at different stages of compilation can be useful. That
+is where Profile-Guided Optimisation tools are useful.
 
 PGO\footnote{Sometimes known as Feedback-Driven Optimisation (FDO): both terms
 refer to the same concept.} helps in optimising a program's runtime
@@ -59,14 +59,18 @@ collecting profiling information. Additionally, they might not end up capturing
 accurate information. PGO is easily adoptable in a production environment 
 by the way of continuously feeding dynamic profiling data to rebuild the binary.
 
-\iti{NOTE: Maybe put this line after your experiments} While Profile Guided Optimisation (PGO) has been an active area of research for
-some time, it remains a field with space for further exploration \laurie{how do
-we know this?}. This report delves into the effects of varying profiling
-methods on the performance of optimised binaries created by PLO tool BOLT.
-Additionally, it investigates the potential for using a hybrid of these
-profiling methods to develop an enhanced PGO framework. A hybrid profiling method
-combines two or more profiling methods to produce a more
-comprehensive and accurate profiling report. 
+While Profile Guided Optimisation (PGO) has been an active area of research for
+some time, it remains a field with space for further exploration. Currently,
+most binary rewriters focus on using single mode of profiling information
+(either sampling based or instrumental). And although, works like MLGO~\cite{mlgo},
+Nadav and Chris~\cite{nadav} focus on training machine learning models to infer
+branch probabilities they don't use it in conjunction with hybrid profiling
+method. This report delves into the effects of varying profiling methods on the
+performance of optimised binaries created by PLO tool BOLT. Additionally, it
+investigates the potential for using a hybrid of these profiling methods to
+develop an enhanced PGO framework. A hybrid profiling method combines two or
+more profiling methods to produce a more comprehensive and accurate profiling
+report. 
  
 I start with doing background research on BOLT, the best existing PGO
 tool.  Despite its extensive use by large corporations for complex
@@ -82,14 +86,16 @@ to include a broader, more diverse range of training files to collect and
 benchmark the profiling data.
 
 \section{Background}
-Modern compilers have integrated many compiler optimisation techniques,
-such as using basic block frequencies \laurie{how can normal AOT compilers use
-basic block frequencies for optimisatins?} and branch target information to
-perform function inlining. But they do not have runtime information, and often
+Modern compilers have integrated many compiler optimisation techniques
+are done using dynamic information such as 
+basic block frequencies and branch taken/not taken ratios.
+This information helps compiler to optimise for frequent cases, rather than assuming
+all code is equally likely to execute.~\cite{chen}
+But since they do not have runtime information, and often
 don't accurately differentiate hot code paths (executed a lot) from  cold code
-paths (executed rarely). This often leads to compilers optimising cold code paths
+paths (executed rarely). This can lead the compiler to optimising cold code paths
 at the expense of hot ones. Sampling data can help us collect accurate hot code
-paths (at least most of the times) since they show up more often. 
+paths (at least most of the times) as they show up more often. 
 
 Profile-Guided Optimisation operates in two stage builds where the first step
 is to build an instrumented binary. This binary is executed using a set of
@@ -158,7 +164,7 @@ running each test file 100 times, taking mean value, and converting standard
 deviation to 99\% confidence interval values. The baseline binary has been
 trained and tested on same set of C source programs. The files were big enough
 for preliminary research but I would like to extend the training and testing
-set with distinct \iti{NOTE: distinct is a little ambiguous} files in the future.
+set with different set files in the future.
 
 BOLT accepts a specific format to rebuild the binary. It does not matter how we
 capture the sample profile as long as we can convert it into BOLT-friendly
@@ -209,14 +215,13 @@ The perf is part of linux-tools-common package and can either be
 installed via \texttt{linux-tools-generic}
 or be build from source. For this report, I have used in-built perf on Debian OS. 
 
-Perf can instrument in the following modes: a) Counting, using \texttt{perf stat}
-which keeps a count of running process for supported events \laurie{huh?}. Unless specified,
-\texttt{perf stat} runs in per-thread mode. Once all occurrence of events are
-aggregated, the summary is presented on the standard output b) Sampling mode,
-using \texttt{perf record/report/annotate}. With \texttt{perf record}, event
-data is written to the kernel and then read at an asynchronous rate to write
-to the perf.data file. This file is then analysed by the perf
-\texttt{report} or \texttt{script} commands.
+Perf operates in two modes, 1) Counting, using \texttt{perf stat} which lets
+user collect overall statistics about execution of an application and presents
+it on the standard output. b) Sampling mode, using \texttt{perf
+record/report/annotate}. With \texttt{perf record}, event data is written to
+the kernel and then read at an asynchronous rate to write to the perf.data
+file. This file is then analysed by the perf \texttt{report} or
+\texttt{script} commands.
 
 Another way to instrument is by using BPF program on events which can then execute
 custom user-defined programs in kernel space, and perform filters and summaries
@@ -657,39 +662,39 @@ tends to enhance performance, albeit with notably diminishing returns
 when two files with a lesser delta in LOC are compared.
 
 Could the observed relative increase in Clang's performance with respect to 
-the line of code (LOC) in both LBR and PT modes be attributed to their 
+the lines of code (LOC) in both LBR and PT modes be attributed to their 
 capacity to record more functions during sampling? This 
 brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis III: perf in PT mode records more functions
 in the samples than LBR mode to build better control flow.}
 
-\texttt{perf record} in LBR and PT mode has some additional information
+\texttt{Perf record} in LBR and PT mode has some additional information
 which is not available in NO LBR mode. More details can be fetched about branches
 such as FROM and TO addresses of each branch with some additional meta-data
-such as timing packets. LBR during each sample only logs last 8-32 branches
-while PT theoretically records every branch. There is a limitation that both LBR and
-PT feature of perf are currently only supported on Intel devices.
-Though there seem to be ongoing development to add support for LBR on AMD devices~\cite{amd}.
+such as timing packets. LBR during each sample only logs the last 8-32 branches,
+while PT theoretically records every branch. There is a limitation that both, LBR, and
+PT feature of perf are currently supported only on Intel devices.
+Though there seems to be ongoing development to add support for LBR on AMD devices~\cite{amd}.
 
-One interesting outcome to see would be aggregating profiles recorded in the
-LBR mode to get optimised Clang and compare Clang in PT mode using profile from
-single file compilation . My next two hypothesis capture this:
+By aggregating profiles recorded in the LBR mode to get an optimised Clang, and comparing it to 
+Clang in PT mode using profile from single file compilation provides some interesiting observations. 
+My next two hypotheses capture this:
 
 \subsubsection*{Hypothesis IV : Aggregating multiple profiles over n runs on the 
 same training file results in building faster Clang binaries.}
 
 To test this hypothesis, I aggregated profiles (collected with perf) over $n$
-runs on the same training file and analyse the resulting performance
+runs on the same training file and analysed the resulting performance
 variations. Since testing file consists of four files: extsmaild.c, tty.c,
 format.c, and window-copy.c. There are four bar graphs in Figure
 \ref{barplot:images}, each representing Clang versions benchmarked on the
 respective testing file.
 
-Looking at Figure \ref{barplot:images}, it's quite evident that the performance
+Looking at Figure \ref{barplot:images}, it is quite evident that the performance
 of Clang versions, created with 5, 10, and 15 aggregated LBR profiles, matches
-or even surpasses the performance of the Clang generated with an PT mode
-profile The same trends seems to follow in other three graphs. Albeit on small
+or even surpasses the performance of the Clang generated with a PT mode
+profile. The same trend seems to follow in other three graphs. Albeit on small
 test set, this seems to be proving my hypothesis correct.
 
 \begin{figure}[H]
@@ -716,7 +721,7 @@ test set, this seems to be proving my hypothesis correct.
         \caption{\small Benchmark of Clang versions on window-copy.c}
         \label{barplot:4}
     \end{subfigure}
-    \caption{\small On the graph, the x-axis represents the Clang versions build with different
+    \caption{\small On the graph, the x-axis represents the Clang versions built with different
     training files, and the y-axis depicts the mean along with the 99\%
     confidence interval. The color, situated at the top right, indicates
     \texttt{number.mode} - 'number' signifies the counts of profiles that have
@@ -728,10 +733,10 @@ test set, this seems to be proving my hypothesis correct.
 \end{figure}
 
 \subsubsection*{Hypothesis V: Aggregating profiles from different training files
-results in building faster Clang binary.}
+results in building a faster Clang binary.}
 
-Next, instead of aggregating profiles from run on the same file, I captured
-profiles from runs on different files to aggregate and feed them into BOLT.
+Next, instead of aggregating profiles from runs on the same file, I captured
+profiles from runs on different files to aggregate and feed into BOLT.
 
 \begin{table}[H]
     \centering
@@ -754,15 +759,15 @@ profiles from runs on different files to aggregate and feed them into BOLT.
     \label{clang-benchmark:4}
 \end{table}
 
-Table \ref{clang-benchmark:4} represents Clang trained with two modes LBR and
-PT, where in LBR mode I aggregated profiles collected from 4 C Source files to build
-optimised Clang and for PT mode I used these files individually to collect and build new Clang.
-Later I have benchmarked sample mean and 99\% confidence interval on the same files I collected profiles from.
+Table \ref{clang-benchmark:4} represents Clang trained with two modes: LBR and
+PT. In LBR mode, I aggregated profiles collected from 4 C Source files to build an
+optimised Clang. For PT mode I used these files individually to collect and build a new Clang.
+Later I benchmarked sample mean and 99\% confidence interval on the same files I collected profiles from.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.6]{images/all_prof_aggr_ci.pdf}
-    \caption{\small Comparison of Clang build with aggregated LBR profiles
+    \caption{\small Comparison of Clang built with aggregated LBR profiles
     to Clangs' build with PT mode profiles. Where \textit{clang.all-prof-aggr-lbr} 
     is build using profile from compiling 4 separate C source files.}
     \label{aggregator-profiles}
@@ -772,7 +777,7 @@ Figure \ref{aggregator-profiles} clearly indicates that aggregating
 four profiles captured from different file compilations is not enough to beat 
 all the Clang builds with PT mode profiles.
 
-I will present another hypothesis to analyse why in Hypothesis III, Clang build with aggregating
+I will present another hypothesis to analyse why in Hypothesis III, Clang built with aggregating
 LBR mode profiles collected over 5 or more runs on same file, first converges to the
 performance of PT mode Clang, and later even beats it.
 
@@ -781,29 +786,30 @@ PT mode collected profiles}
 
 Linux Perf's wiki states that ``perf with LBR can provide finer timing than
 PT.'' \laurie{need to explain what this means --- the quote isn't sufficient} ~\cite{perf} This might explain why in Figure
-\ref{barplot:images} Clang build with LBR aggregated data outperforms Clang
+\ref{barplot:images}, the Clang build with LBR aggregated data outperforms the Clang
 build using PT profile. However, it is not clear whether the statement holds 
-true when we tune cycle-accurate mode on in PT mode profiling.
-I intend to verify this as future work, by collecting profiling data for specific set of address,
+true when we turn the cycle-accurate mode on in PT mode profiling.
+I intend to verify this in future work, by collecting profiling data for a specific set of addresses,
 both in LBR and PT (cycle-accurate) mode. 
 
-In PT, logs are compressed into packets. PT traces uses three types of timing
-packets: Packet stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
+In PT, logs are compressed into packets. PT traces use three types of timing
+packets: Packet Stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
 Mini Time Counter (MTC), and Cycle (CYC). 
 PSB although being coarse grained, is the basic synchronization 
 of the trace and provides a full TSC time stamp. 
 The MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
-Running Timer). Lastly, Cycle accurate mode (CYC) packets
+Running Timer). Lastly, cycle accurate mode (CYC) packets
 are updated relative to the last send MTC packet.
 
-By default, perf when operating in PT mode uses MTC packets with
-period of 3. This means there is an ART timing update ever $2^3=8$ times, 
-so roughly every 300ns. This is quite coarse, so I used CYC packet
-in conjunction with MTC. However, the data generated by perf command increases
-in size with decrease in MTC period's value and thus gets difficult to processes.
-For this experiment, I didn't alter MTC period's value.
+By default, perf when operating in PT mode uses MTC packets with a period of 3.
+This means there is an ART timing update once every $2^3=8$ times, so roughly
+every 300ns. This is quite coarse, so I used CYC packet in conjunction with
+MTC. However, the data generated by perf command increases in size with
+decrease in MTC period's value and thus, gets difficult to processes. For this
+experiment, I did not alter MTC period's value.
 
-In case modification is needed in MTC period, the following command can be used:
+In case modification is needed in MTC period, the following command can be
+used:
 
 \texttt{perf record -e intel\_pt/cyc,cyc\_thres=value,mtc\_period=value/u -- }
 where:
@@ -836,15 +842,15 @@ next CYC packet is sent.
 Taking best performing Clang from Hypothesis IV (Figure \ref{barplot:1}) i.e 
 Clang.exts.15.lbr, where Clang binary was optimised by aggregating
 profile collected from 15 consecutive runs of extsmaild.c compilation, I compare
-it with Clang build using single PT mode profile (no cycle accurate mode),
+it with Clang built using single PT mode profile (no cycle accurate mode),
 single PT mode profile (with cycle accurate mode), 5, 10, and 15 aggregated
-profiles from PT mode profiling. All optimised Clang version were run/benchmarked on 
+profiles from PT mode profiling. All optimised Clang versions were run/benchmarked on 
 gcc.c which was bootstrapped from gcc source code into single C file.
 
 Figure \ref{compare-cyc-acc-mode} shows that when aggregating profiles in PT
 (cycle accurate mode) from $n$ consecutive runs starting from Clang.exts.5.pt,
 the performance of PT cycle accurate mode Clang when aggregated is better than
-Clang build with Clang build with LBR aggregated profiles.
+Clang built with LBR aggregated profiles.
 
 \begin{figure}[H]
     \centering
@@ -857,23 +863,23 @@ Clang build with Clang build with LBR aggregated profiles.
 
 \section*{Future Work}
 
-From Hypothesis VI it's fair to say when profiles are aggregated both in LBR
-and PT mode they tend to give better runtime timings. And although this method
-of aggregating multiple profiles in sample mode might help achieving
-significant performance boost there is a trade-off for using one
+From Hypothesis VI it is fair to say that when profiles are aggregated both in LBR
+and PT mode, they tend to give better runtime timings. And although this method
+of aggregating multiple profiles in sample mode might help achieving a 
+significant performance boost, there is a trade-off for using one
 profiling mode over the other.
 
 While it is easier to process profile data captured via perf in LBR mode, due
-do smaller packet sizes, it isn't the provides most accurate profile data.
+do smaller packet sizes it does not provide the most accurate profile data.
 Sampling can produce coarse-grained data depending on frequency at which
-samples are generated. Further LBR only captures cycle timing between two
+samples are generated. Further, LBR only captures cycle timing between two
 taken branches.~\cite{easyperf} 
-Perf with PT mode uses CPU tracing and records trace the program's execution by
-encoding data captured in a compressed packets. With PT it is possible to
+Perf with PT mode uses CPU tracing and records the program's execution by
+encoding data captured in compressed packets. With PT it is possible to
 create an exact control-flow graph. However, since PT produces much more data
 than LBR decoding data captured might take a while.
 
-LBR also has limited call-stack depth of max 32 frames which is not the case
+LBR also has a limited call-stack depth of maximum 32 frames, which is not the case
 for PT.
 
 \begin{table}[H]
@@ -899,8 +905,8 @@ is a technique that combines two or more profiling methods to produce a
 more comprehensive and accurate profiling report.
 
 The goal of hybrid profiling is to overcome the limitation of individual
-profiling methods,for example we can use detailed tracing information of PT
-in combination with low overhead data of LBR by aggregating profiles from single
+profiling methods. For example we can use the detailed tracing information of PT
+in combination with low overhead data of LBR by composing profiles from single
 run of PT data (in cycle-accurate mode) with data captured by LBR.
 
 Another method could be capturing data in both PT and LBR mode and filtering
@@ -915,8 +921,8 @@ The next immediate steps are:
     \item Expand the experiments from this
 report to a larger training and testing set.
 
-    \item Determine the cost of the hybrid.
-profiling technique using LBR and PT mode profiles with BOLT
+    \item Determine the cost of the hybrid
+profiling technique using LBR and PT mode profiles with BOLT.
 
     \item Test the hybrid profiling technique with other PGO tool(s) such as
     Google's Propeller~\cite{gp}. \end{enumerate}
@@ -931,21 +937,21 @@ profiling technique using LBR and PT mode profiles with BOLT
         \toprule
         Year & Month & Goals \\
         \midrule
-        2023 & July-December & Expanding the scale of experiment, analysing the data,
-        and modifying BOLT to adopt to hybrid profiling information \\
+        2023 & July-December & Expand the scale of experiment, analyse the data,
+        and modify BOLT to adopt to hybrid profiling information \\
 
         2024 & January-June & Literature review on PGO tools. Forming the research
-        question. Benchmarking the results to see whether I can work on top of
+        question. Benchmark the results to see whether I can work on top of
         BOLT to add additional capabilities or should I build a
         new tool/framework. \\
 
         2024 & July-December & Complete first version of experimental PGO
         framework. \\
 
-        2025 & January-June & Benchmarking and debugging of the new framework.
-        Drafting the initial findings. \\
+        2025 & January-June & Benchmark and debug the new framework.
+        Draft the initial findings. \\
 
-        2025 & July-December & Identifying areas which can be expanded on the new framework,
+        2025 & July-December & Identify areas which can be expanded on the new framework,
         receive feedback and do revisions. \\
         \bottomrule
 \end{tabular}
