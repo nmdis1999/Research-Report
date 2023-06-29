@@ -25,24 +25,24 @@
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
 2017 ~\cite{cs}. Existing compiler optimisations do give performance gains but
-often come at the cost of usability. They often require change to build process,
-further the code injected for instrumenting the application can lead to performance
+often come at the cost of usability \laurie{why do optimisations affect usability?}. They often \laurie{very few optimisations require changes to build processes -- in fact the only one I can think of is PGO!} require change to build process,
+\laurie{instrumentation is temporary, so why does this matter} further the code injected for instrumenting the application can lead to performance
 degradation~\cite{SPGO}.
 
 For many applications most executed code paths (``hot paths``) rarely
-change from run to run. By focusing on most executed code paths it is 
-possible to achieve significant performance gains(about 3\% to 15\%)~\cite{weibin}.
+change from run to run \laurie{find a citation. By focusing on most executed code paths it is 
+possible to achieve significant performance gains(about 3\% to 15\% \laurie{that's a hell of a range! also if we *know* 15\% is the upper bound, then does that mean there is no research for us to do?})~\cite{weibin}.
 One of the optimisation that takes advantage of this is
 Profile-Guided optimizations (PGO), which offer more optimization
 opportunities, typically hard to obtain with static
 heuristics and methods. 
 
 But can't we identify hot paths and uses the information to make optimisations
-in the compiler itself? Yes, we can. In fact, compilers like
+in the compiler itself \laurie{compilers have been performing optimisations for decades, so i'm not sure what this means}? Yes, we can. In fact, compilers like
 gcc~\cite{gcc} and Clang have already integrated a lot of
 optimisation techniques including Profile-Guided Optimisation(PGO) and Link
-Time Optimisation (LTO). However, compilers don't have runtime information to
-make accurate decisions ~\cite{chen}. For such situations capturing program's
+Time Optimisation (LTO) \laurie{most optimisations are not PGO or LTO}. However, compilers don't have runtime information to
+make accurate decisions \laurie{about ... ?}~\cite{chen}. For such situations capturing program's
 runtime information and using at different stages of compilation can be useful.
 That is where Profile-Guided Optimisation tools are useful.
 
