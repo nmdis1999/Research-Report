@@ -6,12 +6,10 @@
 
 \begin{abstract}
     \noindent
-    \laurie{change from past to present tense (i.e.~``I have presented`` -> ``I present``)}
-
     The aim of my PhD is to develop an improved framework for Profile Guided
     Optimisation (PGO) by better understanding types and quantity of data
     required to achieve more optimal performance than existing PGO tools such
-    as BOLT. In this preliminary report, I have presented an analysis of
+    as BOLT. In this preliminary report, I present an analysis of
     BOLT, a post-link binary optimiser which is now part of the LLVM project.
     I have conducted set of experiments to investigate how 
     different types of profiling information impacts performance of optimised
@@ -26,18 +24,28 @@
 
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
-2017 \cite{cs}. \laurie{sentence doesn't parse. also, i don't think monorepo's are relevant here (and if they are, it needs a citation). delete the sentence imho} Further, with adoption of monorepo approach, while
-collaborations increased it meant that applications started relying on
-dependencies for a lot of tasks. Thus, the slower the dependency the slower the
-application would be \laurie{this is a vague claim, and has an obvious rebuttal: what happens if i don't call the dependency very much?}
+2017 ~\cite{cs}. Existing compiler optimisations do give performance gains but
+often come at the cost of usability. They often require change to build process,
+further the code injected for instrumenting the application can lead to performance
+degradation~\cite{SPGO}.
 
-But can't we make these \laurie{what's ``these``?} optimisations in the compiler itself? Yes, we can. In
-fact, compilers like \texttt{gcc}\cite{gcc} and \texttt{Clang} have already integrated a
-lot of optimisation techniques including Profile-Guided Optimisation(PGO) and
-Link Time Optimisation (LTO). However, compilers don't have runtime information
-to make accurate decisions\cite{chen}. For such situations capturing program's
+For many applications most executed code paths (``hot paths``) rarely
+change from run to run. By focusing on most executed code paths it is 
+possible to achieve significant performance gains(about 3\% to 15\%)~\cite{weibin}.
+One of the optimisation that takes advantage of this is
+Profile-Guided optimizations (PGO), which offer more optimization
+opportunities, typically hard to obtain with static
+heuristics and methods. 
+
+But can't we identify hot paths and uses the information to make optimisations
+in the compiler itself? Yes, we can. In fact, compilers like
+gcc~\cite{gcc} and Clang have already integrated a lot of
+optimisation techniques including Profile-Guided Optimisation(PGO) and Link
+Time Optimisation (LTO). However, compilers don't have runtime information to
+make accurate decisions ~\cite{chen}. For such situations capturing program's
 runtime information and using at different stages of compilation can be useful.
-That is where Profile-Guided Optimisation are useful.
+That is where Profile-Guided Optimisation tools are useful.
+
 
 PGO\footnote{Sometimes known as Feedback-Driven Optimisation (FDO): both terms
 refer to the same concept.} helps in optimising a program's runtime
@@ -50,15 +58,15 @@ accurate information. PGO is easily adoptable in production environment such as
 by continuous feeding of dynamic profiling data to rebuild the binary.
 
 While Profile Guided Optimisation (PGO) has been an active area of research for
-some time, it remains a field with space for further exploration \laurie{how do we know this?}. This report
-delves into the effects of varying profiling methods on the performance of
-optimised binaries created by PLO tool BOLT. Additionally, it investigates the
-potential for using a hybrid\footnote{\laurie{this should be in the main text}Hybrid profiling method is a technique
-that combines two or more profiling methods to produce a more comprehensive and
-accurate profiling report.} of these profiling methods to develop an enhanced
-PGO framework.
+some time, it remains a field with space for further exploration \laurie{how do
+we know this?}. This report delves into the effects of varying profiling
+methods on the performance of optimised binaries created by PLO tool BOLT.
+Additionally, it investigates the potential for using a hybrid of these
+profiling methods to develop an enhanced PGO framework.Hybrid profiling method
+is a technique that combines two or more profiling methods to produce a more
+comprehensive and accurate profiling report. 
  
-I start with doing background research on BOLT, the best known existing PGO
+I start with doing background research on BOLT, the best existing PGO
 tool.  Despite its extensive use by large corporations for complex
 applications, even relatively simple experiments uncover surprising interactions
 between profiling and performance.
@@ -66,19 +74,20 @@ between profiling and performance.
 I ultimately aim to determine which profiling methods would prove most
 effective and feasible to improve the performance of PLO tools, starting with
 BOLT. For preliminary report, I conducted experiments using existing profiling
-techniques on the Clang\cite{perf} compiler binary and compared it against the
+techniques on the Clang ~\cite{perf} compiler binary and compared it against the
 baseline Clang binary. Future work will extend the scope of these experiments
 to include a broader, more diverse range of training files to collect and
 benchmark the profiling data.
 
 \section{Background}
 Modern compilers have integrated a lot of compiler optimisation techniques,
-such as using basic block frequencies \laurie{how can normal AOT compilers use basic block frequencies for optimisatins?} and branch target information to perform
-function inlining.  But they don’t have  runtime information and can’t
-differentiate hot code path (executed a lot) from  cold code paths (executed
-rarely) \laurie{not exactly true: they can make quite good guesses. but it's definitely true that they can't be 100\% sure in most cases}. This often leads compilers to optimise cold code paths at the
-expense of hot ones. Sampling data can help us collect hot code path (at least
-most of the times) since they show up more often. 
+such as using basic block frequencies \laurie{how can normal AOT compilers use
+basic block frequencies for optimisatins?} and branch target information to
+perform function inlining.  But they don’t have  runtime information and often
+don't accurately differentiate hot code path (executed a lot) from  cold code
+paths (executed rarely). This often leads compilers to optimise cold code paths
+at the expense of hot ones. Sampling data can help us collect accurate hot code
+path (at least most of the times) since they show up more often. 
 
 Profile-Guided Optimisations operates in two stage builds where the first step
 is to build an instrumented binary. This binary is executed using a set of
@@ -105,7 +114,7 @@ code compactness among others to emit a newly optimised binary.
 \end{figure}
 
 \subsection*{Methodology} 
-BOLT\cite{bolt} is a post-link static binary
+BOLT~\cite{bolt} is a post-link static binary
 optimiser that enhances the code layout by utilizing sample-based profiling
 data at the binary level. This study investigates how much performance difference
 can be achieved by feeding BOLT different types of data (sampling or tracing)
@@ -131,31 +140,39 @@ block. In the end it rewrites and emits the optimised  binary.
     \label{aggregator-profiles}
 \end{figure}
 
-All the experiments are conducted using \textbf{Intel(R) Xeon(R) CPU E3-1270 v5
-@ 3.60GHz}. I used three types of sample profiles (referred to as \emph{modes}
-throughout the report): No Last Branch Record (NO LBR) which is the default
-\texttt{perf record} collected sample \laurie{what *is* is NO LBR? it's not explained anywhere!}, Last Branch Record (LBR), and Intel-PT
-(intel-pt or PT); these are explained in background section. I have presented
-a Table \ref{clang-benchmark:0a} later in report which indicates that compared to
-baseline binary, Clang built without intel specific feature (NO LBR mode Clang) performs
-18.45\% better, LBR mode Clang performs 19.82\% better and PT mode Clang
-performs 22.1\% better . 
+All the experiments are conducted using \emph{Intel(R) Xeon(R) CPU E3-1270 v5 @
+3.60GHz}. I used three types of sample profiles (referred to as \emph{modes}
+throughout the report): No Last Branch Record (NO LBR)\footnote{I infer perf
+collected profiles without intel architecture specific feature as NO LBR}
+which is the default \texttt{perf record} collected sample, Last Branch Record
+(LBR), and Intel-PT (intel-pt or PT); these are explained in background
+section. I have presented a Table \ref{clang-benchmark:0a} later in report
+which indicates that compared to baseline binary, Clang built without intel
+specific feature (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
+performs 19.82\% better and PT mode Clang performs 22.1\% better . 
 
-I have presented benchmarking numbers using multitime\cite{multitime}, running each test file
-100 times, taking mean value and converting standard deviation to 99\%
-confidence interval values. The baseline binary has been trained on four C
-programs (training set), and baseline along with optimised binaries were
-benchmarked on the same set of files (testing set) \laurie{normally the training and testing set should be distinct. explain why they aren't -- it's fine to say ``i chose these files because they are quite big, and i'd like to use more files in the future'' or similar}.
+I have presented benchmarking numbers using multitime ~\cite{multitime},
+running each test file 100 times, taking mean value and converting standard
+deviation to 99\% confidence interval values. The baseline binary has been
+trained and tested on same set of C source programs. The files were big enough
+for preliminary research but I would like to extend the training and testing
+set with distinct files in the future.
 
 BOLT accepts specific format to rebuild the binary. It doesn't matter how we
 capture the sample profile as long as we can convert it into BOLT friendly
-format \laurie{what is a ``BOLT friendly'' format?} before rebuilding the binary. I have used linux’s tool-chain perf. Not
-just BOLT provides tool to convert perf data into BOLT friendly data but perf
-also let us capture different type of profiling information very easily.
+format\footnote{This format consists of four columns of data. The first column
+contains numerical values which represent either 0: DSO (an unknown or
+non-symbol place), 1: a global symbol, or 2: a local symbol. The second column
+lists the symbol names, while the third provides the offset within the
+function. The fourth column shows the count of samples in that place. For LBR
+and PT, BOLT accommodates the same data format but for both FROM and TO branch
+addresses.} before rebuilding the binary. I have used linux’s tool-chain perf.
+Not just BOLT provides tool to convert perf data into BOLT friendly data but
+perf also let us capture different type of profiling information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf\cite{perf}, also commonly known as perf\_event \laurie{i've never heard it called this! i think perf\_event is a sub-part of perf?}, offers an abstraction over hardware-specific
+Perf ~\cite{perf}, offers an abstraction over hardware-specific
 capabilities. It is primarily used for performance measurements by
 instrumenting events, these events are unified interference from different
 parts of the kernel. Perf uses performance counters to capture events
@@ -182,7 +199,8 @@ Measurable events includes:
     
     \item Timed Profiling: commonly used for capturing snapshot  by using
         custom timer interrupt events and invoked using \texttt{perf record
-        -FHz} \laurie{what does ``-FHz'' mean?}
+        -FHz}, where \texttt{-F} is passed for changing frequency (i.e sample/sec)
+        and \textit{Hz} is frequency value.
 \end{itemize}
 
 The perf\_event tool is part of linux-tools-common package and can either be
@@ -214,7 +232,7 @@ but contains instruction pointer by default \laurie{huh}, irrespective of event 
 
 \subsubsection*{Sample period and rate}
 
-By default perf records sample at \textbf{both} user and kernel levels
+By default perf records sample at \emph{both} user and kernel levels
 using cycles events with average rate of ${1000}$ samples / sec or ${4000}$ events / sec \laurie{which? why two?}.
 During Sampling \texttt{perf record} asks PMU to count some
 events, for example cpu-cycles, and generate an overflow interrupt after every
@@ -234,19 +252,19 @@ depends upon frequency and period set.
 By default perf only records basic performance counter and cannot follow
 indirect function call, i.e it can only know where the target is at the
 runtime, this leads to incomplete control flow. Intel has additional support in
-their CPUs called Last Branch Record (LBR)\cite{lbr}, a hardware register to record
+their CPUs called Last Branch Record (LBR) ~\cite{lbr}, a hardware register to record
 additional information in branch stack (or brstack) about branch instruction
 such as “from” and “to” address of each branch with some additional metadata
 (timing, branch mispredictions and so). The retired branches are captured in
 the rotating ring buffer. The stack depth of the ring buffer (usually 8, 16, or
 32 frames) varies according to the Intel CPU model. Using LBR can also help in
-building better control flow graph with information about hot code paths, the
+building better control-flow graph with information about hot code paths, the
 profile generated can be used for finding basic block frequency or do
 profile-guided optimisation.
 
 \subsection*{PT}
 PT is a hardware based tracing technique integrated into Intel’s CPU
-hardware\cite{pt}. It traces branch execution which theoretically can be used to build
+hardware ~\cite{pt}. It traces branch execution which theoretically can be used to build
 exact control flow since it can know all executed code path.
 
 This makes PT to capture huge amount of data which is not the case with
@@ -259,11 +277,11 @@ We can use PT with perf’s record command as:
 
 \subsubsection*{Buffer Handling}
 PT produces hundreds of megabytes of data per second per CPU and
-it often encounters two types of errors: \textbf{trace data-loss} (generating data at
-faster rate than it can be recorded to file) and \textbf{overflow packet}
+it often encounters two types of errors: \emph{trace data-loss} (generating data at
+faster rate than it can be recorded to file) and \emph{overflow packet}
 (unable to record data to memory).
 
-Passing larger auxtrace \textbf{mmap} size seems to help in resolving the trace data
+Passing larger auxtrace \emph{mmap} size seems to help in resolving the trace data
 loss, which can be done by passing the \texttt{-m} flag. So, passing \texttt{-m,
 64M}  means we can set trace buffer size to 64MiB  per CPU. We would need to be
 careful with choosing auxtrace mmap size. For instance, if we have 8 CPUs we
@@ -275,7 +293,7 @@ PT (which I have elaborated on later in this report). This will capture lesser
 data(a couple of MiB) but is helpful to remove “Instruction trace errors” \laurie{what are these?} in captured
 data.
 
-It is important that we get rid of any "Instruction trace errors"
+It is important that we get rid of any ``Instruction trace errors``
 as BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file.
 
@@ -287,7 +305,7 @@ It uses sample based profiling data and relocations mode (by passing
 \texttt{-emit-relocs} flag) to recompile the binary. BOLT reorder
 function blocks (or basic blocks) to split hot/cold code blocks with the goal
 of improving code locality. For function discovery, BOLT relies on ELF symbol
-table and function frame information (to get function boundaries)\cite{bolt2}.
+table and function frame information (to get function boundaries)~\cite{bolt2}.
 
 To recompile the binary, BOLT requires a specific format data. The fields that
 are required to get BOLT friendly data from profiling information are: thread
@@ -300,9 +318,23 @@ data directly into BOLT friendly data.
 
 \subsubsection*{Optimisation passes}
 
-BOLT runs code transformation or analysis in the form of passes. Some passes
-heavily uses LLVM's Machine Code (MC) Class for disassembly , analysis and
-modification of binary files. BOLT also access LLVM's MCContext class for both
+BOLT uses it’s own IR, by using extension of MC-level representation from LLVM
+Machine Code library.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.2]{images/bolt_ir.pdf}
+    \caption{\small LLVM IR and BOLT IR, side by side. BOLT uses extension
+    of MCInst in it's IR. For basic-block and function layout it shares
+    the same algorithm as that of LLVM.}
+    \label{aggregator-profiles}
+\end{figure}
+
+The MC level class lives at very low level in the LLVM system i.e closer to
+Machine-level IR. This extension helps BOLT to build a disassembler with a
+custom symboliser.
+
+BOLT also access LLVM's MCContext class for both
 processing the binary, creating Labels and handling of
 BinaryBasicBlocks\footnote{A BinaryFunction can exist in various states as
 defined in the function. When it's in the disassembled state, it holds a
@@ -310,16 +342,43 @@ sequence of instructions along with their offsets. In the Control Flow Graph
 (CFG) state, it houses a set of BinaryBasicBlocks that construct a control-flow
 graph.}
 
-Other optimisation passes are where BOLT performs function splitting (in
-hot/cold sections), implements the ExtTsp and HFSort algorithms to rearrange
-basic blocks and functions, respectively.
+After reconstructing the CFG. 
 
-Table \ref{BOLT:LLVM} shows passes handled by BOLT or by LLVM's library.
-\begin{table}[ht]
+BOLT performs following passes in order:
+
+\begin{itemize}
+    \item Identical Code Folding replaces references to identical functions
+        with references to a single one of them.
+    \item Basic-block reordering is performed by using Extended-TSP
+        (ExtTSP)~\cite{ExtTSP}, which is a generalisation of maximum Traveling
+        Salesmen Problem. BOLT implements the algorithm to improve code
+        locality and i-cache utilisation.\footnote{The greedy algorithm which
+        works with ordered list of basic blocks, first tries to find a layout
+        of nodes (basic blocks) of a given CFG optimizing jump locality and
+        thus processor I-cache utilization.It then aims to increase the number
+        of fall-through jumps and to co-locate frequently executed nodes
+        together.}
+    \item BOLT performs function reordering using HFSort
+        algorithm~\cite{HFSort} to computes an optimal ordering. It goes
+        through all functions in decreasing order of their execution density
+        and for each one, finds its most likely caller and places the caller’s
+        cluster right before the callee’s cluster. After all functions are
+        considered, the HFSort algorithm orders all function clusters in
+        decreasing order of their total execution density.
+    \item Split-function is done after basic-block and function reordering.
+        BOLT uses profiling information to compute basic-block order for that
+        function, and partition blocks into hot and cold fragments.
+\end{itemize}
+
+BOLT then finally aligns basic-blocks and function code and uses LLVM’s
+MCStreamer class to emit the code into the binary.
+
+Table \ref{BOLT:LLVM} shows passes BOLT and LLVM's specific passes.
+\begin{table}[H]
     \centering
     \begin{tabular}{ccc}
         \toprule
-        \textbf{Optimisation passes} & \textbf{BOLT} & \textbf{LLVM} \\
+        \emph{Optimisation passes} & \emph{BOLT} & \emph{LLVM} \\
         \midrule
         Discover functions & & \checkmark \\
         Disassemble functions & & \checkmark \\
@@ -334,8 +393,8 @@ Table \ref{BOLT:LLVM} shows passes handled by BOLT or by LLVM's library.
         Emit \& Link & & \checkmark \\
         \bottomrule
     \end{tabular}
-    \caption{\small Column II shows optimisations handled mostly by BOLT and column III shows
-    optimisations handled mostly by LLVM objects.}
+    \caption{\small Column II shows optimisations handled specifically by BOLT and column III shows
+    optimisations handled by parts of LLVM.}
     \label{BOLT:LLVM}
 \end{table}
 
@@ -344,11 +403,11 @@ I decided to replicate BOLT's tutorial to optimise Clang binary presented in the
 github\footnote{https://github.com/llvm/llvm-project/blob/main/bolt/docs/OptimizingClang.md}
 repository and followed it with some additional experiments and benchmarking.
 
-\textbf{Experiment Setup}
+\emph{Experiment Setup}
 
 For benchmarking, I used  Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on Debian
-OS and baseline CLANG \laurie{should be spelt `Clang'} 16 (without any optimisation). The files were executed
-hundred times using multitime \cite{multitime}, which is extension of linux
+OS and baseline Clang 16 (without any optimisation). The files were executed
+hundred times using multitime ~\cite{multitime}, which is extension of linux
 times to run file multiple times and present mean, standard deviation, mins,
 medians, and maxs values on standard output. I used the sample mean and
 standard deviation values. Later I converted sample standard deviation value
@@ -356,7 +415,7 @@ into 99\% confidence interval to plot the graphs in this report. All the
 scripts to replicate the experiments can be found on my github
 repository.\footnote{https://github.com/nmdis1999/experiment\_setter}
 
-\textbf{NO LBR vs LBR vs PT}
+\emph{NO LBR vs LBR vs PT}
 
 In this section, I present my experiment where I have collected profiles in
 three modes namely NO LBR, LBR and PT and used the sample profiles captured to
@@ -446,10 +505,7 @@ To probe into why PT mode Clang outperforms the others, I examined the
 number of functions that BOLT aims to reorder and the actual percentage of
 functions it ends up reordering in all three modes.
 
-\subsubsection*{Analysis of the Number of Functions Recorded During
-Compilation, Number of Functions Captured in profile that BOLT identified, and Number of
-Functions Reordered by BOLT}
-\laurie{way too long subsubsection title!}
+\subsubsection*{Analysis of Number of Functions Identified and Reordered by BOLT} 
 
 I used the baseline Clang to gather profiles through the compilation of the
 extsmaild.c file and subsequently rebuilt the binary in three modes.Table
@@ -484,7 +540,7 @@ Does increase in number of functions captured in the profile results in faster
 Clang variant? Before answering the question above, I'll present a small
 hypothesis:
 
-\textbf{Hypothesis I: Increase in lines of code (LOC) in testing file is
+\emph{Hypothesis I: Increase in lines of code (LOC) in testing file is
 directly proportional to increased number of functions recorded by perf and
 thus captured BOLT}
 
@@ -603,7 +659,7 @@ such as FROM and TO addresses of each branch with some additional meta-data
 such as timing packets. LBR during each sample only logs last 8-32 branches
 while PT theoretically records every branch. There is a limitation that both LBR and
 PT feature of perf are currently only supported on Intel devices.
-Though there seem to be ongoing development to add support for LBR on AMD devices\cite{amd}.
+Though there seem to be ongoing development to add support for LBR on AMD devices~\cite{amd}.
 
 One interesting outcome to see would be aggregating profiles recorded in the
 LBR mode to get optimised Clang and compare Clang in PT mode using profile from
@@ -712,8 +768,8 @@ performance of PT mode Clang, and later even beats it.
 \subsubsection*{Hypothesis VI: LBR mode collected profiles has finer-grained data than
 PT mode collected profiles}
 
-Linux Perf's wiki states that "perf with LBR can provide finer timing than
-PT." \laurie{need to explain what this means --- the quote isn't sufficient} \cite{perf} This might explain why in Figure
+Linux Perf's wiki states that ``perf with LBR can provide finer timing than
+PT.`` \laurie{need to explain what this means --- the quote isn't sufficient} ~\cite{perf} This might explain why in Figure
 \ref{barplot:images} Clang build with LBR aggregated data outperforms Clang
 build using PT profile. However, it is not clear whether the statement holds 
 true when we tune cycle-accurate mode on in PT mode profiling.
@@ -795,7 +851,7 @@ Results of Hypothesis VI indicate that when profiles are aggregated both in LBR
 and PT mode they tend to give better runtime timings. However, there is a
 trade-off for using one profiling mode over the other. While with LBR, perf
 captures fine details in a smaller size profile, it uses sampling. Whereas
-with PT it is possible to creates complete control flow graph. LBR also has
+with PT it is possible to creates complete control-flow graph. LBR also has
 limited call-stack depth of max 32 frames which is not the case for PT.
 
 \begin{table}[H]
@@ -820,8 +876,9 @@ Overall PT in cycle-accurate mode despite producing the fastest Clang binary
 captures huge amounts of profiling data which is very difficult to process.
 
 \subsubsection*{Hybrid Profiling}
-\laurie{``I am proposing hybrid profiling as a method for ...''} Hybrid profiling method is a technique that combines two or more profiling
-methods to produce a more comprehensive and accurate profiling report.
+I am proposing hybrid profiling as a method for PGO framework. Hybrid profiling
+is a technique that combines two or more profiling methods to produce a
+more comprehensive and accurate profiling report.
 
 The goal of hybrid profiling is to overcome the limitation of individual
 profiling methods,for example we can use detailed tracing information of PT
@@ -844,7 +901,10 @@ report to a larger training and testing set.
 profiling technique using LBR and PT mode profiles with BOLT
 
     \item Test the hybrid profiling technique with other PGO tool(s) such as
-    Google's Propeller\cite{gp}. \end{enumerate}
+    Google's Propeller~\cite{gp}. \end{enumerate}
+
+
+\section*{Related Work}
 
 \section*{Timeline}
 \noindent
