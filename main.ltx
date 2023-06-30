@@ -149,11 +149,13 @@ blocks. In the end it rewrites and emits the optimised  binary.
 \end{figure}
 
 All the experiments are conducted using \emph{Intel(R) Xeon(R) CPU E3-1270 v5 @
-3.60GHz}. I used three types of sample profiles (referred to as \emph{modes}
-throughout the report): No Last Branch Record (NO LBR)\footnote{I infer perf
-collected profiles without intel architecture specific feature as NO LBR \laurie{huh?}}
-which is the default \texttt{perf record} collected sample, Last Branch Record
-(LBR), and Intel-PT (intel-pt or PT); these are explained in background
+3.60GHz}. 
+
+In this report I have used three types of profiling information (\emph{modes}).
+NO Last Branch Record (NO LBR) where profile data is recorded using 'cycles' as
+a sampling event,  and without additional branch instructions details such as
+TO and FROM addresses, Last Branch Record (LBR) and Intel-PT (intel-pt or PT);
+both of which are intel specific features and are explained in background
 section. I have presented a Table \ref{clang-benchmark:0a} later in the report
 which indicates that compared to the baseline binary, Clang built without intel
 specific feature (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
