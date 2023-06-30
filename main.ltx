@@ -45,7 +45,7 @@ and methods.
 While PGO exists in compilers like LLVM and GCC, they collect profile data by
 instrumenting the code. This can cause a mismatch between profile data and code
 being optimised as code progress in the compiler's optimisation
-pipeline \laurie{what mismatch?}.~\cite{gp}. For such situations, capturing a program's runtime
+pipeline~\cite{gp}. For such situations, capturing a program's runtime
 information and using it at different stages of compilation can be useful. That
 is where Profile-Guided Optimisation tools are useful.
 
@@ -80,7 +80,7 @@ between profiling and performance.
 I ultimately aim to determine which profiling methods would prove most
 effective and feasible to improve the performance of PLO tools, starting with
 BOLT. For this preliminary report, I conducted experiments using existing profiling
-techniques on the Clang ~\cite{perf} compiler binary and compared it against the
+techniques on the Clang~\cite{perf} compiler binary and compared it against the
 baseline Clang binary. My future work will extend the scope of these experiments
 to include a broader, more diverse range of training files to collect and
 benchmark the profiling data.
@@ -90,7 +90,7 @@ Modern compilers have integrated many compiler optimisation techniques
 are done using dynamic information such as 
 basic block frequencies and branch taken/not taken ratios.
 This information helps compiler to optimise for frequent cases, rather than assuming
-all code is equally likely to execute.~\cite{chen}
+all code is equally likely to execute~\cite{chen}.
 But since they do not have runtime information, and often
 don't accurately differentiate hot code paths (executed a lot) from  cold code
 paths (executed rarely). This can lead the compiler to optimising cold code paths
@@ -159,7 +159,7 @@ which indicates that compared to the baseline binary, Clang built without intel
 specific feature (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
 performs 19.82\% better and PT mode Clang performs 22.1\% better . 
 
-I have presented benchmarking numbers using multitime ~\cite{multitime}:
+I have presented benchmarking numbers using multitime~\cite{multitime}:
 running each test file 100 times, taking mean value, and converting standard
 deviation to 99\% confidence interval values. The baseline binary has been
 trained and tested on same set of C source programs. The files were big enough
@@ -180,7 +180,7 @@ perf also lets us capture different types of profiling information very easily.
 
 \subsection{Profiling Techniques}
 \subsection*{Perf}
-Perf ~\cite{perf}, offers an abstraction over hardware-specific
+Perf~\cite{perf}, offers an abstraction over hardware-specific
 capabilities. It is primarily used for performance measurements by
 instrumenting events, these events are unified interference from different
 parts of the kernel. Perf uses performance counters to capture events
@@ -267,7 +267,7 @@ period set.
 By default perf only records basic performance counter and cannot follow an 
 indirect function call, i.e it can only know where the target is at the
 runtime which leads to incomplete control flow. Intel has additional support in
-their CPUs called Last Branch Record (LBR) ~\cite{lbr}, a hardware register to record
+their CPUs called Last Branch Record (LBR)~\cite{lbr}, a hardware register to record
 additional information in branch stack (or brstack) about branch instruction
 such as “from” and “to” address of each branch with some additional metadata
 (timing, branch mispredictions and so). The retired branches are captured in
@@ -279,7 +279,7 @@ profile-guided optimisation.
 
 \subsection*{PT}
 PT is a hardware based tracing technique integrated into Intel’s CPU
-hardware ~\cite{pt}. It traces branch execution which theoretically can be used to build
+hardware~\cite{pt}. It traces branch execution which theoretically can be used to build
 exact control flow since it can know all executed code path.
 
 This makes PT to capture huge amount of data which is not the case with
@@ -427,7 +427,7 @@ repository and extended with additional experiments and benchmarking.
 
 For benchmarking, I used  Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on Debian
 OS and baseline Clang 16 (without any optimisation). The files were executed one 
-hundred times using multitime ~\cite{multitime}, which is extension of linux
+hundred times using multitime~\cite{multitime}, which is extension of linux
 times to run file multiple times and present mean, standard deviation, mins,
 medians, and maxs values on standard output. I used the sample mean and
 standard deviation values. Later, I converted sample standard deviation value
@@ -789,7 +789,7 @@ performance of PT mode Clang, and later even beats it.
 PT mode collected profiles}
 
 Linux Perf's wiki states that ``perf with LBR can provide finer timing than
-PT.'' \laurie{need to explain what this means --- the quote isn't sufficient} ~\cite{perf} This might explain why in Figure
+PT.'' \laurie{need to explain what this means --- the quote isn't sufficient}~\cite{perf} This might explain why in Figure
 \ref{barplot:images}, the Clang build with LBR aggregated data outperforms the Clang
 build using PT profile. However, it is not clear whether the statement holds 
 true when we turn the cycle-accurate mode on in PT mode profiling.
@@ -877,7 +877,7 @@ While it is easier to process profile data captured via perf in LBR mode, due
 do smaller packet sizes it does not provide the most accurate profile data.
 Sampling can produce coarse-grained data depending on frequency at which
 samples are generated. Further, LBR only captures cycle timing between two
-taken branches.~\cite{easyperf} 
+taken branches~\cite{easyperf}.
 Perf with PT mode uses CPU tracing and records the program's execution by
 encoding data captured in compressed packets. With PT it is possible to
 create an exact control-flow graph. However, since PT produces much more data
