@@ -25,9 +25,9 @@
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
 2017~\cite{cs}. Existing compiler optimisations do give performance gains, but
-they are uncertain in their optimisation decisions. Since compilers are limited
+they are uncertain \laurie{what does `uncertain' mean here?} in their optimisation decisions. Since compilers are limited
 by their static heuristics they can often make optimisation in less
-significant parts of code. Questions like which function will be 
+significant parts of code \laurie{huh?}. Questions like which function will be 
 called the most, and can benefit from inlining is easier to know
 using program's runtime information.
 
@@ -45,7 +45,7 @@ and methods.
 While PGO exists in compilers like LLVM and GCC, they collect profile data by
 instrumenting the code. This can cause a mismatch between profile data and code
 being optimised as code progress in the compiler's optimisation
-pipeline.~\cite{gp}. For such situations, capturing a program's runtime
+pipeline \laurie{what mismatch?}.~\cite{gp}. For such situations, capturing a program's runtime
 information and using it at different stages of compilation can be useful. That
 is where Profile-Guided Optimisation tools are useful.
 
@@ -144,7 +144,7 @@ blocks. In the end it rewrites and emits the optimised  binary.
     and reconstruction of CFG using profile data annotated on top of it.
     Later it performs optimisation passes such as Identical Code Folding,
     reordering function/basic blocks, and peephole optimisations. Finally,
-    BOLT emits and links the functions}.
+    BOLT emits and links the functions \laurie{did you come up with this figure yourself? if not, cite where it came from}}.
     \label{aggregator-profiles}
 \end{figure}
 
@@ -230,7 +230,7 @@ on the data. But I will not be covering that in my experiments.
 \subsubsection*{How is a sample event recorded?}
 
 An event sample is recorded when sampling counter overflows, which means
-counters go from $2^{64}$ to 0. Since 64-bit hardware counters aren’t
+counters go from $2^{64}$ to 0 \laurie{this seems unlikely: counting from 0 to 2\^64 will take ages. so event samples must surely be generated before this overflow occurs}. Since 64-bit hardware counters aren’t
 implemented in intel CPUs PMU, perf emulated it in software. Hence, when using
 perf on a 32-bit system, perf silently truncates the period \laurie{surely it
 can overflow 64 bits too?}
@@ -314,6 +314,10 @@ as BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file.
 
 \subsection*{BOLT}
+
+\laurie{this is still very vague about what bolt does and what llvm does.
+does bolt actually fiddle with machine code or not?}
+
 BOLT is a static post link binary optimiser that is built on top of LLVM
 compiler infrastructure.
 
@@ -880,7 +884,7 @@ create an exact control-flow graph. However, since PT produces much more data
 than LBR decoding data captured might take a while.
 
 LBR also has a limited call-stack depth of maximum 32 frames, which is not the case
-for PT.
+for PT.\laurie{this sentence doesn't make sense on its own}
 
 \begin{table}[H]
     \centering
