@@ -144,7 +144,8 @@ blocks. In the end it rewrites and emits the optimised  binary.
     and reconstruction of CFG using profile data annotated on top of it.
     Later it performs optimisation passes such as Identical Code Folding,
     reordering function/basic blocks, and peephole optimisations. Finally,
-    BOLT emits and links the functions \laurie{did you come up with this figure yourself? if not, cite where it came from}}.
+    BOLT emits and links the functions.~\cite{bolt}
+    }
     \label{aggregator-profiles}
 \end{figure}
 
@@ -152,10 +153,8 @@ All the experiments are conducted using \emph{Intel(R) Xeon(R) CPU E3-1270 v5 @
 3.60GHz}. 
 
 In this report I have used three types of profiling information (\emph{modes}).
-NO Last Branch Record (NO LBR) where profile data is recorded using 'cycles' as
-a sampling event,  and without additional branch instructions details such as
-TO and FROM addresses, Last Branch Record (LBR) and Intel-PT (intel-pt or PT);
-both of which are intel specific features and are explained in background
+NO Last Branch Record (NO LBR), Last Branch Record (LBR) and Intel-PT (intel-pt or PT);
+both of which are intel specific features.These modes are explained in background
 section. I have presented a Table \ref{clang-benchmark:0a} later in the report
 which indicates that compared to the baseline binary, Clang built without intel
 specific feature (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
@@ -265,6 +264,14 @@ passing \texttt{-F} and period can be adjusted by passing \texttt{-c} to
 to \texttt{perf.data} file, the size of file will depends upon frequency and
 period set.
 
+\subsection*{NO LBR}
+In this mode the profile data is recorded with perf using 'cycles' as
+a sampling event, by default sample is captured in both user and kernel 
+mode. Unlike LBR and PT, \texttt{perf record} in NO LBR doesn't logs details
+of branch instruction such as TO and FROM address.
+So the filtered field which are fed into BOLT are Process ID/ Thread ID (PID/TID),
+Instruction Pointer (IP),and events (i.e cycle event).
+
 \subsection*{LBR}
 By default perf only records basic performance counter and cannot follow an 
 indirect function call, i.e it can only know where the target is at the
@@ -348,7 +355,7 @@ Machine Code library.
     \includegraphics[scale=0.2]{images/bolt_ir.pdf}
     \caption{\small LLVM IR and BOLT IR, side by side. BOLT uses extension
     of MCInst in it's IR. For basic-block and function layout it shares
-    the same algorithm as that of LLVM.}
+    the same algorithm as that of LLVM.~\cite{bolt}}
     \label{aggregator-profiles}
 \end{figure}
 
