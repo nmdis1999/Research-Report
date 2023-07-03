@@ -265,7 +265,7 @@ In No LBR mode, the profile is captured via perf in both user and kernel space,
 with "cycles" as the default sampling event.
 
 First, the PMU increments Performance Monitoring Counters (PMCs) to count every
-cycle event. When the PMC overflows, the hardware raises a Performance
+cycle event~\cite{perf}. When the PMC overflows, the hardware raises a Performance
 Monitoring Interrupt (PMI).
 
 Next, perf uses the Interrupt Service Routine (ISR) to capture the interrupt.
@@ -276,7 +276,7 @@ generate an interrupt.
 
 For example, we can set the period such that one sample is collected every one
 million instructions (i.e., set the counter value to -1 million to overflow the
-counter every one million instructions).
+counter every one million instructions)~\cite{perfbook}.
 
 At every counter overflow, perf captures IP which indicates location where the
 event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
