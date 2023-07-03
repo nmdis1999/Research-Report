@@ -269,8 +269,8 @@ cycle event. When the PMC overflows, the hardware raises a Performance
 Monitoring Interrupt (PMI).
 
 Next, perf uses the Interrupt Service Routine (ISR) to capture the interrupt.
-The ISR begins by disabling the counter, after which it records all executed
-instructions by the CPU at the time of PMC overflow. Later, it resets the
+The ISR disables the counter, after which it records all executed
+instructions by the CPU at the time of PMC overflow. Lastly, it resets the
 counter value to $N$, where $N$ controls the frequency at which we want to
 generate an interrupt.
 
@@ -281,7 +281,7 @@ counter every one million instructions).
 At every counter overflow, perf captures IP which indicates location where the
 event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
 information (i.e TO and FROM addresses of branch along with some additional
-metadata) BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
+metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
 (IP),and events (i.e cycle event) in this mode.
 
 \subsection*{LBR}
