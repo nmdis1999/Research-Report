@@ -261,22 +261,28 @@ period set.
 
 \subsection*{NO LBR}
 
-In this mode the profile data is recorded with perf using 'cycles' as a
-sampling event, by default sample is captured in both user and kernel mode. PMU
-increments Performance Monitoring Counters (PMC) to count every cycle events.
-When PMC overflows, hardware will raise a Performance Monitoring Interrupt
-(PMI). Perf uses Interrupt Service Routine (ISR) to capture PMI. The ISR first
-disables counting to record all instructions executed by the CPU at the time of
-PMC overflow; next it reset the counter value to $N$, where $N$ controls how
-frequent we want to generate an interrupt. For example, we can set period such
-that we can collect a sample every 1 million instructions (i.e set counter
-value to -1 million to overflow counter every 1 million instructions).
+In No LBR mode, the profile is captured via perf in both user and kernel space,
+with "cycles" as the default sampling event.
 
-At every counter overflow, perf captures IP which indicates place of event's
-occurrence but LBR and PT, \texttt{perf record} in NO LBR doesn't logs details
-of branch instruction such as TO and FROM address. So the filtered field which
-are fed into BOLT are Process ID/ Thread ID (PID/TID), Instruction Pointer
-(IP),and events (i.e cycle event).
+First, the PMU increments Performance Monitoring Counters (PMCs) to count every
+cycle event. When the PMC overflows, the hardware raises a Performance
+Monitoring Interrupt (PMI).
+
+Next, perf uses the Interrupt Service Routine (ISR) to capture the interrupt.
+The ISR begins by disabling the counter, after which it records all executed
+instructions by the CPU at the time of PMC overflow. Later, it resets the
+counter value to $N$, where $N$ controls the frequency at which we want to
+generate an interrupt.
+
+For example, we can set the period such that one sample is collected every one
+million instructions (i.e., set the counter value to -1 million to overflow the
+counter every one million instructions).
+
+At every counter overflow, perf captures IP which indicates location where the
+event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
+information (i.e TO and FROM addresses of branch along with some additional
+metadata) BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
+(IP),and events (i.e cycle event) in this mode.
 
 \subsection*{LBR}
 By default perf only records basic performance counter and cannot follow an 
