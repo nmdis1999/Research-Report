@@ -25,11 +25,13 @@
 Modern software is growing in code size and complexity. For example, MySQL grew
 by 10\% in terms of line of code and 16\% in terms of binary size from 2008 to
 2017~\cite{cs}. Existing compiler optimisations do give performance gains, but
-they are uncertain \laurie{what does `uncertain' mean here?} in their optimisation decisions. Since compilers are limited
-by their static heuristics they can often make optimisation in less
-significant parts of code \laurie{huh?}. Questions like which function will be 
-called the most, and can benefit from inlining is easier to know
-using program's runtime information.
+they are uncertain in some of their optimisation decisions. For example, when
+deciding which function to inline, a compiler can make a guess based on typical
+cases but since compiler has no way knowing beforehand how many times this
+function will be called. Making guesses like this can easily result in
+suboptimal performance. With program's runtime information, it's easier to
+answer questions like which function will be called the most, and can benefit
+from inlining.
 
 For many applications, the most executed code paths (``hot paths'') rarely
 change from one run to another~\cite{SPGO}. By focusing on most executed code
@@ -230,16 +232,9 @@ on the data. But I will not be covering that in my experiments.
 
 \subsubsection*{How is a sample event recorded?}
 
-An event sample is recorded when sampling counter overflows, which means
-counters go from $2^{64}$ to 0 \laurie{this seems unlikely: counting from 0 to 2\^64 will take ages. so event samples must surely be generated before this overflow occurs}. Since 64-bit hardware counters aren’t
-implemented in intel CPUs PMU, perf emulated it in software. Hence, when using
-perf on a 32-bit system, perf silently truncates the period \laurie{surely it
-can overflow 64 bits too?}
-
-\iti{Not all PMU events have 64-bit hardware counters,
-at least in Intel CPUs. Arm has added support for 64-bit hardware counter
-though\footnote{
-    https://patchwork.kernel.org/project/linux-arm-kernel/patch/20191210120146.2942-4-andrew.murray@arm.com/}}.
+A sample is recorded after PMU generates an overflow hardware interrupt every $N$
+events, the data recorded depends on input passed by the user
+such as event type, sample period specified and more.
 
 On every counter overflow, perf can capture IP (instruction pointer) in the
 sampling mode. Dumping the IP tells us the place in the program where the event
@@ -265,12 +260,23 @@ to \texttt{perf.data} file, the size of file will depends upon frequency and
 period set.
 
 \subsection*{NO LBR}
-In this mode the profile data is recorded with perf using 'cycles' as
-a sampling event, by default sample is captured in both user and kernel 
-mode. Unlike LBR and PT, \texttt{perf record} in NO LBR doesn't logs details
-of branch instruction such as TO and FROM address.
-So the filtered field which are fed into BOLT are Process ID/ Thread ID (PID/TID),
-Instruction Pointer (IP),and events (i.e cycle event).
+
+In this mode the profile data is recorded with perf using 'cycles' as a
+sampling event, by default sample is captured in both user and kernel mode. PMU
+increments Performance Monitoring Counters (PMC) to count every cycle events.
+When PMC overflows, hardware will raise a Performance Monitoring Interrupt
+(PMI). Perf uses Interrupt Service Routine (ISR) to capture PMI. The ISR first
+disables counting to record all instructions executed by the CPU at the time of
+PMC overflow; next it reset the counter value to $N$, where $N$ controls how
+frequent we want to generate an interrupt. For example, we can set period such
+that we can collect a sample every 1 million instructions (i.e set counter
+value to -1 million to overflow counter every 1 million instructions).
+
+At every counter overflow, perf captures IP which indicates place of event's
+occurrence but LBR and PT, \texttt{perf record} in NO LBR doesn't logs details
+of branch instruction such as TO and FROM address. So the filtered field which
+are fed into BOLT are Process ID/ Thread ID (PID/TID), Instruction Pointer
+(IP),and events (i.e cycle event).
 
 \subsection*{LBR}
 By default perf only records basic performance counter and cannot follow an 
@@ -324,9 +330,6 @@ trace errors in \texttt{.data} file.
 
 \subsection*{BOLT}
 
-\laurie{this is still very vague about what bolt does and what llvm does.
-does bolt actually fiddle with machine code or not?}
-
 BOLT is a static post link binary optimiser that is built on top of LLVM
 compiler infrastructure.
 
@@ -346,6 +349,11 @@ record different mode of samples b) BOLT has a utility tool to convert perf
 data directly into BOLT friendly data.
 
 \subsubsection*{Optimisation passes}
+
+BOLT depends on LLVM for using object library (such as reading DWARKF, ELF,
+EHFrame etc), for assembly and disassembly of binary and linking. The
+optimisation passes and changes made to the binary are done specifically
+by BOLT.
 
 BOLT uses it’s own IR, by using extension of MC-level representation from LLVM
 Machine Code library.
@@ -797,22 +805,22 @@ performance of PT mode Clang, and later even beats it.
 \subsubsection*{Hypothesis VI: LBR mode collected profiles has finer-grained data than
 PT mode collected profiles}
 
-Linux Perf's wiki states that ``perf with LBR can provide finer timing than
-PT.'' \laurie{need to explain what this means --- the quote isn't sufficient}~\cite{perf} This might explain why in Figure
-\ref{barplot:images}, the Clang build with LBR aggregated data outperforms the Clang
-build using PT profile. However, it is not clear whether the statement holds 
-true when we turn the cycle-accurate mode on in PT mode profiling.
-I intend to verify this in future work, by collecting profiling data for a specific set of addresses,
-both in LBR and PT (cycle-accurate) mode. 
+From Figure \ref{barplot:images}, the Clang build with LBR aggregated data outperforms the Clang
+build using PT profile. Linux Perf's wiki states that ``perf with LBR can provide
+finer timing than PT''. LBR mode profile have additional field called 'cycle count',
+which is count of elapsed cycles between two taken branches. PT bundles up conditional
+packet before it emits a timing packet.Which means PT shows same timing for bundled
+up instructions~\cite{perfbook}. The timing information can improve with cycle-accurate mode
+but timing packets are only sent when it paired with some other control-flow packets.
+Currently LBR has most precise cycle-accurate timing information.
 
 In PT, logs are compressed into packets. PT traces use three types of timing
-packets: Packet Stream Boundary (PSB) with Time Stamp Counter (TSC) updates, 
-Mini Time Counter (MTC), and Cycle (CYC). 
-PSB although being coarse grained, is the basic synchronization 
-of the trace and provides a full TSC time stamp. 
-The MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
-Running Timer). Lastly, cycle accurate mode (CYC) packets
-are updated relative to the last send MTC packet.
+packets: Packet Stream Boundary (PSB) with Time Stamp Counter (TSC) updates,
+Mini Time Counter (MTC), and Cycle (CYC). PSB although being coarse grained, is
+the basic synchronization of the trace and provides a full TSC time stamp. The
+MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
+Running Timer). Lastly, cycle accurate mode (CYC) packets are updated relative
+to the last send MTC packet.
 
 By default, perf when operating in PT mode uses MTC packets with a period of 3.
 This means there is an ART timing update once every $2^3=8$ times, so roughly
@@ -883,17 +891,15 @@ significant performance boost, there is a trade-off for using one
 profiling mode over the other.
 
 While it is easier to process profile data captured via perf in LBR mode, due
-do smaller packet sizes it does not provide the most accurate profile data.
+do smaller packet sizes, it does not provide the most accurate profile data.
 Sampling can produce coarse-grained data depending on frequency at which
 samples are generated. Further, LBR only captures cycle timing between two
 taken branches~\cite{easyperf}.
 Perf with PT mode uses CPU tracing and records the program's execution by
-encoding data captured in compressed packets. With PT it is possible to
-create an exact control-flow graph. However, since PT produces much more data
-than LBR decoding data captured might take a while.
-
-LBR also has a limited call-stack depth of maximum 32 frames, which is not the case
-for PT.\laurie{this sentence doesn't make sense on its own}
+encoding data captured in compressed packets. Since PT captures
+outcome of every branch it is possible to
+create an exact control-flow graph with it. LBR on the other hand
+logs only source and destination of last 32 executed branches.
 
 \begin{table}[H]
     \centering
