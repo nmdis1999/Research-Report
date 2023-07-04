@@ -35,7 +35,7 @@ from inlining.
 
 For many applications, the most executed code paths (``hot paths'') rarely
 change from one run to another~\cite{SPGO}. By focusing on most executed code
-paths, existing binary rewriter tools such as BOLT~\cite{bolt} and
+paths, existing binary rewriter tools \laurie{note: binary rewriting is one kind of PGO. it is not all kinds of PGO} such as BOLT~\cite{bolt} and
 Propeller~\cite{gp} were able to achieve significant performance gains(about
 3\% to 15\%\cite{weibin}. And although compilers can make a decent guess about
 taken branches they don't have runtime information to make accurate branch
@@ -44,21 +44,23 @@ is profile-guided optimization (PGO); it offers more optimization
 opportunities, which typically is hard to obtain with static heuristics 
 and methods.
 
+\laurie{this paragraph doesn't make much sense: it both says that LLVM/GCC do PGO but don't do PGO? there's some sort of missing information here i guess?}
 While PGO exists in compilers like LLVM and GCC, they collect profile data by
-instrumenting the code. This can cause a mismatch between profile data and code
+instrumenting the code. This can cause a mismatch \laurie{what sort of mismatch?} between profile data and code
 being optimised as code progress in the compiler's optimisation
 pipeline~\cite{gp}. For such situations, capturing a program's runtime
 information and using it at different stages of compilation can be useful. That
 is where Profile-Guided Optimisation tools are useful.
 
+\laurie{i think this paragraph might be confusing `PGO in BOLT' as being different from `PGO in LLVM/GCC'. both tools can do PGO, but they might do different sorts of PGO. this paragraph both says `PGO is good' and `PGO is bad', but I think it really wants to say `BOLT-esque PGO can do more than LLVM-esque PGO'.}
 PGO\footnote{Sometimes known as Feedback-Driven Optimisation (FDO): both terms
 refer to the same concept.} helps in optimising a program's runtime
 performance by reducing branch mispredictions and instruction-cache
-problems by reordering code layout with the help of function splitting, and
+problems by reordering code layout with the help of function splitting \laurie{PGO is more likely to merge than split functions!}, and
 shrinking code size. Traditional methods such as instrumentation-based profilers
-are tedious and have a significant overhead of memory and performance for
+are tedious \laurie{why tedious?} and have a significant overhead of memory and performance for
 collecting profiling information. Additionally, they might not end up capturing
-accurate information. PGO is easily adoptable in a production environment 
+accurate information \laurie{because...}. PGO is easily adoptable \laurie{but you've just said it's tedious and inaccurate} in a production environment 
 by the way of continuously feeding dynamic profiling data to rebuild the binary.
 
 While Profile Guided Optimisation (PGO) has been an active area of research for
@@ -74,7 +76,7 @@ develop an enhanced PGO framework. A hybrid profiling method combines two or
 more profiling methods to produce a more comprehensive and accurate profiling
 report. 
  
-I start with doing background research on BOLT, the best existing PGO
+I start with doing background research on BOLT, the best existing \laurie{this isn't scientific: we don't know it's the best!} PGO
 tool.  Despite its extensive use by large corporations for complex
 applications, even relatively simple experiments uncover surprising interactions
 between profiling and performance.
@@ -88,7 +90,8 @@ to include a broader, more diverse range of training files to collect and
 benchmark the profiling data.
 
 \section{Background}
-Modern compilers have integrated many compiler optimisation techniques
+
+\laurie{sentence dosen't parse} Modern compilers have integrated many compiler optimisation techniques
 are done using dynamic information such as 
 basic block frequencies and branch taken/not taken ratios.
 This information helps compiler to optimise for frequent cases, rather than assuming
@@ -100,7 +103,7 @@ at the expense of hot ones. Sampling data can help us collect accurate hot code
 paths (at least most of the times) as they show up more often. 
 
 Profile-Guided Optimisation operates in two stage builds where the first step
-is to build an instrumented binary. This binary is executed using a set of
+is to build an instrumented binary \laurie{but earlier you said instrumentation isn't always necessary}. This binary is executed using a set of
 inputs suitable for training, and profile data is collected from this run. The
 second build step compiles the binary again with the profile collected from the
 first run. The profile data obtained through sampling can be retrofitted at
@@ -109,14 +112,14 @@ Optimisers (PLOs) (also called static binary optimiser) which directly operate o
 the executable files. 
 
 PLOs take the binary executable and a profile, either
-captured with instrumentation of source code or with hardware counters, and
+captured with instrumentation of source code or with hardware counters \laurie{so not all code needs instrumentation?}, and
 perform optimisation(s) such as reordering function and/or basic blocks,
 code compactness among others to emit a newly optimised binary. 
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.07]{images/PLO.pdf}
-    \caption{\small How Post Link Optimisers work. A PLO 
+    \caption{\small \laurie{is this your diagram? if not, cite where it came from and explicitly say ``Diagram taken from blah''} How Post Link Optimisers work. A PLO 
     takes an input binary and capture profile data from its run. In next step,
     both the binary executable and profile data are fed into PLO and it performs
     some optimisation passes to build a new binary.}
@@ -156,10 +159,10 @@ All the experiments are conducted using \emph{Intel(R) Xeon(R) CPU E3-1270 v5 @
 
 In this report I have used three types of profiling information (\emph{modes}).
 NO Last Branch Record (NO LBR), Last Branch Record (LBR) and Intel-PT (intel-pt or PT);
-both of which are intel specific features.These modes are explained in background
-section. I have presented a Table \ref{clang-benchmark:0a} later in the report
-which indicates that compared to the baseline binary, Clang built without intel
-specific feature (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
+both of which are \laurie{capital I} intel specific features.These modes are explained in background
+section. Table \ref{clang-benchmark:0a} later in the report
+shows that, compared to the baseline binary, Clang built without intel
+specific feature \laurie{i'm not sure we want to say ``Intel is the only way of doing this'', because other CPUs probably have an equivalent of LBR. so we probably want to say something like ``Without dedicated branch information (LBR) from the CPU, we have to use cruder mechanisms (e.g.~cycle counts as found in NO LBR) as a proxy and they perform worse''} (NO LBR mode Clang) performs 18.45\% better, LBR mode Clang
 performs 19.82\% better and PT mode Clang performs 22.1\% better . 
 
 I have presented benchmarking numbers using multitime~\cite{multitime}:
@@ -218,6 +221,7 @@ The perf is part of linux-tools-common package and can either be
 installed via \texttt{linux-tools-generic}
 or be build from source. For this report, I have used in-built perf on Debian OS. 
 
+\laurie{use enumerate lists if you need them or at least use `1` and `2` or `a` and `b`, not `1` and `b` ;)}
 Perf operates in two modes, 1) Counting, using \texttt{perf stat} which lets
 user collect overall statistics about execution of an application and presents
 it on the standard output. b) Sampling mode, using \texttt{perf
@@ -226,11 +230,14 @@ the kernel and then read at an asynchronous rate to write to the perf.data
 file. This file is then analysed by the perf \texttt{report} or
 \texttt{script} commands.
 
+\laurie{very briefly explain why bpf is different than perf (1 sentence should be enough)}
 Another way to instrument is by using BPF program on events which can then execute
 custom user-defined programs in kernel space, and perform filters and summaries
 on the data. But I will not be covering that in my experiments.
 
 \subsubsection*{How is a sample event recorded?}
+
+\laurie{this section needs to introduce the negative overflow stuff: at the moment this information is repeated later in the `NO LBR' section, which means this section is incomplete}
 
 A sample is recorded after PMU generates an overflow hardware interrupt every $N$
 events, the data recorded depends on input passed by the user
@@ -262,7 +269,7 @@ period set.
 \subsection*{NO LBR}
 
 In No LBR mode, the profile is captured via perf in both user and kernel space,
-with "cycles" as the default sampling event.
+with \laurie{never use double quote marks in latex} "cycles" as the default sampling event.
 
 First, the PMU increments Performance Monitoring Counters (PMCs) to count every
 cycle event~\cite{perf}. When the PMC overflows, the hardware raises a Performance
@@ -285,20 +292,23 @@ metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
 (IP),and events (i.e cycle event) in this mode.
 
 \subsection*{LBR}
+\laurie{i think we should make clearer that LBR is an intel-specific implementation of a more general idea}
+
 By default perf only records basic performance counter and cannot follow an 
-indirect function call, i.e it can only know where the target is at the
+indirect function call, i.e \laurie{`i.e.~blah' must always be formatted so (with the tilde after the second full stop)} it can only know where the target is at the
 runtime which leads to incomplete control flow. Intel has additional support in
 their CPUs called Last Branch Record (LBR)~\cite{lbr}, a hardware register to record
 additional information in branch stack (or brstack) about branch instruction
-such as “from” and “to” address of each branch with some additional metadata
+such as \laurie{don't use double quotes (even smart quotes) in latex} “from” and “to” address of each branch with some additional metadata
 (timing, branch mispredictions and so). The retired branches are captured in
 the rotating ring buffer. The stack depth of the ring buffer (usually 8, 16, or
-32 frames) varies according to the Intel CPU model. Using LBR can also help in
+32 frames) varies according to the Intel CPU model. Using LBR can help in
 building a better control-flow graph with information about hot code paths, and the
 profile generated can be used for finding basic block frequency or perform
-profile-guided optimisation.
+profile-guided optimisation \laurie{NO LBR mode can also do this, right? so what's different about LBR and NO LBR?}.
 
 \subsection*{PT}
+\laurie{this is too brief for readers to understand: how is PT different than LBR?}
 PT is a hardware based tracing technique integrated into Intel’s CPU
 hardware~\cite{pt}. It traces branch execution which theoretically can be used to build
 exact control flow since it can know all executed code path.
@@ -307,7 +317,7 @@ This makes PT to capture huge amount of data which is not the case with
 standard processing such as PMU. Thus it uses additional auxiliary buffer(AUX)
 which is associated with perf’s ring buffer.
 
-We can use PT with perf’s record command as: 
+We can use PT with perf’s record command as: \laurie{this sentence and the command below feel orphaned!}
 
 \texttt{perf record -e intel-pt//u ls}
 
@@ -330,7 +340,7 @@ hack will result in smaller data files (a couple of MiB), it does successfully
 remove ``Instruction trace errors'' from profile data 
 caused because of errors mentioned above.
 
-It is important that we get rid of any ``Instruction trace errors'' from profile data
+It is important that we get rid of any ``Instruction trace errors'' \laurie{how do you get rid of them?} from profile data
 as BOLT fails to convert data into in a acceptable format if it encounters
 trace errors in \texttt{.data} file.
 
@@ -385,9 +395,9 @@ sequence of instructions along with their offsets. In the Control Flow Graph
 (CFG) state, it houses a set of BinaryBasicBlocks that construct a control-flow
 graph.}
 
-After reconstructing the CFG. 
+After reconstructing the CFG \laurie{incomplete sentence}. 
 
-BOLT performs following passes in order:
+BOLT performs following passes in order \laurie{use `enumerate' for ordered things (not itemize)}:
 
 \begin{itemize}
     \item Identical Code Folding replaces references to identical functions
@@ -400,7 +410,7 @@ BOLT performs following passes in order:
         of nodes (basic blocks) of a given CFG optimizing jump locality and
         thus processor I-cache utilization. It then aims to increase the number
         of fall-through jumps and to co-locate frequently executed nodes
-        together.}
+        together. \laurie{this text needs to be in the main body somewhere}}
     \item BOLT performs function reordering using HFSort
         algorithm~\cite{HFSort} to computes an optimal ordering. It goes
         through all functions in decreasing order of their execution density
@@ -419,7 +429,7 @@ MCStreamer class to emit the code into the binary.
 Table \ref{BOLT:LLVM} shows passes BOLT and LLVM's specific passes.
 \begin{table}[H]
     \centering
-    \begin{tabular}{ccc}
+    \begin{tabular}{lcc}
         \toprule
         \emph{Optimisation passes} & \emph{BOLT} & \emph{LLVM} \\
         \midrule
@@ -451,7 +461,7 @@ repository and extended with additional experiments and benchmarking.
 For benchmarking, I used  Intel(R) Xeon(R) CPU E3-1270 v5 @ 3.60GHz, on Debian
 OS and baseline Clang 16 (without any optimisation). The files were executed one 
 hundred times using multitime~\cite{multitime}, which is extension of linux
-times to run file multiple times and present mean, standard deviation, mins,
+times \laurie{what is `linux times'?} to run file multiple times and present mean, standard deviation, mins,
 medians, and maxs values on standard output. I used the sample mean and
 standard deviation values. Later, I converted sample standard deviation value
 into 99\% confidence interval to plot the graphs in this report. All the
@@ -468,14 +478,14 @@ I conducted an experiment to compare performance of baseline Clang with
 Clang build using NO LBR mode profile and LBR mode profiling data. I used two
 distinct sets: a training set to generate the profiles for constructing the new
 version of Clang, and a testing set\footnote{Both the training and testing are
-same: extsmaild.c, tty.c, window-copy.c and format.c} to procure the sample
+same: extsmaild.c, tty.c, window-copy.c and format.c \laurie{it's incorrect to claim you've used two distinct sets that also happen to be the same!!! nor is it ok to put this in a footnote: you need to be open and honest with readers in the main body of text}} to procure the sample
 mean wall-clock time over hundred runs and the 99\% confidence
 interval\footnote{Files used are from following repository:
 https://github.com/ltratt/extsmail https://github.com/tmux/tmux}.
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{ccccc}
+    \begin{tabular}{lcccc}
         \toprule
         Testing file & Baseline & NO LBR & LBR \\
         \midrule
@@ -494,7 +504,7 @@ The above experiment demonstrates that a Clang build with an LBR mode profile
 is approximately 1.66\% faster than a Clang build using a NO LBR mode profile.
 I intended for the PT data to run the same optimisation as BOLT when it is fed
 LBR mode profiling data. However, BOLT does not support the processing of PT
-data and only handles NO LBR and LBR data formats. By making adjustments
+data and only handles NO LBR and LBR data formats. By making adjustments \laurie{what adjustments?}
 mentioned later in this section to BOLT’s data aggregator source code, we can
 enable it to use PT-collected profile information.
 
@@ -528,7 +538,7 @@ mode, LBR mode and PT mode Clang.
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{ccccc}
+    \begin{tabular}{lcccc}
         \toprule
         Testing file & Baseline & NO LBR & LBR & Intel PT \\
         \midrule
@@ -695,6 +705,7 @@ brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis III: perf in PT mode records more functions
 in the samples than LBR mode to build better control flow.}
+\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}
 
 \texttt{Perf record} in LBR and PT mode has some additional information
 which is not available in NO LBR mode. More details can be fetched about branches
@@ -808,7 +819,7 @@ I will present another hypothesis to analyse why in Hypothesis III, Clang built 
 LBR mode profiles collected over 5 or more runs on same file, first converges to the
 performance of PT mode Clang, and later even beats it.
 
-\subsubsection*{Hypothesis VI: LBR mode collected profiles has finer-grained data than
+\subsubsection*{Hypothesis VI: LBR mode collected profiles has finer-grained data \laurie{`finer-grained data' is too vague to be useful. i think the hypothesis should be something like `Because LBR collects timing data more often, it can do better than PT'?} than
 PT mode collected profiles}
 
 From Figure \ref{barplot:images}, the Clang build with LBR aggregated data outperforms the Clang
@@ -834,6 +845,8 @@ every 300ns. This is quite coarse, so I used CYC packet in conjunction with
 MTC. However, the data generated by perf command increases in size with
 decrease in MTC period's value and thus, gets difficult to processes. For this
 experiment, I did not alter MTC period's value.
+
+\laurie{i'm missing a comparison between LBR and PT here: how often is LBR giving us cycle data? how does that compare to PT?}
 
 In case modification is needed in MTC period, the following command can be
 used:
@@ -893,7 +906,7 @@ Clang built with LBR aggregated profiles.
 From Hypothesis VI it is fair to say that when profiles are aggregated both in LBR
 and PT mode, they tend to give better runtime timings. And although this method
 of aggregating multiple profiles in sample mode might help achieving a 
-significant performance boost, there is a trade-off for using one
+significant performance boost, there is a trade-off \laurie{what trade-off?} for using one
 profiling mode over the other.
 
 While it is easier to process profile data captured via perf in LBR mode, due
