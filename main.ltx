@@ -38,7 +38,7 @@ change from one run to another~\cite{SPGO}. By focusing on most executed code
 paths, existing binary rewriter tools \laurie{note: binary rewriting is one
 kind of PGO. it is not all kinds of PGO} \iti{since I am introducing PGO after
 couple of lines I think changing binary rewriter to PGO tool might be
-repetitive} such as BOLT~\cite{bolt} and Propeller~\cite{gp} were able to
+repetitive} \laurie{repetition in scientific writing is fine, provided it helps the reader. it's not like a novel where we're told that repeating words bores the reader.} such as BOLT~\cite{bolt} and Propeller~\cite{gp} were able to
 achieve significant performance gains(about 3\% to 15\%\cite{weibin}. And
 although compilers can make a decent guess about taken branches they don't have
 runtime information to make accurate branch prediction.~\cite{chen}. One of the
@@ -58,9 +58,7 @@ is where Post Link Optimisers (another kind of PGO tool) are useful.
 PGO\footnote{Sometimes known as Feedback-Driven Optimisation (FDO): both terms
 refer to the same concept.} helps in optimising a program's runtime performance
 by reducing branch mispredictions and instruction-cache problems by reordering
-code layout, function splitting \iti{function splitting is used to move cold
-basic blocks to different section resulting in tight packing of frequently
-executed code.} \laurie{PGO is more likely to merge than split functions!}, and
+code layout, function splitting, and
 shrinking code size. 
 Traditional methods such as instrumentation-based PGO are tedious because it
 requires changes to the code in the application, resulting in complicated build
@@ -124,9 +122,7 @@ the compilation pipeline; my report focuses on Post Link Optimisers (PLOs)
 files and uses profile data collected using hardware counter.
 
 PLOs take the binary executable and a profile, either captured with
-instrumentation of source code or with hardware counters \laurie{so not all
-code needs instrumentation?} \iti{edited paragraph above this to address your
-question.}, and perform optimisation(s) such as reordering function and/or
+instrumentation of source code or with hardware counters, and perform optimisation(s) such as reordering function and/or
 basic blocks, code compactness among others to emit a newly optimised binary. 
 
 \begin{figure}[htbp]
@@ -244,8 +240,7 @@ the kernel and then read at an asynchronous rate to write to the perf.data
 file. \end{enumerate} This file is then analysed by the perf \texttt{report} or
 \texttt{script} commands.
 
-\laurie{very briefly explain why bpf is different than perf (1 sentence should
-be enough)} Another way to instrument is by using BPF program on events.
+Another way to instrument is by using BPF program on events.
 Traditionally perf post-process sample profile whereas with BPF, perf\_events
 is used to collect sample by executing custom user-defined programs in the
 kernel space. I will not be covering BPF programs using perf in my
@@ -306,7 +301,8 @@ At every counter overflow, perf captures IP which indicates location where the
 event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
 information (i.e.~ TO and FROM addresses of branch along with some additional
 metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
-(IP),and events (i.e.~ cycle event) in this mode.
+(IP),and events (i.e.~ cycle event) in this mode \laurie{how does PID/TID
+compensate for not having branch addresses?}.
 
 \subsection*{LBR}
 By default perf only records basic performance counter and cannot follow an
@@ -324,12 +320,14 @@ development to add support for LBR on AMD devices~\cite{amd} as well.
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
-CPU model. Using LBR can help in building a better control-flow graph with
+CPU model. Using LBR can help in building a better \laurie{better than?} control-flow graph with
 information about hot code paths, and the profile generated can be used for
 finding basic block frequency or perform profile-guided optimisation \laurie{NO
 LBR mode can also do this, right? so what's different about LBR and NO
 LBR?}\iti{Had captured this in paragraph 1 \& 2, but anyways expanded it to
-cover details)}.
+cover details)}\laurie{which paragraphs?}.
+
+\laurie{need a paragraph here briefly explaining why LBR is better than NO LBR. for example, how often can NO LBR sample? is LBR in a sense ``ring buffer times' better than NO LBR or ... ? basically, let's try putting some numbers on NO LBR vs LBR.}
 
 \subsection*{PT}
 Perf supports capturing data with Intel's Processor Tracing with following command:
@@ -377,7 +375,7 @@ remove ``Instruction trace errors'' from profile data
 caused because of errors mentioned above.
 
 It is important that we get rid of any ``Instruction trace errors'' \laurie{how
-do you get rid of them?} \iti{the above 2 paragraphs address how to.} from
+do you get rid of them?} \iti{the above 2 paragraphs address how to.} \laurie{i wouldn't say you ``got rid of them'' by rerunning things: if you mean ``the user has to rerun until they get no such errors'' that's a bit different} from
 profile data as BOLT fails to convert data into in a acceptable format if it
 encounters trace errors in \texttt{.data} file.
 
@@ -740,7 +738,7 @@ brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis III: perf in PT mode records more functions
 in the samples than LBR mode to build better control flow.}
-\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove this subsection?}
+\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove this subsection?}\laurie{it should probably come earlier in the report when you introduce PT, because it explains why PT is rather different than LBR}
 
 \texttt{Perf record} in LBR and PT mode has some additional information
 which is not available in NO LBR mode. More details can be fetched about branches
@@ -877,14 +875,12 @@ MTC packet has finer and regular timing updates from the 24/25Mhz ART (Always
 Running Timer). Lastly, cycle accurate mode (CYC) packets are updated relative
 to the last send MTC packet.
 
-By default, perf when operating in PT mode uses MTC packets with a period of 3.
-This means there is an ART timing update once every $2^3=8$ times, so roughly
+By default, perf when operating in PT mode uses MTC packets with a period of 3 \laurie{units?}.
+This means there is an ART timing update once every $2^3=8$ times \laurie{per what?}, so roughly
 every 300ns. This is quite coarse, so I used CYC packet in conjunction with
 MTC. However, the data generated by perf command increases in size with
 decrease in MTC period's value and thus, gets difficult to processes. For this
 experiment, I did not alter MTC period's value.
-
-\laurie{i'm missing a comparison between LBR and PT here: how often is LBR giving us cycle data? how does that compare to PT?}\iti{addressed in first paragraph}
 
 In case modification is needed in MTC period, the following command can be
 used:
@@ -946,7 +942,6 @@ and PT mode, they tend to give better runtime timings. And although this method
 of aggregating multiple profiles in sample mode might help achieving a 
 significant performance boost, there is a trade-off for using one
 profiling mode over the other.
-\iti{I have written trade-offs in paragraph below.}
 
 For example, it is easier to process profile data captured via perf in LBR
 mode, due do smaller packet sizes, however it only accounts for last 8-32 taken
@@ -957,9 +952,9 @@ Perf with PT mode uses CPU tracing and records the program's execution by
 encoding data captured in compressed packets. Since PT captures
 outcome of every branch it is possible to
 create an exact control-flow graph with it. This results in profile being
-more accurate than that of LBR. But PT as mentioned in Background section
+more accurate than that of LBR. But PT as mentioned in Background section \laurie{use a latex label + reference}
 capture less accurate timings between branches (due to sending timing
-packets less often) in comparison to LBR. 
+packets less often) in comparison to LBR \laurie{the reader might not appreciate why timing information is so important. the challenge is that they can be confused because PT gains complete branching information but less accurate timing information (at least AIUI!) and it's not clear why that's a bad, or not-always-good, tradeoff. try and put some numbers on this if you can}. 
 \begin{table}[H]
     \centering
     \scalebox{0.85}{
