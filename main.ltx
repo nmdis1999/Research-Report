@@ -309,18 +309,18 @@ metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
 (IP),and events (i.e.~ cycle event) in this mode.
 
 \subsection*{LBR}
-\laurie{i think we should make clearer that LBR is an intel-specific implementation of a more general idea}
-
 By default perf only records basic performance counter and cannot follow an
-indirect function call, i.e.~ it can only know where the target
-is at the runtime which leads to incomplete control flow. By sampling last
-executed branches it is possible to build a better control-flow graph and
-capture accurate data about hot code paths. Intel has additional support in
-their CPUs called Last Branch Record (LBR)~\cite{lbr}, a hardware register to
-record additional information in the sampling data about branch instructions
-known as branch stack (or brstack). Branch stack includes information such as
-to and from address of each taken branch with some additional metadata (top of
-the stack counter, timing, branch mispredictions and so).
+indirect function call, i.e.~ it can only know where the target is at the
+runtime which leads to incomplete control flow. By sampling last executed
+branches it is possible to build a better control-flow graph and capture
+accurate data about hot code paths. Intel has additional support in their CPUs
+called Last Branch Record (LBR)~\cite{lbr}, a hardware register to record
+additional information in the sampling data about branch instructions known as
+branch stack (or brstack). Branch stack includes information such as to and
+from address of each taken branch with some additional metadata (top of the
+stack counter, timing, branch mispredictions and so). The idea of sampling
+recent executed branches is not specific to Intel, there seems to be ongoing
+development to add support for LBR on AMD devices~\cite{amd} as well.
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
@@ -740,7 +740,7 @@ brings me to the next hypothesis:
 
 \subsubsection*{Hypothesis III: perf in PT mode records more functions
 in the samples than LBR mode to build better control flow.}
-\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}\iti{todo}
+\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove this subsection?}
 
 \texttt{Perf record} in LBR and PT mode has some additional information
 which is not available in NO LBR mode. More details can be fetched about branches
