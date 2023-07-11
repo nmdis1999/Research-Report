@@ -298,15 +298,24 @@ event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
 information (i.e.~TO and FROM addresses of branch along with some additional
 metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
 (IP), and events (i.e.~cycle event) in this mode \laurie{how does PID/TID
-compensate for not having branch addresses?}.
+compensate for not having branch addresses?}
+
+\iti{PID/TID are constant in both LBR
+and NO LBR, the only difference is branch-stack which is present in LBR, I have
+added explanation in LBR section what difference having branch stack makes}.
 
 \subsection*{LBR}
-By default perf in NO LBR mode can only records basic performance counter
-and cannot follow an indirect function call, i.e.~it can only know where the
-target is at the runtime which leads to incomplete control flow. So while in NO
-LBR mode the profile does capture some of most executed hot paths.
-By sampling last executed branches it is possible to build a better
-control-flow graph and capture accurate data about hot code paths.
+By default perf in NO LBR mode can only record basic performance counter and
+cannot follow an indirect function call, i.e.~it can only know where the target
+is at the runtime which leads to an incomplete control flow. So while in NO LBR
+mode it is possible to capture subset of most executed paths, it doesn't account for
+instructions with indirect branches and calls. Indirect branches occur when
+switch statements are converted into jump tables, and indirect calls happen
+because of virtual calls. With LBR it is possible to capture indirect branches
+and calls for taken branches in each sample. Not only sampling last executed
+branches helps in building a better control-flow graph (more complete than NO
+LBR), it can also lead to a better code layout optimisation (with the help
+of accurate branch probability).
 
 New Intel and AMD machines~\cite{amd} have additional support in their CPUs called Last
 Branch Record (LBR)~\cite{lbr}, a hardware register to record additional
@@ -317,21 +326,26 @@ counter, timing, branch mispredictions and so).
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
-CPU model. In each sample user can look at last (let's take 32) taken
-branches, this results in a good coverage of most executed
-code paths. NO LBR on the other hand just
-has direct instruction calls (i.e.~no jumps) which results in incomplete
-control-flow-graph.
-
-Using LBR can help in building a better control-flow graph than NO LBR
-mode profile.
+CPU model. The sample collected in LBR accounts for $direct instructions +
+indirect instructions (branch stack with last 32 executed branches)$. The last
+32 executed branches is not a separate entity, it comes along with instruction
+captured in a sample (if the instruction has branch stack). NO LBR on the
+other hand only captures samples with direct instructions.
 
 \laurie{NO
 LBR mode can also do this, right? so what's different about LBR and NO
 LBR?}\iti{Had captured this in paragraph 1 \& 2, but anyways expanded it to
-cover details)}\laurie{which paragraphs?}.
+cover details)}\laurie{which paragraphs?}
+
+\iti{I have updated paragraph 1}.
 
 \laurie{need a paragraph here briefly explaining why LBR is better than NO LBR. for example, how often can NO LBR sample? is LBR in a sense ``ring buffer times' better than NO LBR or ... ? basically, let's try putting some numbers on NO LBR vs LBR.}
+
+\iti{I don't think there is going to be a fixed number by which LBR sample
+is larger than NO LBR. Both are sampled at the same rate i.e 1000 sample/sec, however one captures less
+type of instruction and details than other, i.e.~ NO LBR captures only direct instructions
+but LBR captures both direct and indirect (and some additional metadata in indirect instructions). I have
+added this in paragraph 3 of this section.}
 
 \subsection*{PT}
 Perf supports capturing data with Intel's Processor Tracing with following command:
