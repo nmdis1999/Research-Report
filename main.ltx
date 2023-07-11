@@ -300,11 +300,13 @@ metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
 (IP), and events (i.e.~cycle event) in this mode \laurie{how does PID/TID
 compensate for not having branch addresses?}
 
-\iti{PID/TID are constant in both LBR
-and NO LBR, the only difference is branch-stack which is present in LBR, I have
-added explanation in LBR section what difference having branch stack makes}.
+\iti{PID/TID are constant in both LBR and NO LBR, the only difference is
+branch-stack which is present in LBR, I have added explanation in LBR section
+what difference having branch stack makes}.
 
 \subsection*{LBR}
+\label{sec:LBR}
+
 By default perf in NO LBR mode can only record basic performance counter and
 cannot follow an indirect function call, i.e.~it can only know where the target
 is at the runtime which leads to an incomplete control flow. So while in NO LBR
@@ -339,25 +341,31 @@ cover details)}\laurie{which paragraphs?}
 
 \iti{I have updated paragraph 1}.
 
-\laurie{need a paragraph here briefly explaining why LBR is better than NO LBR. for example, how often can NO LBR sample? is LBR in a sense ``ring buffer times' better than NO LBR or ... ? basically, let's try putting some numbers on NO LBR vs LBR.}
+\laurie{need a paragraph here briefly explaining why LBR is better than NO LBR.
+for example, how often can NO LBR sample? is LBR in a sense ``ring buffer
+times' better than NO LBR or ... ? basically, let's try putting some numbers on
+NO LBR vs LBR.}
 
-\iti{I don't think there is going to be a fixed number by which LBR sample
-is larger than NO LBR. Both are sampled at the same rate i.e 1000 sample/sec, however one captures less
-type of instruction and details than other, i.e.~ NO LBR captures only direct instructions
-but LBR captures both direct and indirect (and some additional metadata in indirect instructions). I have
-added this in paragraph 3 of this section.}
+\iti{I don't think there is going to be a fixed number by which LBR sample is
+larger than NO LBR. Both are sampled at the same rate i.e 1000 sample/sec,
+however one captures less type of instruction and details than other, i.e.~ NO
+LBR captures only direct instructions but LBR captures both direct and indirect
+(and some additional metadata in indirect instructions). I have added this in
+paragraph 3 of this section.}
 
 \subsection*{PT}
+\label{sec:PT}
+
 Perf supports capturing data with Intel's Processor Tracing with following command:
 
 \texttt{perf record -e intel-pt//u ls}
 
 PT is a hardware based tracing technique integrated into Intel’s CPU
-hardware~\cite{pt}. Similar to LBR method, PT does not require
-any modifications to the sample code. However, unlike LBR it captures
-data using tracing mechanism instead of sampling. Thus, we can
-capture all the branch instructions executed. As mentioned, LBR
-only logs data of last 8-32 branch instructions.
+hardware~\cite{pt}. Similar to LBR method, PT does not require any
+modifications to the sample code and also have branch stack. However, unlike
+LBR it captures data using tracing mechanism instead of sampling. Thus, we
+can capture all the branch instructions executed. As mentioned, LBR only logs
+data of last 8-32 branch instructions while PT has unlimited stack depth.
 
 In PT, CPU captures branch instructions data at the runtime, which can be used
 to build exact control flow graph. Since PT has record of every branch
@@ -744,32 +752,38 @@ sometimes beats Clang build using profile from window-copy.c compilation.
     \label{clang-benchmark:pt}
 \end{table}
 
-In the PT mode (Table \ref{clang-benchmark:pt}), a similar trend like LBR is noticed - an increase in LOC
-tends to enhance performance, albeit with notably diminishing returns
-when two files with a lesser delta in LOC are compared.
+In the PT mode (Table \ref{clang-benchmark:pt}), a similar trend like LBR is
+noticed - an increase in LOC tends to enhance performance, albeit with notably
+diminishing returns when two files with a lesser delta in LOC are compared.
 
 Could the observed relative increase in Clang's performance with respect to
 the lines of code (LOC) in both LBR and PT modes be attributed to their
-capacity to record more functions during sampling? This
-brings me to the next hypothesis:
+capacity to record more functions during sampling?
 
-\subsubsection*{Hypothesis III: perf in PT mode records more functions
-in the samples than LBR mode to build better control flow.}
-\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove this subsection?}\laurie{it should probably come earlier in the report when you introduce PT, because it explains why PT is rather different than LBR}
+\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT
+doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove
+this subsection?}\laurie{it should probably come earlier in the report when you
+introduce PT, because it explains why PT is rather different than LBR}
 
-\texttt{Perf record} in LBR and PT mode has some additional information
-which is not available in NO LBR mode. More details can be fetched about branches
-such as FROM and TO addresses of each branch with some additional meta-data
-such as timing packets. LBR during each sample only logs the last 8-32 branches,
-while PT theoretically records every branch. There is a limitation that both, LBR, and
-PT feature of perf are currently supported only on Intel devices.
-Though there seems to be ongoing development to add support for LBR on AMD devices~\cite{amd}.
+\iti{I have already captured why PT is different in \ref{sec:PT} so I feel
+removing hypothesis label and leaving this paragraph here would be better}
 
-By aggregating profiles recorded in the LBR mode to get an optimised Clang, and comparing it to
-Clang in PT mode using profile from single file compilation provides some interesting observations.
-My next two hypotheses capture this:
+As mentioned in Section \ref{sec:LBR} and \ref{sec:PT} \texttt{Perf record} in
+LBR and PT mode has some additional information which is not available in NO
+LBR mode. More details can be fetched about branches such as FROM and TO
+addresses of each branch with some additional meta-data such as timing
+packets. LBR during each sample only logs the last 8-32 branches, while PT
+theoretically records every branch. With both LBR and PT the control-flow graph
+reconstructed is much better than that with NO LBR profile. However, there is a
+limitation that both, LBR, and PT feature of perf are currently supported only
+on Intel devices. Though there seems to be ongoing development to add support
+for LBR on AMD devices~\cite{amd}.
 
-\subsubsection*{Hypothesis IV : Aggregating multiple profiles over n runs on the
+In next two hypothesis, I aggregated profiles recorded in LBR mode and used it to
+build new version of Clang, later I compared Clang build using single PT profile
+with the aggregated LBR profile build Clang.
+
+\subsubsection*{Hypothesis III : Aggregating multiple profiles over n runs on the
 same training file results in building faster Clang binaries.}
 
 To test this hypothesis, I aggregated profiles (collected with perf) over $n$
@@ -820,7 +834,7 @@ test set, this seems to be proving my hypothesis correct.
     \label{barplot:images}
 \end{figure}
 
-\subsubsection*{Hypothesis V: Aggregating profiles from different training files
+\subsubsection*{Hypothesis IV: Aggregating profiles from different training files
 results in building a faster Clang binary.}
 
 Next, instead of aggregating profiles from runs on the same file, I captured
@@ -869,7 +883,7 @@ I will present another hypothesis to analyse why in Hypothesis III, Clang built 
 LBR mode profiles collected over 5 or more runs on same file, first converges to the
 performance of PT mode Clang, and later even beats it.
 
-\subsubsection*{Hypothesis VI: In LBR mode timing packets are collected more
+\subsubsection*{Hypothesis V: In LBR mode timing packets are collected more
 often than PT mode, resulting in more accurate timing information between two
 branch instructions.}
 
@@ -997,8 +1011,17 @@ effects both LBR and PT mode profiles in reducing cache misses in different hier
 i.e~ i-cache (instruction cache) and d-cache (data cache) for multiple Post-Link Optimisers.
 
 
-\laurie{the reader might not appreciate why timing information is so important. the challenge is that they can be confused because PT gains complete branching information but less accurate timing information (at least AIUI!) and it's not clear why that's a bad, or not-always-good, tradeoff. try and put some numbers on this if you can}.\iti{i tried to explain why timing packets would be important for reducing cache misses with reference. Getting numbers might take additional experiments which I have mentioned is future scope. I think
-I would want to find impact of precise timing in propeller too.}
+\laurie{the reader might not appreciate why timing information is so important.
+the challenge is that they can be confused because PT gains complete branching
+information but less accurate timing information (at least AIUI!) and it's not
+clear why that's a bad, or not-always-good, tradeoff. try and put some numbers
+on this if you can}.
+
+\iti{i tried to explain why timing packets would be important for reducing
+cache misses with reference. Getting numbers might take additional experiments
+which I have mentioned is future scope. I think I would want to find impact of
+precise timing in propeller too.}
+
 \begin{table}[H]
     \centering
     \scalebox{0.85}{
