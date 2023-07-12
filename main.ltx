@@ -308,7 +308,7 @@ what difference having branch stack makes}.
 \label{sec:LBR}
 
 By default perf in NO LBR mode can only record basic performance counter and
-cannot follow an indirect function call, i.e.~it can only know where the target
+cannot follow an indirect function call, i.e.~\laurie{rephrase rest of sentence starting from here}it can only know where the target
 is at the runtime which leads to an incomplete control flow. So while in NO LBR
 mode it is possible to capture subset of most executed paths, it doesn't account for
 instructions with indirect branches and calls. Indirect branches occur when
@@ -324,7 +324,7 @@ Branch Record (LBR)~\cite{lbr}, a hardware register to record additional
 information in the sampling data about branch instructions known as branch
 stack (or brstack). Branch stack includes information such as to and from
 address of each taken branch with some additional metadata (top of the stack
-counter, timing, branch mispredictions and so).
+counter \laurie{what is a stack counter?}, timing \laurie{timing of what?}, branch mispredictions \laurie{what are the units?} and so).
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
@@ -334,24 +334,18 @@ The last 32 executed branches is not a separate entity, it comes along with
 instruction captured in a sample (if the instruction has branch stack). NO LBR
 on the other hand only captures samples with direct instructions.
 
-\laurie{NO
-LBR mode can also do this, right? so what's different about LBR and NO
-LBR?}\iti{Had captured this in paragraph 1 \& 2, but anyways expanded it to
-cover details)}\laurie{which paragraphs?}
-
-\iti{I have updated paragraph 1}.
-
 \laurie{need a paragraph here briefly explaining why LBR is better than NO LBR.
 for example, how often can NO LBR sample? is LBR in a sense ``ring buffer
 times' better than NO LBR or ... ? basically, let's try putting some numbers on
 NO LBR vs LBR.}
-
 \iti{I don't think there is going to be a fixed number by which LBR sample is
 larger than NO LBR. Both are sampled at the same rate i.e 1000 sample/sec,
 however one captures less type of instruction and details than other, i.e.~ NO
 LBR captures only direct instructions but LBR captures both direct and indirect
 (and some additional metadata in indirect instructions). I have added this in
 paragraph 3 of this section.}
+\laurie{so i claim that if we sample NO LBR and LBR at the same rate, we have
+(at least) 32x as much information in LBR}
 
 \subsection*{PT}
 \label{sec:PT}
@@ -760,14 +754,6 @@ Could the observed relative increase in Clang's performance with respect to
 the lines of code (LOC) in both LBR and PT modes be attributed to their
 capacity to record more functions during sampling?
 
-\laurie{this isn't a meaningful hypothesis: we know that LBR samples and PT
-doesn't. so this is an established fact, not a hypothesis}\iti{Should I remove
-this subsection?}\laurie{it should probably come earlier in the report when you
-introduce PT, because it explains why PT is rather different than LBR}
-
-\iti{I have already captured why PT is different in \ref{sec:PT} so I feel
-removing hypothesis label and leaving this paragraph here would be better}
-
 As mentioned in Section \ref{sec:LBR} and \ref{sec:PT} \texttt{Perf record} in
 LBR and PT mode has some additional information which is not available in NO
 LBR mode. More details can be fetched about branches such as FROM and TO
@@ -991,12 +977,12 @@ every branch it is possible to create an exact control-flow graph with it. This
 results in profile being more accurate than that of LBR. But PT as mentioned
 in Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
-timestamp is important between two instructions (i.e.~branches) as this can
-help user determine latency for a given instruction. Latency can be defined
+timestamp is important between two instructions \laurie{are timestamps given between two arbitrary instructions or just branches?} (i.e.~branches) as this can
+help user determine latency for a given instruction. Latency can \laurie{`is' or `can'?} be defined
 by total time it took an instruction to go through all stages of the pipeline.
 Multiple overlapped Instructions are passed through different stages (in a
 computer pipeline), each stage completes one part of an instruction at a time,
-and all stages work in parallel. One example is DLX
+and all stages work in parallel. \laurie{DLX is a RISC processor -- what's that got to do with PT?} One example is DLX
 pipeline~\footnote{https://en.wikipedia.org/wiki/DLX} which includes stages as
 : instruction fetching, instruction decoding, execution, memory decoding, and
 write back. With information about latency of each instruction, it is
