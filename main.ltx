@@ -328,11 +328,11 @@ counter, timing, branch mispredictions and so).
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
-CPU model. The sample collected in LBR accounts for $direct instructions +
-indirect instructions (branch stack with last 32 executed branches)$. The last
-32 executed branches is not a separate entity, it comes along with instruction
-captured in a sample (if the instruction has branch stack). NO LBR on the
-other hand only captures samples with direct instructions.
+CPU model. The sample collected in LBR accounts for: Direct instructions +
+Indirect instructions (includes branch stack with last 32 executed branches).
+The last 32 executed branches is not a separate entity, it comes along with
+instruction captured in a sample (if the instruction has branch stack). NO LBR
+on the other hand only captures samples with direct instructions.
 
 \laurie{NO
 LBR mode can also do this, right? so what's different about LBR and NO
@@ -996,18 +996,18 @@ help user determine latency for a given instruction. Latency can be defined
 by total time it took an instruction to go through all stages of the pipeline.
 Multiple overlapped Instructions are passed through different stages (in a
 computer pipeline), each stage completes one part of an instruction at a time,
-and all stages work in parallel. One example if DLX
+and all stages work in parallel. One example is DLX
 pipeline~\footnote{https://en.wikipedia.org/wiki/DLX} which includes stages as
 : instruction fetching, instruction decoding, execution, memory decoding, and
 write back. With information about latency of each instruction, it is
 possible to prefetch instructions into different level of cache hierarchy
 before it is needed in the pipeline. This will result in reduced cache
-misses~\cite{perfbook}. As mentioned since PT often have same timestamp for
-multiple instructions in a packet, and releases timing packets only when paired
-with other control-flow packet, it misses the opportunity to get accurate
-latency values and thus can have higher cache misses than that of LBR collected
+misses~\cite{perfbook}. As mentioned before, PT often has same timestamp for
+multiple instructions in a packet and releases timing packets only when paired
+with other control-flow packet(s). Thus, it misses the opportunity to get accurate
+latency values and can have higher cache misses than that of LBR collected
 profile (with same number of samples). Future work constitutes analysing
-effects both LBR and PT mode profiles in reducing cache misses in different hierarchy
+effects of both LBR and PT mode profiles in reducing cache misses in different hierarchies
 i.e~ i-cache (instruction cache) and d-cache (data cache) for multiple Post-Link Optimisers.
 
 
