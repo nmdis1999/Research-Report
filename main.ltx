@@ -38,7 +38,7 @@ paths, existing Profile-Guided Optimisers such as BOLT~\cite{bolt} and
 Propeller~\cite{gp} were able to achieve significant performance gains(about
 3\% to 15\%\cite{weibin}. And although compilers can make a decent guess about
 taken branches they don't have runtime information to make accurate branch
-prediction.~\cite{chen}. One of the optimisation that takes advantage of this
+prediction~\cite{chen}. One of the optimisation that takes advantage of this
 is profile-guided optimization (PGO), which includes binary rewriting tools;
 PGO offers more optimization opportunities, which typically is hard to obtain
 with static heuristics and methods.
@@ -154,7 +154,7 @@ blocks. In the end it rewrites and emits the optimised  binary.
     and reconstruction of CFG using profile data annotated on top of it.
     Later it performs optimisation passes such as Identical Code Folding,
     reordering function/basic blocks, and peephole optimisations. Finally,
-    BOLT emits and links the functions.~\cite{bolt}
+    BOLT emits and links the functions~\cite{bolt}.
     }
     \label{aggregator-profiles}
 \end{figure}
@@ -308,23 +308,27 @@ what difference having branch stack makes}.
 \label{sec:LBR}
 
 By default perf in NO LBR mode can only record basic performance counter and
-cannot follow an indirect function call, i.e.~\laurie{rephrase rest of sentence starting from here}it can only know where the target
-is at the runtime which leads to an incomplete control flow. So while in NO LBR
-mode it is possible to capture subset of most executed paths, it doesn't account for
-instructions with indirect branches and calls. Indirect branches occur when
-switch statements are converted into jump tables, and indirect calls happen
-because of virtual calls. With LBR it is possible to capture indirect branches
-and calls for taken branches in each sample. Not only sampling last executed
-branches helps in building a better control-flow graph (more complete than NO
-LBR), it can also lead to a better code layout optimisation (with the help
-of accurate branch probability).
+cannot follow an indirect function call, i.e.~without knowing the outcome for
+indirect branches, perf can only record incomplete control flow in this mode.
+So while in NO LBR mode it is possible to capture subset of most executed
+paths, it doesn't account for instructions with indirect branches and calls.
+Indirect branches occur when switch statements are converted into jump tables,
+and indirect calls happen because of virtual calls. With LBR it is possible to
+capture indirect branches and calls for taken branches in each sample. Not only
+sampling last executed branches helps in building a better control-flow graph
+(more complete than NO LBR), it can also lead to a better code layout
+optimisation (with the help of accurate branch probability).
 
-New Intel and AMD machines~\cite{amd} have additional support in their CPUs called Last
-Branch Record (LBR)~\cite{lbr}, a hardware register to record additional
-information in the sampling data about branch instructions known as branch
-stack (or brstack). Branch stack includes information such as to and from
-address of each taken branch with some additional metadata (top of the stack
-counter \laurie{what is a stack counter?}, timing \laurie{timing of what?}, branch mispredictions \laurie{what are the units?} and so).
+New Intel and AMD machines~\cite{amd} have additional support in their CPUs
+called Last Branch Record (LBR)~\cite{lbr}, a hardware register to record
+additional information in the sampling data about branch instructions known as
+branch stack (or brstack). Branch stack includes information such as to and
+from address of each taken branch with some additional metadata such as: top of
+the stack pointer, which contains a pointer to the MSR (Model-specific
+register) in the LBR stack,\laurie{what is a stack counter?}\iti{silly mistake,
+it is a pointer}, timing between two instructions, branch mispredictions
+(presented as ``Yes'' or ``No'' in perf output) \laurie{what are the units?}
+and so.
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
@@ -345,7 +349,8 @@ LBR captures only direct instructions but LBR captures both direct and indirect
 (and some additional metadata in indirect instructions). I have added this in
 paragraph 3 of this section.}
 \laurie{so i claim that if we sample NO LBR and LBR at the same rate, we have
-(at least) 32x as much information in LBR}
+(at least) 32x as much information in LBR}\iti{yes, if there is at least one
+branch present in the program. Should i mention this explicitly here?}.
 
 \subsection*{PT}
 \label{sec:PT}
@@ -433,7 +438,7 @@ Machine Code library.
     \includegraphics[scale=0.2]{images/bolt_ir.pdf}
     \caption{\small LLVM IR and BOLT IR, side by side. BOLT uses extension
     of MCInst in it's IR. For basic-block and function layout it shares
-    the same algorithm as that of LLVM.~\cite{bolt}}
+    the same algorithm as that of LLVM~\cite{bolt}.}
     \label{aggregator-profiles}
 \end{figure}
 
@@ -977,15 +982,16 @@ every branch it is possible to create an exact control-flow graph with it. This
 results in profile being more accurate than that of LBR. But PT as mentioned
 in Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
-timestamp is important between two instructions \laurie{are timestamps given between two arbitrary instructions or just branches?} (i.e.~branches) as this can
-help user determine latency for a given instruction. Latency can \laurie{`is' or `can'?} be defined
+timestamp is important between two instructions \laurie{are timestamps given between two arbitrary instructions or just branches?}\iti{the former} (in this case, branches) as this can
+help user determine latency for a given instruction. Latency is \laurie{`is' or `can'?} be defined
 by total time it took an instruction to go through all stages of the pipeline.
 Multiple overlapped Instructions are passed through different stages (in a
 computer pipeline), each stage completes one part of an instruction at a time,
 and all stages work in parallel. \laurie{DLX is a RISC processor -- what's that got to do with PT?} One example is DLX
-pipeline~\footnote{https://en.wikipedia.org/wiki/DLX} which includes stages as
-: instruction fetching, instruction decoding, execution, memory decoding, and
-write back. With information about latency of each instruction, it is
+pipeline~\footnote{https://en.wikipedia.org/wiki/DLX} which includes stages as:
+instruction fetching, instruction decoding, execution, memory decoding, and
+write back\iti{It is not related to PT, I thought of adding an example of
+a pipleline. Should i remove this part then?}. With information about latency of each instruction, it is
 possible to prefetch instructions into different level of cache hierarchy
 before it is needed in the pipeline. This will result in reduced cache
 misses~\cite{perfbook}. As mentioned before, PT often has same timestamp for
@@ -1085,4 +1091,3 @@ profiling technique using LBR and PT mode profiles with BOLT.
 \bibliography{bib}
 
 \end{document}
-m
