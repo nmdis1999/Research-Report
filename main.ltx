@@ -979,29 +979,29 @@ samples are generated.
 Perf with PT mode uses CPU tracing and records the program's execution by
 encoding data captured in compressed packets. Since PT captures outcome of
 every branch it is possible to create an exact control-flow graph with it. This
-results in profile being more accurate than that of LBR. But PT as mentioned
-in Section \ref{sec:background} capture less accurate timings between branches
+results in profile being more accurate than that of LBR. But PT as mentioned in
+Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
-timestamp is important between two instructions \laurie{are timestamps given between two arbitrary instructions or just branches?}\iti{the former} (in this case, branches) as this can
-help user determine latency for a given instruction. Latency is \laurie{`is' or `can'?} be defined
-by total time it took an instruction to go through all stages of the pipeline.
-Multiple overlapped Instructions are passed through different stages (in a
-computer pipeline), each stage completes one part of an instruction at a time,
-and all stages work in parallel. \laurie{DLX is a RISC processor -- what's that got to do with PT?} One example is DLX
-pipeline~\footnote{https://en.wikipedia.org/wiki/DLX} which includes stages as:
-instruction fetching, instruction decoding, execution, memory decoding, and
-write back\iti{It is not related to PT, I thought of adding an example of
-a pipleline. Should i remove this part then?}. With information about latency of each instruction, it is
-possible to prefetch instructions into different level of cache hierarchy
-before it is needed in the pipeline. This will result in reduced cache
-misses~\cite{perfbook}. As mentioned before, PT often has same timestamp for
-multiple instructions in a packet and releases timing packets only when paired
-with other control-flow packet(s). Thus, it misses the opportunity to get accurate
-latency values and can have higher cache misses than that of LBR collected
-profile (with same number of samples). Future work constitutes analysing
-effects of both LBR and PT mode profiles in reducing cache misses in different hierarchies
-i.e~ i-cache (instruction cache) and d-cache (data cache) for multiple Post-Link Optimisers.
-
+timestamp is important between two instructions \laurie{are timestamps given
+between two arbitrary instructions or just branches?}\iti{the former} (in this
+case, branches) as this can help user determine latency for a given
+instruction. Latency is defined as the total time it took an instruction to go
+through all stages of the pipeline. Multiple overlapped Instructions are passed
+through different stages (in a computer pipeline), each stage completes one
+part of an instruction at a time, and all stages work in parallel. A generic
+pipeline includes four stages such as: instruction fetching, instruction
+decoding, execution, and write
+back\footnote{https://en.wikipedia.org/wiki/Instruction\_pipelining}. With
+information about latency of each instruction, it is possible to prefetch
+instructions into different level of cache hierarchy before it is needed in the
+pipeline. This will result in reduced cache misses~\cite{perfbook}. As
+mentioned before, PT often has same timestamp for multiple instructions in a
+packet and releases timing packets only when paired with other control-flow
+packet(s). Thus, it misses the opportunity to get accurate latency values and
+can have higher cache misses than that of LBR collected profile (with same
+number of samples). Future work constitutes analysing effects of both LBR and
+PT mode profiles in reducing cache misses in different hierarchies i.e~ i-cache
+(instruction cache) and d-cache (data cache) for multiple Post-Link Optimisers.
 
 \laurie{the reader might not appreciate why timing information is so important.
 the challenge is that they can be confused because PT gains complete branching
