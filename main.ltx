@@ -296,9 +296,8 @@ counter every one million instructions)~\cite{perfbook}.
 At every counter overflow, perf captures IP which indicates location where the
 event occurred. Since unlike LBR and PT, NO LBR doesn't have branch stack
 information (i.e.~TO and FROM addresses of branch along with some additional
-metadata), BOLT accepts Process ID/ Thread ID (PID/TID), Instruction Pointer
-(IP), and events (i.e.~cycle event) in this mode \laurie{how does PID/TID
-compensate for not having branch addresses?}
+metadata), BOLT accepts events (i.e.~cycle event) in this mode to build partial
+CFG.
 
 \iti{PID/TID are constant in both LBR and NO LBR, the only difference is
 branch-stack which is present in LBR, I have added explanation in LBR section
@@ -984,8 +983,8 @@ every branch it is possible to create an exact control-flow graph with it. This
 results in profile being more accurate than that of LBR. But PT as mentioned in
 Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
-timestamp is important between two instructions \laurie{are timestamps given
-between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?} (in this
+timestamp is important between two adjacent instructions \laurie{are timestamps given
+between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?}\iti{the timestamp exists for each instruction, so we calculate T'-T for adjacent instructions} (in this
 case, branches) as this can help user determine latency for a given
 instruction. Latency is defined as the total time it took an instruction to go
 through all stages of the pipeline. Multiple overlapped Instructions are passed
