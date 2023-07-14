@@ -326,8 +326,7 @@ additional information in the sampling data about branch instructions known as
 branch stack (or brstack). Branch stack includes information such as to and
 from address of each taken branch with some additional metadata such as: top of
 the stack pointer, which contains a pointer to the MSR (Model-specific
-register) in the LBR stack,\laurie{what is a stack counter?}\iti{silly mistake,
-it is a pointer}, timing between two instructions, branch mispredictions
+register) in the LBR stack, timing between two instructions, branch mispredictions
 (presented as ``Yes'' or ``No'' in perf output) \laurie{what are the units?}
 and so.
 
@@ -351,7 +350,7 @@ LBR captures only direct instructions but LBR captures both direct and indirect
 paragraph 3 of this section.}
 \laurie{so i claim that if we sample NO LBR and LBR at the same rate, we have
 (at least) 32x as much information in LBR}\iti{yes, if there is at least one
-branch present in the program. Should i mention this explicitly here?}.
+branch present in the program. Should i mention this explicitly here?}\laurie{a program without a branch isn't much of a program! why ``at least one''? i think you might be making this more complex than it needs to be?}.
 
 \subsection*{PT}
 \label{sec:PT}
@@ -984,7 +983,7 @@ results in profile being more accurate than that of LBR. But PT as mentioned in
 Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
 timestamp is important between two adjacent instructions \laurie{are timestamps given
-between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?}\iti{the timestamp exists for each instruction, so we calculate T'-T for adjacent instructions} (in this
+between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?}\iti{the timestamp exists for each instruction, so we calculate T'-T for adjacent instructions}\laurie{i am unconvinced by this. surely we mean something like `an instruction X was executed at timestamp T' where `T' is either just before or just after it was executed? why do we have to talk about adjacent instructions?} (in this
 case, branches) as this can help user determine latency for a given
 instruction. Latency is defined as the total time it took an instruction to go
 through all stages of the pipeline. Multiple overlapped Instructions are passed
@@ -998,22 +997,11 @@ instructions into different level of cache hierarchy before it is needed in the
 pipeline. This will result in reduced cache misses~\cite{perfbook}. As
 mentioned before, PT often has same timestamp for multiple instructions in a
 packet and releases timing packets only when paired with other control-flow
-packet(s). Thus, it misses the opportunity to get accurate latency values and
+packet(s). \laurie{sentence doesn't parse} Thus, it misses the opportunity to get accurate latency values and
 can have higher cache misses than that of LBR collected profile (with same
 number of samples). Future work constitutes analysing effects of both LBR and
 PT mode profiles in reducing cache misses in different hierarchies i.e~ i-cache
 (instruction cache) and d-cache (data cache) for multiple Post-Link Optimisers.
-
-\laurie{the reader might not appreciate why timing information is so important.
-the challenge is that they can be confused because PT gains complete branching
-information but less accurate timing information (at least AIUI!) and it's not
-clear why that's a bad, or not-always-good, tradeoff. try and put some numbers
-on this if you can}.
-
-\iti{i tried to explain why timing packets would be important for reducing
-cache misses with reference. Getting numbers might take additional experiments
-which I have mentioned is future scope. I think I would want to find impact of
-precise timing in propeller too.}
 
 \begin{table}[H]
     \centering
