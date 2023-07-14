@@ -302,7 +302,9 @@ compensate for not having branch addresses?}
 
 \iti{PID/TID are constant in both LBR and NO LBR, the only difference is
 branch-stack which is present in LBR, I have added explanation in LBR section
-what difference having branch stack makes}.
+what difference having branch stack makes}.\laurie{so BOLT ignores PID/TID and
+so on? if so, either don't mention them, or say that BOLT explicitly ignores
+them.}
 
 \subsection*{LBR}
 \label{sec:LBR}
@@ -983,7 +985,7 @@ results in profile being more accurate than that of LBR. But PT as mentioned in
 Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
 timestamp is important between two instructions \laurie{are timestamps given
-between two arbitrary instructions or just branches?}\iti{the former} (in this
+between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?} (in this
 case, branches) as this can help user determine latency for a given
 instruction. Latency is defined as the total time it took an instruction to go
 through all stages of the pipeline. Multiple overlapped Instructions are passed
