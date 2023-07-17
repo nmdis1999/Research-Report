@@ -336,7 +336,10 @@ CPU model. The sample collected in LBR accounts for: Direct instructions +
 Indirect instructions (includes branch stack with last 32 executed branches).
 The last 32 executed branches is not a separate entity, it comes along with
 instruction captured in a sample (if the instruction has branch stack). Therefore,
-we get at least \laurie{why `at least'?} 32 times more information in LBR in comparison to NO LBR, since
+we get at least \laurie{why `at least'?}\iti{from what i understand not every sample has a branch
+stack, in the case when sample size is very small and only one
+sample has branch stack we will get at least 32x more information}
+32 times more information in LBR in comparison to NO LBR, since
 profile in NO LBR mode only captures samples with direct instructions.
 
 \laurie{need a paragraph here briefly explaining why LBR is better than NO LBR.
@@ -999,7 +1002,9 @@ pipeline. This will result in reduced cache misses~\cite{perfbook}. As
 mentioned before, PT often has same timestamp for multiple instructions in a
 packet and releases timing packets only when paired with other control-flow
 packet(s). \laurie{sentence doesn't parse} The resultant timestamp (and
-consequently the latencies) are not necessarily precise for each instruction \laurie{why?}.
+consequently the latencies) are not necessarily precise for each instruction \laurie{why?}
+\iti{I have written PT has same timestamp for multiple instructions just a line
+above}.
 This leads to missed opportunities to reduce cache misses. Future work
 constitutes analysing effects of both LBR and PT mode profiles in reducing
 cache misses in different hierarchies i.e~ i-cache (instruction cache) and
