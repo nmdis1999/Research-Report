@@ -338,7 +338,10 @@ The last 32 executed branches is not a separate entity, it comes along with
 instruction captured in a sample (if the instruction has branch stack). Therefore,
 we get at least \laurie{why `at least'?}\iti{from what i understand not every sample has a branch
 stack, in the case when sample size is very small and only one
-sample has branch stack we will get at least 32x more information}\laurie{then that presumably means that sometimes you get *less* than 32x as much information?}
+sample has branch stack we will get at least 32x more information}\laurie{then that presumably means that sometimes you get *less* than 32x as much information?}\iti{if we have one sample with branch stack we get 32x more information,
+if we have 2 than 2*32x more information, for 10 samples 10*32x more, and so on...
+so if we don't say at least 32x we mean we will get 32 * sample size information,
+but not all sample has branch stack so I am not sure if this will sit right.}
 32 times more information in LBR in comparison to NO LBR, since
 profile in NO LBR mode only captures samples with direct instructions.
 
@@ -999,10 +1002,12 @@ back\footnote{https://en.wikipedia.org/wiki/Instruction\_pipelining}. With
 information about latency of each instruction, it is possible to prefetch
 instructions into different level of cache hierarchy before it is needed in the
 pipeline. This will result in reduced cache misses~\cite{perfbook}. As
-mentioned before, PT often \laurie{`often' meaning...?} has same timestamp for multiple instructions in a
+mentioned before, PT ends up \laurie{`often' meaning...?} \iti{I don't know
+how often PT releases timing packets and bundles up the instructions so
+removing this word} having same timestamp for multiple instructions in a
 packet and releases timing packets only when paired with other control-flow
-packet(s). \laurie{sentence doesn't parse} The resultant timestamp (and
-consequently the latencies) are not necessarily precise for each instruction \laurie{be clearer about the link: ``when PT gives the same timestamp for multiple instructions, at most one instruction has a fully accurate timestamp''}.
+packet(s). When PT gives same timestamp for multiple instructions, at most one instruction
+has a fully accurate timestamp. \laurie{sentence doesn't parse} \laurie{be clearer about the link: ``when PT gives the same timestamp for multiple instructions, at most one instruction has a fully accurate timestamp''}.
 This leads to missed opportunities to reduce cache misses. Future work
 constitutes analysing effects of both LBR and PT mode profiles in reducing
 cache misses in different hierarchies i.e~ i-cache (instruction cache) and
