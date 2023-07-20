@@ -299,12 +299,6 @@ information (i.e.~TO and FROM addresses of branch along with some additional
 metadata), BOLT accepts events (i.e.~cycle event) in this mode to build partial
 CFG.
 
-\iti{PID/TID are constant in both LBR and NO LBR, the only difference is
-branch-stack which is present in LBR, I have added explanation in LBR section
-what difference having branch stack makes}.\laurie{so BOLT ignores PID/TID and
-so on? if so, either don't mention them, or say that BOLT explicitly ignores
-them.}
-
 \subsection*{LBR}
 \label{sec:LBR}
 
@@ -327,8 +321,7 @@ branch stack (or brstack). Branch stack includes information such as to and
 from address of each taken branch with some additional metadata such as: top of
 the stack pointer, which contains a pointer to the MSR (Model-specific
 register) in the LBR stack, timing between two instructions, branch mispredictions
-(presented as ``Yes'' or ``No'' in perf output) \laurie{what are the units?}
-and so.
+(presented as ``Yes'' or ``No'' in perf output) and so.
 
 The retired branches are captured in the rotating ring buffer. The stack depth
 of the ring buffer (usually 8, 16, or 32 frames) varies according to the Intel
@@ -336,22 +329,8 @@ CPU model. The sample collected in LBR accounts for: Direct instructions +
 Indirect instructions (includes branch stack with last 32 executed branches).
 The last 32 executed branches is not a separate entity, it comes along with
 instruction captured in a sample (if the instruction has branch stack). Therefore,
-we get 32 times \laurie{why `at least'?}\laurie{then that presumably means that sometimes you get *less* than 32x as much information?} more information in LBR in comparison to NO LBR, since
+we get 32 times more information in LBR in comparison to NO LBR, since
 profile in NO LBR mode only captures samples with direct instructions.
-
-\laurie{need a paragraph here briefly explaining why LBR is better than NO LBR.
-for example, how often can NO LBR sample? is LBR in a sense ``ring buffer
-times' better than NO LBR or ... ? basically, let's try putting some numbers on
-NO LBR vs LBR.}
-\iti{I don't think there is going to be a fixed number by which LBR sample is
-larger than NO LBR. Both are sampled at the same rate i.e 1000 sample/sec,
-however one captures less type of instruction and details than other, i.e.~ NO
-LBR captures only direct instructions but LBR captures both direct and indirect
-(and some additional metadata in indirect instructions). I have added this in
-paragraph 3 of this section.}
-\laurie{so i claim that if we sample NO LBR and LBR at the same rate, we have
-(at least) 32x as much information in LBR}\iti{yes, if there is at least one
-branch present in the program. Should i mention this explicitly here?}\laurie{a program without a branch isn't much of a program! why ``at least one''? i think you might be making this more complex than it needs to be?}.
 
 \subsection*{PT}
 \label{sec:PT}
@@ -983,8 +962,7 @@ every branch it is possible to create an exact control-flow graph with it. This
 results in profile being more accurate than that of LBR. But PT as mentioned in
 Section \ref{sec:background} capture less accurate timings between branches
 (due to sending timing packets less often) in comparison to LBR. Accurate
-timestamp is important for each instruction \laurie{are timestamps given
-between two arbitrary instructions or just branches?}\iti{the former}\laurie{what does it mean to have a timestamp between two arbitrary instructions? are those instructions adjacent or do you mean something like `i got the timestamp T for instruction I then a lot later a timestamp T' for instruction I', so I can calculate (T'-T)'?}\iti{the timestamp exists for each instruction, so we calculate T'-T for adjacent instructions}\laurie{i am unconvinced by this. surely we mean something like `an instruction X was executed at timestamp T' where `T' is either just before or just after it was executed? why do we have to talk about adjacent instructions?} (in this
+timestamp is important for each instruction (in this
 case, branches) as this can help user determine latency for a given
 instruction. Latency is defined as the total time it took an instruction to go
 through all stages of the pipeline. Multiple overlapped Instructions are passed
