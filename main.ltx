@@ -993,7 +993,12 @@ more loss of data packets when writing the data into a file or memory.
 Since, PT records timing information for only a fraction of branch it encounters.
 The recorded data ends up having same timestamp for multiple instructions in a
 packet. When PT gives same timestamp for multiple instructions, at most one instruction
-has a fully accurate timestamp. This leads to missed opportunities to reduce cache misses \laurie{because ...}. Future work
+has a fully accurate timestamp. This leads to missed opportunities to reduce cache misses
+\laurie{because ...} as having accurate timestamp for instructions is
+important for prefetching. If the instruction is fetched early in the cache hierarchy
+it is risked being evicted before their use, while requesting instruction late
+results in their arrival past the execution time. Both of these scenarios leads to
+cache misses. Future work
 constitutes analysing effects of both LBR and PT mode profiles in reducing
 cache misses in different hierarchies i.e~ i-cache (instruction cache) and
 d-cache (data cache) for multiple Post-Link Optimisers.
