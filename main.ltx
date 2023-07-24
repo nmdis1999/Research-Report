@@ -998,7 +998,10 @@ for optimal use of cache line and reduce instruction cache miss.
 However, even with optimal reordering of blocks
 when a profile have in-accurate timestamp for instructions they will
 be queued in wrong order in the basic block and result in stalls during instruction
-prefetching \laurie{is this saying that BOLT reorders instructions *within* a basic block?}. If the instruction is fetched early in the cache hierarchy
+prefetching \laurie{is this saying that BOLT reorders instructions *within* a basic block?} \iti{No BOLT
+doesn't reorder instructions. What I want to convey is since multiple instructions have same 
+timestamp within the basic block, before prefetching, instructions might get pushed in the queue
+in the wrong order resulting in stalls}. If the instruction is fetched early in the cache hierarchy
 it is risked being evicted before their use, while requesting instruction late
 results in their arrival past the execution time. Both of these scenarios leads to
 cache misses. Future work
