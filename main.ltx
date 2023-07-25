@@ -994,11 +994,17 @@ Since, PT records timing information for only a fraction of branch it encounters
 The recorded data ends up having same timestamp for multiple instructions in a
 packet. When PT gives same timestamp for multiple instructions, at most one instruction
 has a fully accurate timestamp. BOLT when using PT mode profile reorders basic blocks
-for optimal use of cache line and reduce instruction cache miss. 
-However, even with optimal reordering of blocks
-when a profile have in-accurate timestamp for instructions they will
-be queued in wrong order in the basic block and result in stalls during instruction
-prefetching \laurie{is this saying that BOLT reorders instructions *within* a basic block?} \iti{No BOLT
+for optimal use of cache line and reduce instruction cache miss. The prefetch engine prefetches 
+basic block sucessor in a buffer ahead of time before it is required in the cache. Since
+a basic block is set of instructions in sequestial order, the buffer stores the addresses
+of these instruction in the same order as obtained from the basic block. BOLT uses profile
+collected by perf in PT mode and it's own function discovery algorithm to identify basic blocks
+for reordering, however it does not reorder the instructions within the basic block. The sequence
+of the instructions within the basic block is decided how PT's data is decoded. As discussed earlier
+since multiple instructions ends up having same timestamp in PT and per timing packet at most
+one instruction have right timestamp prefetcher can fetch instruction either early or later 
+than when it was needed in the cache level.
+\laurie{is this saying that BOLT reorders instructions *within* a basic block?} \iti{No BOLT
 doesn't reorder instructions. What I want to convey is since multiple instructions have same 
 timestamp within the basic block, before prefetching, instructions might get pushed in the queue
 in the wrong order resulting in stalls}. If the instruction is fetched early in the cache hierarchy
