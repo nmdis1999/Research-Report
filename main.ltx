@@ -1007,7 +1007,16 @@ than when it was needed in the cache level.
 \laurie{is this saying that BOLT reorders instructions *within* a basic block?} \iti{No BOLT
 doesn't reorder instructions. What I want to convey is since multiple instructions have same 
 timestamp within the basic block, before prefetching, instructions might get pushed in the queue
-in the wrong order resulting in stalls}. If the instruction is fetched early in the cache hierarchy
+in the wrong order resulting in stalls}\laurie{this paragraph still doesn't make sense, because
+it still implies there's magic: somehow having accurate PT timing data leads to less stalls
+later. i wonder if `instruction' is misleading here: perhaps what's happening is that PT
+can't give you accurate timing data for each and every block. in other words, sometimes we
+won't know how long a block (which, by definition, contains at least 1 instruction)
+took to execute. so i wonder if what you're saying is that with PT a) we lack accurate
+timing data for each block b) if we did have per-block timing data we could guesstimate
+the effects of prefetching/decoding/other-cpu-magic (e.g. by dividing the block's
+execution time by the number of instructions) c) without that information we can make less
+intelligent decisions about what the best order blocks should go in is.}. If the instruction is fetched early in the cache hierarchy
 it is risked being evicted before their use, while requesting instruction late
 results in their arrival past the execution time. Both of these scenarios leads to
 cache misses. Future work
