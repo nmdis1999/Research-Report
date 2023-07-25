@@ -1000,7 +1000,7 @@ a basic block is set of instructions in sequestial order, the buffer stores the 
 of these instruction in the same order as obtained from the basic block. BOLT uses profile
 collected by perf in PT mode and it's own function discovery algorithm to identify basic blocks
 for reordering, however it does not reorder the instructions within the basic block. The sequence
-of the instructions within the basic block is decided how PT's data is decoded. As discussed earlier
+of the instructions within the basic block is decided by PT's decoder. As discussed earlier
 since multiple instructions ends up having same timestamp in PT and per timing packet at most
 one instruction have right timestamp prefetcher can fetch instruction either early or later 
 than when it was needed in the cache level.
