@@ -985,25 +985,28 @@ with every branch (i.e.~additional 64 bits information with each branch) the
 consequences will just not be overwhelming amount of data generated, but also much
 more loss of data packets when writing the data into a file or memory.
 
-Having accurate timing information for each instruction (in this case,
-branches) is important as timing information is used to determine latency for a
-given instruction. Latency is defined as the total time it took an instruction
-to go through all stages of the pipeline. A generic pipeline includes four
-stages such as: instruction fetching, instruction decoding, execution, and
-write back\footnote{https://en.wikipedia.org/wiki/Instruction\_pipelining}.
-Multiple overlapped instructions are passed through different stages (in a
-computer pipeline). Each stage completes one part of an instruction at a time,
-and all stages work in parallel. With
-information about latency of each instruction, the CPU is able to prefetch
-instructions into different levels of cache hierarchy before it is needed in
-the pipeline. Prefetching is triggered and implemented by the processor (hardware based) and the prefetcher's
-algorithm varies with different processors.\footnote{ 
-Another type of prefetching is software based: it is done by the compiler or manually by the developer. 
-\iti{addressed Laurie's comment about software prefetching here} The code is annotated by adding a prefetch instruction, for example, the compiler/developer makes a prediction
-about the data access pattern (e.g.~in a loop) and inserts an instruction (i.e.~prefetch instruction)
-to load the data in advance.Compilers such as GCC and Clang have options 
-to enable data prefetching (e.g.~ with -fprefetch-pointers to greedy prefetch data).} 
-Prefetching instructions can help in reducing cache misses~\cite{perfbook}.
+Cache prefetching is a technique used by CPU to improve program's execution
+time by fetching an instruction or data from original storage (slower memory)
+to cache level (faster memory) before it is needed in the CPU pipeline.
+Instructions are passed through different stages (in a computer pipeline). A
+generic pipeline includes four stages such as: instruction fetching,
+instruction decoding, execution, and write
+back\footnote{https://en.wikipedia.org/wiki/Instruction\_pipelining}. Each
+stage completes one part of an instruction at a time, and all stage work in
+parallel. Total time it takes for an instruction to go through all stages of
+the pipeline is defined as latency, with latency CPU is able to
+prefetch instructions into different levels of cache hierarchy before they are
+needed in the pipeline. Prefetching is triggered and implemented by the
+processor (hardware based) and the prefetcher's algorithm varies with
+different processors.\footnote{ Another type of prefetching is software based:
+it is done by the compiler or manually by the developer. \iti{addressed
+Laurie's comment about software prefetching here} The code is annotated by
+adding a prefetch instruction, for example, the compiler/developer makes a
+prediction about the data access pattern (e.g.~in a loop) and inserts an
+instruction (i.e.~prefetch instruction) to load the data in advance. Compilers
+such as GCC and Clang have options to enable data prefetching (e.g.~ with
+-fprefetch-pointers to greedy prefetch data).} Accurately prefetching instructions can
+help in reducing cache misses~\cite{perfbook}.
 
 BOLT performs a function reordering pass for improving code locality and reducing
 number of cache lines used. For this pass, it uses a clustering algorithm, where it uses
