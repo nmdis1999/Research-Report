@@ -6,7 +6,18 @@
 
 \begin{abstract}
     \noindent
-    \iti{add abstract}
+        Finding the best optimisation pass sequence, which both
+        correctly(i.e~without crashing) builds the program and improve its
+        execution time is challenging. Modern compilers have hundreds of
+        optimisation passes, and finding the best pass sequence, which not only
+        results in correct binary executable but also gives us desired
+        performance for a program can take up to exponential time. In this
+        report, I use parallised genetic algorithm to find best pass
+        sequence for yk, which is a metatracing system and yklua, a yk-based lua
+        interpreter. The result is not only a pass-sequence which improves
+        yklua's performance by 1.5-2 times but also leads a way for me 
+        to investigate the causes of slowdown in yk-based interpreter.
+    
     \laurie{i think you need to try writing the abstract now, because it will
     guide you for the rest of the report. The advice in point 4 of
     https://plg.uwaterloo.ca/~migod/research/beckOOPSLA.html is an excellent
@@ -49,21 +60,22 @@ Genetic algorithm is well-known stochastic algorithm which is adopted on
 the basis of theory of evolution. This algorithm has been used by several
 researchers to solve phase-ordering problemi\iti{add citation}.
 
-This report focuses on solving phase-ordering problem using genetic-algorithm
-for YK and YKLUA \laurie{yk and yklua are lower-cased}. YK is a meta-tracing system and YKLUA is yk-enabled lua
+This report focuses on solving phase-ordering problem using genetic algorithm
+for yk and yklua \laurie{yk and yklua are lower-cased}. yk is a meta-tracing
+system and yklua is yk-enabled lua
 interpreter. First, I started with a recursive based approach to find 
 pass sequence which doesn't violate constraints (where constraint is passing
-all of YK tests and building lua interpreter to run it's tests successfully.)
-Later, in the report I moved to using genetic-algorithm due to it's nature
+all of yk tests and building lua interpreter to run it's tests successfully.)
+Later, in the report I moved to using genetic algorithm due to it's nature
 to escape local optima very efficiently. \iti{add citation} In this report
 I also address the modifications I had to make to make our oracle suitable
 for the genetic algorithm. 
 
-The main contributions of this reports are: a) a parallel-ised genetic-algorithm
-for YK and YK-based interpreter b) optimised YK and YKLUA by 1.5x-2x times 
+The main contributions of this reports are: a) a parallelised genetic algorithm
+for yk and yk-based interpreter b) optimised yk and yklua by 1.5x-2x times 
 from baseline (where baseline was pipeline with non O2 passes) c) identified
-blockers from YK which were limiting further performance optimisations with 
-the help of the genetic-algorithm.
+blockers from yk which were limiting further performance optimisations with 
+the help of the genetic algorithm.
 
 The remainder of the report is organised as follows:
 the next section (2) explains the background, section (3) explains methodology
@@ -246,7 +258,7 @@ why these passes are high penality?
 
 is there any way to solve it?
 
-
+exaplain yk-config in methodology section \iti{IMPORTANT!}
 
 % \bibliographystyle{plain}
 % \bibliography{bib}
