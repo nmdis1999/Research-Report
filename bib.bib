@@ -2100,7 +2100,7 @@ Gudka, Khilan and Filardo, Nathaniel W. and Markettos, A. Theodore and
 Roe, Michael and Neumann, Peter G. and Watson, Robert N. M. and
 Moore, Simon W.},
     title = {{CHERI} {Concentrate}: Practical Compressed Capabilities},
-    journal = {IEEE Transactions on Computers},
+    journal = {Transactions on Computers},
     year = {2019},
     volume = {68},
     number = {10},
@@ -2121,7 +2121,7 @@ Sewell, Peter and Neumann, Peter G.},
 
 @techreport{watson20cheriintroduction,
     author = {Robert N. M. Watson and Simon W. Moore and Peter Sewell and Peter G. Neumann},
-    title = {An Introduction to CHERI},
+    title = {An Introduction to {CHERI}},
     year = {2019},
     link = {https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-941.pdf},
     institution = {University of Cambridge},
@@ -2239,7 +2239,7 @@ Blankstein, Aaron and Balkind, Jonathan},
 }
 
 @misc{watson21assessing,
-    title = {Assessing the Viability of an Open-Source CHERI Desktop Software},
+    title = {Assessing the Viability of an Open-Source {CHERI} Desktop Software},
     author = {Robert N. M. Watson and Ben Laurie and Alex Richardson},
     year = {2021},
     link = {https://www.capabilitieslimited.co.uk/pdfs/20210917-capltd-cheri-desktop-report-version1-FINAL.pdf},
@@ -2398,7 +2398,7 @@ Blankstein, Aaron and Balkind, Jonathan},
 
 @inproceedings{lietar19snmalloc,
     author = {Li\'{e}tar, Paul and Butler, Theodore and Clebsch, Sylvan and Drossopoulou, Sophia and Franco, Juliana and Parkinson, Matthew J. and Shamis, Alex and Wintersteiger, Christoph M. and Chisnall, David},
-    title = {Snmalloc: A Message Passing Allocator},
+    title = {{snmalloc}: A Message Passing Allocator},
     year = {2019},
     link = {https://doi.org/10.1145/3315573.3329980},
     booktitle = {ISMM},
@@ -2521,6 +2521,243 @@ Blankstein, Aaron and Balkind, Jonathan},
     note = {Accessed: 2023-03-03},
     year = {2019},
     author = {Google},
+}
+
+@misc{watson23early,
+    title = {Early Performance Results from the Prototype {M}orello Microarchitecture},
+    author = {Watson, Robert N. M. and Clarke, Jessica and Woodruff, Jonathan and Moore, Simon W. and Barnes, Graeme and Grisenthwaite, Richard and Stacer, Kathryn and Baranga, Silviu and Richardson, Alexander},
+    note = {(to appear)},
+    year = {2023},
+}
+
+@misc{jsc,
+    title = {{JavaScriptCore}},
+    howpublished = {\url{https://developer.apple.com/documentation/javascriptcore}},
+    note = {Accessed: 2023-04-03},
+    year = {2013},
+    author = {Apple},
+}
+
+@misc{rustpython,
+    title = {{RustPython}: a {Python} interpreter written in {Rust}},
+    howpublished = {\url{https://github.com/RustPython/RustPython}},
+    note = {Accessed: 2023-04-03},
+    year = {2018},
+    author = {The {RustPython} Project},
+}
+
+@misc{wlambda,
+    title = {{WLambda}: embeddable scripting language for {Rust}},
+    howpublished = {\url{https://github.com/WeirdConstructor/WLambda/}},
+    note = {Accessed: 2023-04-03},
+    year = {2019},
+    author = {WeirdConstructor},
+}
+
+@misc{boa,
+    title = {{Boa}: an experimental {JavaScript} lexer, parser and interpreter written in {Rust}},
+    howpublished = {\url{https://github.com/boa-dev/boa}},
+    note = {Accessed: 2023-04-03},
+    year = {2018},
+    author = {Jason Williams},
+}
+
+@misc{mmtk,
+    title = {{MMTk}: a framework for the design and implementation of memory managers},
+    howpublished = {\url{https://github.com/mmtk/mmtk-core}},
+    note = {Accessed: 2023-04-03},
+    year = {2017},
+    author = {Lin, Yi and Blackburn, Stephen M and Hosking, Antony L and Norrish, Michael},
+}
+
+@misc{rustbacon,
+    title = {{bacon-rajan-cc}: A reference counted type with cycle collection for {Rust}},
+    howpublished = {\url{https://github.com/fitzgen/bacon-rajan-cc}},
+    note = {Accessed: 2023-04-03},
+    year = {2015},
+    author = {Nick Fitzgerald},
+}
+
+@misc{gcarena,
+    title = {{gc-arena}: An experimental system for {Rust} garbage collection},
+    howpublished = {\url{https://github.com/kyren/gc-arena/}},
+    note = {Accessed: 2023-04-03},
+    year = {2019},
+    author = {Catherine West},
+}
+
+@misc{yksom,
+    title = {{yksom}: A {SOM} {VM} in {Rust}},
+    howpublished = {\url{https://github.com/softdevteam/yksom}},
+    note = {Accessed: 2023-04-03},
+    year = {2019},
+    author = {Laurence Tratt},
+}
+
+@misc{somrs,
+    title = {{som-rs}: An alternative implementation of the {Simple Object Machine}, written in {Rust}},
+    howpublished = {\url{https://github.com/Hirevo/som-rs}},
+    note = {Accessed: 2023-04-03},
+    year = {2020},
+    author = {Nicolas Polomack},
+}
+
+@misc{niko13destructors,
+    title = {Destructors and finalizers in {Rust}},
+    author = {Niko Matsakis},
+    year = {2013},
+    howpublished = {\url{http://smallcultfollowing.com/babysteps/blog/2013/01/17/destructors-and-finalizers-in-rust/}},
+    note = {Accessed: 2023-04-03},
+}
+
+@misc{manish18elsa,
+    title = {{elsa}: append-only collections for {Rust} where borrows to entries can outlive insertions},
+    howpublished = {\url{https://github.com/Manishearth/elsa/}},
+    note = {Accessed: 2023-04-03},
+    year = {2018},
+    author = {Manish Goregaokar},
+}
+
+@misc{manish21arena,
+    title = {A tour of safe tracing {{GC}} designs in {Rust}},
+    author = {Manish Goregaokar},
+    year = {2021},
+    howpublished = {\url{https://manishearth.github.io/blog/2021/03/15/arenas-in-rust/}},
+    note = {Accessed: 2023-04-03},
+}
+
+@misc{manish16gc,
+    title = {{GC} support in {Rust}: {API} design},
+    author = {Manish Goregaokar},
+    year = {2016},
+    howpublished = {\url{https://manishearth.github.io/blog/2016/08/18/gc-support-in-rust-api-design/}},
+    note = {Accessed: 2023-04-03},
+}
+
+@misc{felix15specifying,
+    title = {{GC} and {Rust}: specifying the problem},
+    author = {Felix S. Klock},
+    year = {2015},
+    howpublished = {\url{http://blog.pnkfx.org/blog/2015/11/10/gc-and-rust-part-1-specing-the-problem/}},
+    note = {Accessed: 2023-04-03},
+}
+
+@misc{felix16roots,
+    title = {{GC} and {Rust}: The roots of the problem},
+    author = {Felix S. Klock},
+    year = {2016},
+    howpublished = {\url{http://blog.pnkfx.org/blog/2016/01/01/gc-and-rust-part-2-roots-of-the-problem/}},
+    note = {Accessed: 2023-04-03},
+}
+
+@inproceedings{powers19mesh,
+    title = {Mesh: Compacting memory management for {{C/C++}} applications},
+    author = {Powers, Bobby and Tench, David and Berger, Emery D and McGregor, Andrew},
+    booktitle = {PLDI},
+    pages = {333--346},
+    year = {2019},
+}
+
+@inproceedings{flood16shenandoah,
+    title = {Shenandoah: An open-source concurrent compacting garbage collector for {OpenJDK}},
+    author = {Flood, Christine H and Kennke, Roman and Dinn, Andrew and Haley, Andrew and Westrelin, Roland},
+    booktitle = {PPPJ},
+    pages = {1--9},
+    year = {2016},
+}
+
+@article{banerjee20sound,
+    title = {Sound garbage collection for {C} using pointer provenance},
+    author = {Banerjee, Subarno and Devecsery, David and Chen, Peter M and Narayanasamy, Satish},
+    booktitle = {OOPSLA},
+    volume = {4},
+    pages = {1--28},
+    year = {2020},
+}
+
+@inproceedings{henderson02accurate,
+    title = {Accurate garbage collection in an uncooperative environment},
+    author = {Henderson, Fergus},
+    booktitle = {ISMM},
+    pages = {150--156},
+    year = {2002},
+}
+
+@article{boehm96simple,
+    title = {Simple garbage collector safety},
+    author = {Boehm, Hans-J},
+    booktitle = {PLDI},
+    volume = {31},
+    number = {5},
+    pages = {89--98},
+    year = {1996},
+}
+
+@article{bartlett88compacting,
+    title = {Compacting garbage collection with ambiguous roots},
+    author = {Bartlett, Joel F},
+    journal = {ACM Lisp Pointers},
+    volume = {1},
+    number = {6},
+    pages = {3--12},
+    year = {1988},
+}
+
+@article{stichnoth99support,
+    title = {Support for garbage collection at every instruction in a {Java} compiler},
+    author = {Stichnoth, James M and Lueh, Guei-Yuan and Cierniak, Micha{\l}},
+    booktitle = {PLDI},
+    volume = {34},
+    number = {5},
+    pages = {118--127},
+    year = {1999},
+}
+
+@misc{ager13oilpan,
+    author = {Ager, Mads and Corry, Erik and Egorov, Vyacheslav and Hara, Kentaro and Wibling, Gustav and Zerny, Ian},
+    year = {2013},
+    title = {Oilpan: tracing garbage collection for {Blink}},
+    link = {https://docs.google.com/document/d/1y7_0ni0E_kxvrah-QtnreMlzCDKN3QP4BN1Aw7eSLfY},
+    note = {Accessed on 2023-10-12},
+}
+
+@misc{goetz21deprecated,
+    title = {{JEP} 421: Deprecate Finalization for Removal},
+    author = {Brian Goetz and Mikael Vidstedt},
+    year = {2021},
+    howpublished = {\url{https://openjdk.org/jeps/421}},
+    note = {Accessed: 2023-10-17},
+}
+
+@book{pierce04advanced,
+    title = {Advanced topics in {Types} and {Programming} {Languages}},
+    author = {Pierce, Benjamin C},
+    year = {2004},
+    publisher = {{MIT} press},
+}
+
+@misc{stroustrup97c++,
+    title = {The {C++} {Programming} {Language} ({Special} 3rd {Edition})},
+    author = {Stroustrup, Bjarne},
+    year = {1997},
+    publisher = {Addison-Wesley},
+}
+
+@inproceedings{bacon04unified,
+    title = {A unified theory of garbage collection},
+    author = {Bacon, David F and Cheng, Perry and Rajan, VT},
+    booktitle = {OOPSLA},
+    pages = {50--68},
+    year = {2004},
+}
+
+@article{yanovski21ghostcell,
+    title = {{GhostCell}: separating permissions from data in {Rust}},
+    author = {Yanovski, Joshua and Dang, Hoang-Hai and Jung, Ralf and Dreyer, Derek},
+    booktitle = {ICFP},
+    volume = {5},
+    pages = {1--30},
+    year = {2021},
 }
 
 This file automatically created by prebib -- do not edit this file.
