@@ -6,17 +6,7 @@
 
 \begin{abstract}
     \noindent
-    The aim of my PhD is to develop an improved framework for Profile Guided
-    Optimisation (PGO) by better understanding types and quantity of data
-    required to achieve more optimal performance than existing PGO tools such
-    as BOLT. In this preliminary report, I present an analysis of BOLT, a
-    post-link binary optimiser which is now part of the LLVM project. I have
-    conducted a set of experiments to investigate how different types of
-    profiling information impact performance of an optimised binary generated
-    by BOLT. The performance metrics gathered in this study are derived from a
-    relatively small test set due to resource constraints. Expanding the scope
-    of the test set and obtaining more comprehensive performance data forms
-    part of the future work of this research.
+    \iti{add abstract}
 \end{abstract}
 
 \section{Introduction}
@@ -33,35 +23,49 @@ Example of optimisation level provided by modern compilers are: O0, O1, O2,
 O3, and Og. The two major compilers gcc and clang have 200 and 100+
 optimisation passes respectively, their sequence is called as optimisation
 sequence. By default without optimisations level all of the passes are turned 
-off, and an expert can choose to turn on and off passes accordingly. 
-\iti{check this statement}. 
-Since some optimisation passes depends on others to
-enable program's transformation, choosing a right sequence (and order of passes)
-is important for program's performance either in respect to execution time or
-code size. This is known as phase ordering problem. Genetic algorithm is used to 
-solve this problem in this report, since the number of passes are a lot and
-makes the search space huge \iti{add value}, using genetic algorithm helps
-us to find an optimal pass sequence for our oracle\footnote{The oracle is the test
-and benchmark suite of our choice.
-}. The genetic algorithm is a
-very famous algorithm developed on the basis of evolution, which has been applied
-on phase-ordering compiler optimisation problem by several researchers.
-This report focuses on solving phase-ordering problem for YK and YKLUA, which
-are ... \iti{complete this line}. The report discusses two ways to solve this
-problem: backtracking and stochastic local search ... \iti{add term from guided GA paper}. 
-The experiment uses YKLLVM, which is ...\iti{complete}.
-The remainder of the report is organised as follows: the next section (2)
-explains the background, section (3) explains greedy method to find
-passes sequence, section (4) explains genetic algorithm method to find passes
-sequence, section (5) covers experimental results from method proposed. Finally, 
-section (6) shows related work and section (7) (word for presents) conclusion
-and future work.
+off, and an expert can choose to turn on and off passes accordingly.\iti{add reference}
+
+Since some optimisation passes depends on others to enable program's
+transformation, choosing a right sequence (and order of passes) is important for
+program's performance either in respect to execution time or code size. This is
+known as phase ordering problem. Genetic algorithm is used to solve this problem
+in this report, since the number of passes are a lot (around 90) this makes the
+our search space huge (i.e~if we try all sequence irrespective of ordering we
+would have to try $2^{90} - 1$ possible combinations!).
+Using genetic algorithm helps us to find an optimal pass sequence for our
+oracle\footnote{The oracle is the test and benchmark suite of our choice.
+}. 
+Genetic algorithm is well-known stochastic algorithm which is adopted on
+the basis of theory of evolution. This algorithm has been used by several
+researchers to solve phase-ordering problemi\iti{add citation}.
+
+This report focuses on solving phase-ordering problem using genetic-algorithm
+for YK and YKLUA. YK is a metra-tracing system and YKLUA is yk-enabled lua
+interpreter. First, I started with a recursive based approach to find 
+pass sequence which doesn't violate constraints (where constraint is passing
+all of YK tests and building lua interpreter to run it's tests successfully.)
+Later, in the report I moved to using genetic-algorithm due to it's nature
+to escape local optima very efficiently. \iti{add citation} In this report
+I also address the modifications I had to make to make our oracle suitable
+for the genetic algorithm. 
+
+The main contributions of this reports are: a) a parallel-ised genetic-algorithm
+for YK and YK-based interpreter b) optimised YK and YKLUA by 1.5x-2x times 
+from baseline (where baseline was pipeline with non O2 passes) c) identified
+blockers from YK which were limiting further performance optimisations with 
+the help of the genetic-algorithm.
+
+The remainder of the report is organised as follows:
+the next section (2) explains the background, section (3) explains methodology
+(4) explains optimisation pipelines (5) covers experimental results from method
+proposed. Finally, section (6) shows related work and section (7) highlights
+conclusion and future work.
 
 \section{Background}
 \label{sec:background}
 
 Constraint Satisfaction Problems are mathematical problem with a finite set of
-variable, each of which has a finite domain (i.e set of possible values).
+variable, each of which has a finite domain (i.e~set of possible values).
 Since the variables can be related, this puts a limitation on what values
 these variables can be instantiated with. To solve this problem, we have to find
 possible values for these variables which lies within the domain and does
@@ -70,7 +74,7 @@ not violates any constraints.
 In this report, we would be discussing about Constraint Satisfaction
 Optimisation Problem (CSOP), which is a NP-hard problem\ref{add reference}. CSOP
 is a variation of Constraint Satisfaction Problem which aims to find most
-optimal solution (i.e global optima) in the search space. One way to solve this
+optimal solution (i.e~global optima) in the search space. One way to solve this
 problem is systematic search algorithm, in this method we try all possible
 combinations of variables for the oracle set, the variables can have any value
 possible from their domains, the algorithm then exhausts the search space (if
@@ -95,7 +99,7 @@ for YK and YKLUA using stochastic search algorithm.
 
 \subsection*{Methodology}
 CSOP
-A finite (i.e with a countable combination) constraint satisfaction problem can
+A finite (i.e~with a countable combination) constraint satisfaction problem can
 be explained as a problem with a finite set of variable, in which each variable
 can have values from the domain set (which is possible values or state for that
 variable). Since variables can be related to each other, these variables can 
@@ -214,6 +218,7 @@ write about binary split algorithm
 Hypothesis II: Introducing randomisation can help us escape local optima (from the GA
 thesis)
 
+parallesing the algorithm for speed-up and faster testing. 
 Speed up from parallesing
 
 Hypothesis III: Deciding upon oracle
