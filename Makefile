@@ -8,7 +8,7 @@ clean:
 
 main.pdf: bib.bib main.ltx main_preamble.fmt softdev.sty
 	pdflatex main.ltx
-	bibtex main
+	# bibtex main
 	pdflatex main.ltx
 	pdflatex main.ltx
 
