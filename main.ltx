@@ -6,30 +6,24 @@
 
 \begin{abstract}
     \noindent
-     JIT compilation gives dynamic languages
-     speed of compiled code with flexibility of interpretation. 
-     One variant of JIT compilation is tracing compilation, in tracing JIT
-     compilation, the VM identifies the frequently executed, ‘hot’ program paths at
-     runtime. Once a hot path is detected, the VM records all instructions in
-     this path into a trace until the execution loops back to the first instruction
-     of this path. The trace is then compiled and subsequent iterations of this
-     path execute the compiled trace instead of the original code. However,
-     implementing a tracing JIT compiler is very complex. But with meta-tracing
-     it is possible to separate language implementation concerns from
-     JIT compilation. In Meta-tracing, language interpreters are built on
-     top of a common tracing JIT compiler, the compiler traces the execution 
-     of the interpreter while it is running a user program. 
-     However, retrofitting meta-tracing system such as yk into existing
-     C-interpreters brings challenges to their performance. The aim of my PhD is
-     find ways to speed up retrofitting meta-tracing system (i.e~yk) into
-     existing interpreters, In this report, I first find optimisation pass
-     sequence (from tradition passes such as O2) using recursive and stochastic
-     method, the end result, when JIT is turned of is performance improvement by
-     1.5-2 times for yklua, a C-based interpreter which uses yk. Next, I dig
-     deeper into reasons for runtime performance overhead introduce by yk in
-     C-based interpreters. This will not only make the interpreters faster but
-     also have positive impact on user experience. 
-     
+     JIT compilation gives dynamic languages speed of compiled code with
+     flexibility of interpretation. One variant of  which is tracing JIT, in
+     which the VM identifies the frequently executed, ‘hot’ program paths at
+     runtime, records the instructions in a trace and uses the trace instead of
+     original code for hot paths. However, they are quite hard to implement. In
+     Meta-tracing, language interpreters are built on top of a common tracing
+     JIT compiler, the compiler traces the execution of the interpreter while it
+     is running a user program. Meta-tracing separates language implementation
+     concerns from JIT compilation. However, retrofitting meta-tracing system
+     such as yk into existing C-interpreters brings challenges to their
+     performance. The aim of my PhD is find ways to speed up retrofitting
+     meta-tracing system (i.e~yk) into existing interpreters, In this report, I
+     first find optimisation pass sequence (from tradition passes such as O2)
+     using recursive and stochastic method, the end result, when JIT is turned
+     of is performance improvement by 1.5-2 times for yklua, a C-based
+     interpreter which uses yk. Next, I dig deeper into reasons for runtime
+     performance overhead introduce by yk in C-based interpreters. 
+
     \laurie{i think you need to try writing the abstract now, because it will
     guide you for the rest of the report. The advice in point 4 of
     https://plg.uwaterloo.ca/~migod/research/beckOOPSLA.html is an excellent
