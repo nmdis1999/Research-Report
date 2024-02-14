@@ -6,6 +6,13 @@
 
 \begin{abstract}
     \noindent
+     \laurie{Maybe something like ``The yk system uses meta-tracing to turn
+     existing C interpreters into JIT compilers. However, not all compiler
+     optimisations are safe to use with yk specifically, or meta-tracing in
+     general. yk pessimistically turns off all optimisations, slowing down the
+     normal interpreter considerably. I am investigating regaining as much of
+     the last performance as possible. This report shows progress to date and
+     plans for the future.''}
      JIT compilation gives dynamic languages speed of compiled code with
      flexibility of interpretation. One variant of  which is tracing JIT, in
      which the VM identifies the frequently executed, ‘hot’ program paths at
