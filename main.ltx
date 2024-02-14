@@ -12,17 +12,17 @@
      runtime, records the instructions in a trace and uses the trace instead of
      original code for hot paths. However, they are quite hard to implement. In
      Meta-tracing, language interpreters are built on top of a common tracing
-     JIT compiler, the compiler traces the execution of the interpreter while it
-     is running a user program. Meta-tracing separates language implementation
-     concerns from JIT compilation. However, retrofitting meta-tracing system
-     such as yk into existing C-interpreters brings challenges to their
-     performance. The aim of my PhD is find ways to speed up retrofitting
-     meta-tracing system (i.e~yk) into existing interpreters, In this report, I
-     first find optimisation pass sequence (from tradition passes such as O2)
-     using recursive and stochastic method, the end result, when JIT is turned
-     of is performance improvement by 1.5-2 times for yklua, a C-based
-     interpreter which uses yk. Next, I dig deeper into reasons for runtime
-     performance overhead introduce by yk in C-based interpreters. 
+     JIT compiler, removing the need to re-implement tracing JIT for every
+     language. This separates language implementation concerns from JIT
+     compilation. However, retrofitting meta-tracing system such as yk into
+     existing C-interpreters brings challenges to their performance. The aim of
+     my PhD is find ways to speed up retrofitting meta-tracing system (i.e~yk)
+     into existing interpreters, In this report, I first find optimisation pass
+     sequence (from tradition passes such as O2) using recursive and stochastic
+     method, the end result, when JIT is turned of is performance improvement by
+     1.5-2 times for yklua, a C-based interpreter which uses yk. Next, I dig
+     deeper into reasons for runtime performance overhead introduce by yk in
+     C-based interpreters. 
 
     \laurie{i think you need to try writing the abstract now, because it will
     guide you for the rest of the report. The advice in point 4 of
