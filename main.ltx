@@ -6,19 +6,39 @@
 
 \begin{abstract}
     \noindent
-        Finding the best optimisation pass sequence, which both
-        correctly(i.e~without crashing) builds the program and improve its
-        execution time is challenging. Modern compilers have hundreds of
-        optimisation passes, and finding the best pass sequence, which not only
-        results in correct binary executable but also gives us desired
-        performance for a program can take up to exponential time. In this
-        report, I use parallised genetic algorithm to find best pass
-        sequence for yk, which is a metatracing system and yklua, a yk-based lua
-        interpreter. The result is not only a pass-sequence which improves
-        yklua's performance by 1.5-2 times but also leads a way for me 
-        to investigate the causes of slowdown in yk-based interpreter.
-    
-    \laurie{i think you need to try writing the abstract now, because it will
+     Dynamic languages are more expensive to compile than statically
+     typed languages. Since, traditional compilers don't have runtime
+     informations, they need to emit code that can handle 
+     all type of combinations that are possible at the runtime. This
+     makes performance of dynamic language much slower. JIT compilers
+     overcome this problem by recording and using runtime informations 
+     to optimise most executed paths. JIT compilation is 
+     combination of two traditional method : ahead of time compilation
+     (AOT) and interpretation. So, JIT compilation gives dynamic languages
+     speed of compiled code with flexibility of interpretation. 
+     One variant of JIT compilation is tracing compilation, in tracing JIT
+     compilation, the VM identifies the frequently executed, ‘hot’ program paths at
+     runtime. Once a hot path is detected, the VM records all instructions in
+     this path into a trace until the execution loops back to the first instruction
+     of this path. The trace is then compiled and subsequent iterations of this
+     path execute the compiled trace instead of the original code. However,
+     implementing a tracing JIT compiler is very complex. But with meta-tracing
+     it is possible to separate language implementation concerns from
+     JIT compilation. In Meta-tracing, language interpreters are built on
+     top of a common tracing JIT compiler, the compiler traces the execution 
+     of the interpreter while it is running a user program. 
+     However, retrofitting meta-tracing system such as yk into existing
+     C-interpreters brings challenges to their performance. The aim of my PhD is
+     to optimise performance of interpreters that uses the yk meta-tracing
+     system. In this report, I first find optimisation pass sequence (from
+     tradition passes such as O2) using recursive and stochastic method, the end
+     result, when JIT is turned of is performance improvement by 1.5-2 times for
+     yklua, a C-based interpreter which uses yk. Next, I dig deeper into reasons
+     for runtime performance overhead introduce by yk in C-based interpreters.
+     This report aims to find ways to speed up retrofitting meta-tracing system
+     (i.e~yk) into existing interpreters, this will not only make the interpreters faster
+     but also have positive impact on user experience. 
+     \laurie{i think you need to try writing the abstract now, because it will
     guide you for the rest of the report. The advice in point 4 of
     https://plg.uwaterloo.ca/~migod/research/beckOOPSLA.html is an excellent
     starting point.}
