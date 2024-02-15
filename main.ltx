@@ -35,7 +35,7 @@
     starting point.}
 \end{abstract}
 
-\section{Introduction}
+\section*{Introduction}
 
 \laurie{this isn't exactly an introduction yet: it's some background, then a
 solution. i would start by writing the abstract to help you crystalise what
@@ -118,7 +118,7 @@ Through this work, I aim to bridge the gap between the theoretical performance o
 meta-tracing JIT compilation and its practical performance for the  C
 interpreter.
 
-\section{Background}
+\section*{Background}
 \label{sec:background}
 Modern compilers have huge number of optimisation passes available. These
 optimisation passes target unique segments of program, such as transforming a
@@ -181,7 +181,7 @@ what causes overhead and limit us to achieve theoretical performance for
 the interpreter. 
 
 
-\subsection*{Methodology}
+\section*{Methodology}
 Constraint Satisfaction Problems are mathematical problem with a finite set of
 variable, each of which has a finite domain (i.e~set of possible values).
 Since the variables can be related, this puts a limitation on what values
@@ -189,18 +189,18 @@ these variables can be instantiated with. To solve this problem, we have to find
 possible values for these variables which lies within the domain and does
 not violates any constraints.
 
-In this report, we would be discussing about Constraint Satisfaction
-Optimisation Problem (CSOP), which is a NP-hard problem\ref{add reference}. CSOP
-is a variation of Constraint Satisfaction Problem which aims to find most
-optimal solution (i.e~global optima) in the search space. One way to solve this
-problem is systematic search algorithm, in this method we try all possible
-combinations of variables for the oracle set, the variables can have any value
-possible from their domains, the algorithm then exhausts the search space (if
-necessary) to find a combination which satisfies our constraint set for the
-oracle(s). The problem with this search is that since the number of combination
-can be exponentially large, even though it might be finite to make sure the
-solution found is optimal or near-optimal the algorithm will need to exhaust the
-entire problem (or search) space, this might  take years.
+Constraint Satisfaction Optimisation Problem (CSOP), is a NP-hard
+problem\iti{add citation}. CSOP is a variation of Constraint Satisfaction
+Problem which aims to find most optimal solution (i.e~global optima) in the
+search space. One way to solve this problem is systematic search algorithm, in
+this method we try all possible combinations of variables for the oracle set,
+the variables can have any value possible from their domains, the algorithm then
+exhausts the search space (if necessary) to find a combination which satisfies
+our constraint set for the oracle(s). The problem with this search is that since
+the number of combination can be exponentially large, even though it might be
+finite to make sure the solution found is optimal or near-optimal the algorithm
+will need to exhaust the entire problem (or search) space, this might  take
+years.
 
 Another way to solve CSOP is using stochastic search method, stochastic
 search method involves randomising the search algorithm. Sometimes search
@@ -208,20 +208,19 @@ based problems contains multiple local optima, and deterministic or systematic
 algorithm can get stuck in local optima because of combinatorial explosion
 problem. 
 
-The objective of this report is to solve constraint optimisation problem
-for YK and YKLUA using stochastic search algorithm.
+I perform two algorithm to find best optimisation pass sequence for yk and
+yklua, best means the optimisation pass sequence which succeeds all yk test and
+improves the performance of yklua interpreter. The first algorithm is recursive
+based binary split algorithm, and the second is stochastic based genetic
+algorithm. 
 
-\begin{itemize}
-    \item 
-\end{itemize}
-
-CSOP \laurie{?}
-A finite (i.e~with a countable combination) constraint satisfaction problem can
-be explained as a problem with a finite set of variable, in which each variable
-can have values from the domain set (which is possible values or state for that
-variable). Since variables can be related to each other, these variables can 
-only be instantiated with those values from their domain which doesn't violate
-any constraint from the constraint set.
+But before that let's understand what Constraint Satisfaction Optimisation
+Problem or CSOP is.\laurie{?} A finite (i.e~with a countable combination)
+constraint satisfaction problem can be explained as a problem with a finite set
+of variable, in which each variable can have values from the domain set (which
+is possible values or state for that variable). Since variables can be related
+to each other, these variables can only be instantiated with those values from
+their domain which doesn't violate any constraint from the constraint set.
 
 For easier understanding, CSOP has three variable: $X$, $D$ and $C$:
 \begin{itemize}
@@ -230,12 +229,54 @@ For easier understanding, CSOP has three variable: $X$, $D$ and $C$:
     \item $C$ is a set of constraints that dictates allowable combinations.
 \end{itemize}
 
+CSOP can usually be solved using different form of search. In this report we
+cover three search algorithm two of which are stochastic in nature:
+\begin{itemize}
+    \item{A devide-and-conquer search which uses binary splitting (or chopping) technique}
+    \item{Non-stochastic divide-and-conquer search which uses binary splitting
+        technique}
+    \item{A global search which uses genetic algorithm}
+\end{itemize}
 
-backtracking or heuristic search
-local search
-genetic algorithm
+\subsection*{Stochastic Binary Splitting Algorithm}
 
-\subsection{The LLVM Project}
+\begin{algorithm}[H]
+    \caption{Testing Optimization Passes in Compiler Pipeline}
+    \begin{algorithmic}[1] % The [1] argument enables line numbering
+    \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
+    \State Fetch all available optimization passes
+
+    \Function{test\_pipeline}{PipelineConfig}
+        \State Execute the pipeline with the specified configuration
+        \State Log the results
+    \EndFunction
+
+    \Function{main}{}
+        \State Fetch all passes
+        \State Perform initial testing of passes in isolation (\textbf{attempt1})
+        \State Perform combined testing of passes (\textbf{attempt2})
+    \EndFunction
+
+    \Function{attempt1}{passes}
+        \State Test each pass in isolation
+        \State Log which passes succeed and which fail
+    \EndFunction
+
+    \Function{attempt2}{passes}
+        \State Start with an empty set of okay passes
+        \State Recursively test combinations of passes
+        \If{a combination is successful}
+            \State Add it to the set of okay passes
+        \EndIf
+        \If{a combination fails with more than one pass}
+            \State Split and test subsets
+        \EndIf
+    \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection*{Genetic Algorithm}
+\subsection*{The LLVM Project}
 As Wikipedia describes, LLVM is a set of compiler and toolchain technologies.
 LLVM very modular and reusable project which has its owns Intermediate
 Representation (LLVM IR). This language-independent IR helps LLVM 
@@ -321,40 +362,75 @@ Add a section about oracle, describe the oracle.
 Question: why can't we use custom pipeline on our oracle?
 why yk or yklua oracle tests fail for some pass sequence?
 
-\section{Experimental Setup}
+\section*{Experimental Setup}
 
-\section{Experiments}
+\section*{Experiments}
 
-Hypothesis I: Maintaining the order of passes are not important for finding
-successful pass sequence.
+Hypothesis I: The sequence order of optimisation passes is non-critical for
+obtaining successful optimisation pass sequence for the target oracle.
 
-Parallising the program
+The binary split algorithm described in section \iti{add section label} doesn't
+inherently maintain the original order of the optimization pass list during its
+divide-and-conquer process. When it splits the list of passes to test subsets,
+it uses a random shuffle before dividing them into two halves. This shuffling
+means that the original order of the passes is not preserved in the testing
+process.
 
-write about binary split algorithm
+The random shuffle is intended to explore different combinations of passes in an
+attempt to quickly find a working set of passes. However, this approach does not
+consider the order in which passes are applied, which might be significant
+depending on the context. In compiler optimization, the order in which
+optimization passes are applied can affect the outcome of the optimizations.
+Some optimizations may need to be applied before others to be effective or to
+avoid negative interactions. Parallising the program
 
-Hypothesis II: Introducing randomisation can help us escape local optima (from the GA
-thesis)
+\iti{add the pseudocode here.}
 
-parallesing the algorithm for speed-up and faster testing. 
-Speed up from parallesing
+Hypothesis II: Elimination of stochastic elements from the divide-and-conquer
+strategy, coupled with parallelization, should give us successful pass list for
+the target oracle quickly.
 
-Hypothesis III: Deciding upon oracle
+Hypothesis III: Using stochastic genetic-algorithm can result in better
+optimisation pass sequence for the target oracle compared to the conventional
+methods.  
 
-Hypothesis IV: aiming for performance
+Hypothesis IV: Parallel execution of genetic algorithms, can result in
+processing multiple generations much faster and hence reduce time to achieve
+optimal pass sequence.
 
-obstacles: aiming for correctness (yk's tests), why we disabled some tests
+Hypothesis V: Running more generations results in finding the optimisation pass
+sequence which converges easily to global optima making the interpreter faster
+by 3-4x from baseline
 
-Obstacles: wall created by ykllvm and yk-config
+Hypothesis VI: he integration of high-overhead optimization passes within ykllvm
+contributes to its performance disparity when compared to standard llvm clang.
 
-Hypothesis V: ykllvm's clang is slower than llvm clang because ykllvm introduce
-high penality passes.
+Hypothesis VII: Disabling optimisation passes when using ykllvm incurs
+significant performance detriments
 
-why these passes are high penality?
+Hypothesis VIII: We can improve performance of interpreter when compiled with
+ykllvm by optimising yk-specific optimisation passes
 
-is there any way to solve it?
 
-exaplain yk-config in methodology section \iti{IMPORTANT!}
-
+    % parallesing the algorithm for speed-up and faster testing. 
+    % Speed up from parallesing
+    %
+    % Hypothesis III: Deciding upon oracle
+    %
+    % Hypothesis IV: aiming for performance
+    %
+    % obstacles: aiming for correctness (yk's tests), why we disabled some tests
+    %
+    % Obstacles: wall created by ykllvm and yk-config
+    %
+    %
+    %
+    % why these passes are high penality?
+    %
+    % is there any way to solve it?
+    %
+    % exaplain yk-config in methodology section \iti{IMPORTANT!}
+    %
  % Dynamic languages are more expensive to compile than statically
  % typed languages. Since, traditional compilers don't have runtime
  % informations, they need to emit code that can handle 
@@ -374,6 +450,7 @@ exaplain yk-config in methodology section \iti{IMPORTANT!}
  % deeper into reasons for runtime performance overhead introduce by yk in
  % C-based interpreters. 
 
+\section*{Conclusion and Future Work}
 % \bibliographystyle{plain}
 % \bibliography{bib}
 
