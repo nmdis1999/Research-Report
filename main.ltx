@@ -401,33 +401,38 @@ rpython} \\
 optimisation, (maybe with basic block reordering algorithm?)} \\
 
 \section{Addressing interpreter performance in a meta-tracing system}
-As mentioned earlier, meta-tracing systems such as yk cannot enable all the
-optimisation passes by default as it messes with basic-blocks mapping when
-switching from JIT mode to AOT mode. Therefore, we need to carefully choose the
-optimisation pass sequence which doesn't interferes with basic block mapping
-while also improving the interpreters performance. Such problem is called
-optimising phase ordering problem. Optimising phase ordering is a long standing
-problem with tons \laurie{`tons' is not really a word we expect to see in academia :)} of work done on it \laurie{don't tell, show: cite some of these many papers}. However, the optimisation pass sequence
+As mentioned earlier, meta-tracing systems which uses hardware tracing mechanism
+such as yk cannot enable all the optimisation passes by default, as they
+reorganises the basic-blocks and thus messes the mapping when switching from JIT
+mode to AOT mode. Therefore, we need to carefully choose the optimisation pass
+sequence which doesn't interferes with basic block mapping while also improving
+the interpreters performance. Such problem is called optimising phase ordering
+problem. Optimising phase ordering is a long standing problem with a lots of
+work done on it \iti{add citation(s)}. However, the optimisation pass sequence
 which might work for one system may not perform well or even work at all for the
-other. Finding right optimisation pass sequence depends on the algorithm and
+other. Finding right optimisation pass sequence depends on the algorithm and the
 oracle used. Algorithm can be recursive or stochastic one while oracle means a
-test set which sets initial constraint. Unless the pass sequence satisfied all
-the constraint it won't be selected in the algorithm. The oracle can contain
-constraints such as tests as well as execution time of the program.
+test set which establishes initial constraint. Unless the pass sequence
+satisfies all the constraint it won't be selected in the algorithm. The oracle
+can contain constraints such as tests as well as execution time of the program.
 
 Since some optimisation passes depends on others to enable program's
 transformation, choosing a right sequence (and order of passes) is important for
-program's performance either in respect to execution time or code size. However,
-the number of passes are a lot (around 90) which makes our search space huge
+program's performance either in respect to execution time, code size or both.
+However, the such large number of passes (around 90) makes our search space huge
 (i.e~if we try all sequence irrespective of ordering we would have to try
-$2^{90} - 1$ possible combinations!). In this report I initially work with two
-algorithm, and finally choose genetic algorithm for the final solution. Genetic
-algorithm is well-known stochastic algorithm which is adopted on the basis of
-theory of evolution. This algorithm has been used by several researchers to
-solve phase-ordering problem. Using genetic algorithm helps us to find an
-optimal pass sequence for our oracle in acceptable time. Further, it isn't just
-compatible with the meta-tracing system but also improves the C interpreter's
-performance.
+$2^{90} - 1$ possible combinations!). In this report I start with
+divide-and-conquer algorithm to find meta-tracing compatible pass sequence, and
+later move on to genetic-algorithm for the same. Genetic algorithm is well-known
+stochastic algorithm which is adopted on the basis of theory of evolution. This
+algorithm has been used by several researchers to solve phase-ordering
+problem\iti{add cite}. Using genetic algorithm helps us to find an optimal pass
+sequence for our oracle in acceptable time, where acceptable time is finding
+compatible pass sequence within couple of hours if not minutes. Further, the
+genetic-algorithm not only able to find pass sequence that's compatible with the
+meta-tracing system but the pass sequence also ends up improving the C
+interpreter's performance. This is much better than divide-and-conquer algorithm
+which was only able to find pass sequence which sped up the interpreter.
 
 \section{Experimental Setup}
 
@@ -440,6 +445,56 @@ as well as improved interpreter's performance.
 In the experiments done below we use yk as the meta-tracing system and yklua
 as the C interpreter being optimised.
 
+\subsection{Methodology}
+
+\subsubsection{Divide-and-conquer algorithm for phase ordering problem}
+\begin{tcolorbox}
+\begin{algorithm}[H]
+    \begin{algorithmic}[1] % The [1] argument enables line numbering
+    \small
+    \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
+    \State Fetch all available optimization passes
+
+    \Function{test\_pipeline}{PipelineConfig}
+        \State Execute the pipeline with the specified configuration
+        \State Log the results
+    \EndFunction
+
+    \Function{attempt1}{passes}
+        \State Test each pass in isolation
+        \State Log which passes succeed and which fail
+    \EndFunction
+
+    \Function{attempt2}{passes}
+        \State Start with an empty set of okay passes
+        \State Recursively test combinations of passes
+        \If{a combination is successful}
+            \State Add it to the set of okay passes
+        \EndIf
+        \If{a combination fails with more than one pass}
+            \State Split and test subsets
+        \EndIf
+    \EndFunction
+
+    \Function{main}{}
+        \State Fetch all passes
+        \State Perform initial testing of passes in isolation (\textbf{attempt1})
+        \State Perform combined testing of passes (\textbf{attempt2})
+    \EndFunction
+    \end{algorithmic} 
+\end{algorithm}
+\textbf{Algorithm 1:} this algorithm has two functions, attempt1 tries each pass
+individually to see which passes succeeds and which ones fails in isolation. It
+takes total of 36 hours to run attempt1. In attempt2, the algorithm starts with
+an empty list of ok passes, recursively test combination of passes starting with
+full list and then splits the list in two if the initial list fails and only
+adds the subsets which succeeds to the okay pass list. The initial version of 
+the algorithm used to reshuffles the list as well to make it stochastic,
+however, I noticed that we received no pass sequence which was compatible with
+yk as well as improved yklua's performance. Removing stochastic elements helped
+me to get at least a pass sequence which was compatible with yk, but failed to
+provide performance improvement to yklua.
+\end{tcolorbox}
 
 % \subsection*{Optimisation passes sequence}
 % As we discussed types of pipeline, the next question is how and what passes are
@@ -479,8 +534,30 @@ as the C interpreter being optimised.
 % what causes overhead and limit us to achieve theoretical performance for
 % the interpreter.\iti{change this line too?} 
 
-\subsection{Methodology}
-\laurie{this paragraph, and some of what comes after, feels more like a textbook than a natural part of the flow of the report: it doesn't really help the reader. rather, the reader needs a higher-level overview of what you're doing before you dive into detail.}
+\subsubsection{Genetic Algorithm for phase-ordering problem}
+Genetic algorithm is a stochastic search algorithm which borrows some concept
+like evolution from nature. This algorithms starts from an initial list (often
+represented in a bitwise form) called entities and explore different
+combinations by combining elements from two entities via method of mutation and
+crossover. The combination then creates a third entity, which may represent a
+new point in the vast search space, which otherwise would have left unexplored
+by search methods like divide-and-conquer.
+
+Some terminology for the genetic algorithm:
+
+\begin{itemize}
+    \item{Entity:}
+    \item{Mutation:}
+    \item{Crossover:}
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.5]{images/genetic_algo.pdf}
+    \caption{\small explain blah blah}
+    \label{aggregator-profiles}
+\end{figure}
+
 Constraint Satisfaction Problems are mathematical problem with a finite set of
 variable, each of which has a finite domain (i.e~set of possible values).
 Since the variables can be related, this puts a limitation on what values
@@ -537,110 +614,70 @@ cover three search algorithm two of which are stochastic in nature:
     \item{A global search which uses genetic algorithm}
 \end{itemize}
 
-\subsection{Stochastic Binary Splitting Algorithm}
 \begin{tcolorbox}
-\begin{algorithm}[H]
+    \begin{algorithm}[H]
     \caption{Testing Optimization Passes in Compiler Pipeline}
-    \begin{algorithmic}[1] % The [1] argument enables line numbering
-    \small
-    \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
-    \State Fetch all available optimization passes
+        \begin{algorithmic}[1] % The [1] argument enables line numbering
+        \small
+        \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
+        \State Fetch all available optimization passes
 
-    \Function{test\_pipeline}{PipelineConfig}
-        \State Execute the pipeline with the specified configuration
-        \State Log the results
-    \EndFunction
+        \Function{test\_pipeline}{PipelineConfig $pl$}
+            \State Execute the pipeline with configuration $pl$
+            \State Log the results
+        \EndFunction
 
-    \Function{main}{}
-        \State Fetch all passes
-        \State Perform initial testing of passes in isolation (\textbf{attempt1})
-        \State Perform combined testing of passes (\textbf{attempt2})
-    \EndFunction
+        \Function{encode\_passes\_randomly}{Pass $root\_passes$}
+            \State Recursively set `on` flag of each pass to 0 or 1 randomly
+            \State Ensure at least one subpass is enabled if parent is enabled
+            \State Return modified $root\_passes$
+        \EndFunction
 
-    \Function{attempt1}{passes}
-        \State Test each pass in isolation
-        \State Log which passes succeed and which fail
-    \EndFunction
+        \Function{decode\_passes\_to\_string}{Pass $passes$}
+            \State Generate string representation of enabled passes and hierarchy
+            \State Exclude passes with `on` set to 0
+            \State Return the string representation
+        \EndFunction
 
-    \Function{attempt2}{passes}
-        \State Start with an empty set of okay passes
-        \State Recursively test combinations of passes
-        \If{a combination is successful}
-            \State Add it to the set of okay passes
-        \EndIf
-        \If{a combination fails with more than one pass}
-            \State Split and test subsets
-        \EndIf
-    \EndFunction
-    \end{algorithmic}
-\end{algorithm}
-\end{tcolorbox}
+        \Function{evaluate\_fitness}{Pass $passes$, ...}
+            \State Decode passes string into PipelineConfig $pl$
+            \State Call $test\_pipeline(pl)$ to get execution time
+            \State Add fitness score (execution time) to shared list
+        \EndFunction
 
-\subsection{Genetic Algorithm}
-\begin{tcolorbox}
-\begin{algorithm}[H]
-\caption{Testing Optimization Passes in Compiler Pipeline}
-\begin{algorithmic}[1] % The [1] argument enables line numbering
-\small
-\State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
-\State Fetch all available optimization passes
+        \Function{tournament}{list $population$, list $fitness$, float $sp$}
+            \State Select two individuals randomly
+            \State Choose fitter one with probability $sp$ as parent
+        \EndFunction
 
-\Function{test\_pipeline}{PipelineConfig $pl$}
-\State Execute the pipeline with configuration $pl$
-\State Log the results
-\EndFunction
+        \Function{crossover}{Pass $parent1$, Pass $parent2$}
+            \State Create child passes by swapping random passes between parents
+            \State Return child passes
+        \EndFunction
 
-\Function{encode\_passes\_randomly}{Pass $root\_passes$}
-\State Recursively set `on` flag of each pass to 0 or 1 randomly
-\State Ensure at least one subpass is enabled if parent is enabled
-\State Return modified $root\_passes$
-\EndFunction
+        \Function{mutate}{Pass $entity$, float $mutation\_rate$}
+            \State Recursively flip `on` flag of each pass with probability $mutation\_rate$
+            \State Return mutated pass
+        \EndFunction
 
-\Function{decode\_passes\_to\_string}{Pass $passes$}
-\State Generate string representation of enabled passes and hierarchy
-\State Exclude passes with `on` set to 0
-\State Return the string representation
-\EndFunction
+        \Function{genetic\_algorithm}{string $parsed\_str$, ...}
+            \State Create initial population of randomly encoded passes
+            \For{$generation$ in $1$ to $generations$}
+            \State Evaluate fitness of each entity in parallel
+            \State Select elites (good fitness)
+            \State Apply crossover and mutation to create new generation
+            \EndFor
+            \State Return best entity (set of passes)
+        \EndFunction
 
-\Function{evaluate\_fitness}{Pass $passes$, ...}
-\State Decode passes string into PipelineConfig $pl$
-\State Call $test\_pipeline(pl)$ to get execution time
-\State Add fitness score (execution time) to shared list
-\EndFunction
-
-\Function{tournament}{list $population$, list $fitness$, float $sp$}
-\State Select two individuals randomly
-\State Choose fitter one with probability $sp$ as parent
-\EndFunction
-
-\Function{crossover}{Pass $parent1$, Pass $parent2$}
-\State Create child passes by swapping random passes between parents
-\State Return child passes
-\EndFunction
-
-\Function{mutate}{Pass $entity$, float $mutation\_rate$}
-\State Recursively flip `on` flag of each pass with probability $mutation\_rate$
-\State Return mutated pass
-\EndFunction
-
-\Function{genetic\_algorithm}{string $parsed\_str$, ...}
-\State Create initial population of randomly encoded passes
-\For{$generation$ in $1$ to $generations$}
-\State Evaluate fitness of each entity in parallel
-\State Select elites (good fitness)
-\State Apply crossover and mutation to create new generation
-\EndFor
-\State Return best entity (set of passes)
-\EndFunction
-
-\Function{main}{}
-\State Set up temporary directories
-\State Get available passes using `get\_all\_passes`
-\State Run genetic algorithm to find best passes
-\State Decode best entity and print final passes
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+        \Function{main}{}
+            \State Set up temporary directories
+            \State Get available passes using `get\_all\_passes`
+            \State Run genetic algorithm to find best passes
+            \State Decode best entity and print final passes
+        \EndFunction
+        \end{algorithmic}
+    \end{algorithm}
 \end{tcolorbox}
 
 \subsection{Algorithm's speed up after parallising}
@@ -746,8 +783,9 @@ To verify if yk-based passes contribute to 3x slowdown to yklua I start to turn
 off yk related flags. First, I turn them off individually and then in
 combinations. The speedup of the interpreter when the passes are turned off
 indicates that the flag (or combination of them) are contributing slowdown by
-ratio of: $$\frac{(performance of baseline)}{(performance of row n)}$$ The numbers in
-Table proves H2 to be true. The majority of overhead is caused when the yk flags
+% ratio of: \scalemath{0.8}{$$\frac{\text{(performance of baseline)}}{\text{(performance of row
+% n)}$$} 
+The numbers in Table proves H2 to be true. The majority of overhead is caused when the yk flags
 are used in combination with row 14 causing maximum slowdown.
 
 \begin{table}[H]
@@ -912,23 +950,24 @@ lukas}
 
 \section{Conclusion and Future Work}
 
-Conclusion: In this report, I prove that retrofitting meta-tracing system such
-as yk brings challenges to performance of C based interpreter \laurie{you didn't prove this: it was already known! what you have proven, rather, is that it is possible to `win back' some of the lost performance. of course this only works for 1 or 2 benchmarks, and we don't know if it's a local or global optima --- but it is a start!}. I am able to
-get back some performance by applying compatible pass sequence obtained with the
-help of genetic-algorithm, and by improving one of the costly yk-based flag used
-for compilation of the interpreter.
+Conclusion: In this report, I prove that we can win back some of the lost
+performance when we retrofit meta-tracing system such
+as yk to C based interpreter. Although, the experiments above are only run on a
+couple of benchmark, it shows possibility of improving yk based interpreters. We
+can expand the oracle suite of genetic-algorithm to include more comprehensive
+benchmarks and extend the above experiments.
 
-Future work: In future, I intend to fetch more performance by improving yk-based
-flag such as yk-insert-stackmaps, yk-split-blocks-after-calls, and
-yk-no-fallthrough. \iti{add about yk-no-fallthrough, what it does and how we can
-improve this}
+Future work: Future work includes improving yk-based flag such as
+yk-insert-stackmaps, yk-split-blocks-after-calls, and yk-no-fallthrough.
+\iti{add about yk-no-fallthrough, what it does and how we can improve this}
 
 Another possible hypothesis, which might be worth testing is whether we can
-support optimisations which we have currently disabled because they interfere
-with basic block mappings \laurie{i think you mean something like ``can partial versions of the disabled optimisations be created''}. This would require change in llvm or to write our own
+create partial version of the disabled optimisations, which were disabled because they interfere
+with basic block mappings. This would require change in llvm or to write our own
 optimisation passes which performs most of the optimisations but don't mess with
 the mapping. One way could be to tweak the passes so that only optimisation
-within the basic blocks are allowed (and those which work across are not).
+within the basic blocks are allowed (and those which work across the basic
+blocks are not allowed).
 
 
 % \bibliographystyle{plain}
