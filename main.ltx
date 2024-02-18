@@ -681,7 +681,7 @@ list of O2 (pre and postlink) and applied on the interpreter. This list however
 is not compatible with yk meta-tracing system (i.e~ the list fails yk's tests)}
 \end{table}
 
-For first experiment we consider 2 ways to build lua binary:
+For first experiment we consider two ways to build lua binary:
 \begin{itemize}
     \item{With the help of yk-config, we call this yklua}
     \item{With the help of traditional compilers such as gcc or clang and llvm opt tool.}
@@ -705,7 +705,7 @@ into the interpreter. The first column is with no optimisations
 and the rest has some or all optimisations turned on while building yklua
 binary.
 
-In row 2 - 2, there is clearly some performance improvement (by 1.5-2 times) when applying
+In row 2 - 7, there is clearly some performance improvement (by 1.5-2 times) when applying
 optimisation pass sequence on yklua binary when yk is retrofitted into the
 interpreter and JIT is turned off. However, what's interesting is that even when
 we apply full O2 pass sequence on yklua binary*\footnote{we ignore the
@@ -717,8 +717,16 @@ dig further why this might have happened.
 \subsection{Apply full O2 to yk retrofitted and traditionally compiled
 interpreter}
 
-\textbf{Yklua binaries built without using yk-config}
+Next, I ran `db.lua` 30 times when lua binary is compiled with gcc in O2 \& O3
+mode, and with lua is compiled with clang and optimisations were applied with
+the help of llvm's opt tool. The latter was to verify what is performance of lua
+binary when optimisation pass sequence (pre+postlink) are applied with the help
+of another tool instead of using clang's O2. Even with using opt tool to apply
+passes the performance of lua binary remains same as that we get with gcc's O2
+pass sequence. This indicates that yk-config might be including some flags
+which results in 3 times slowdown of yklua binary from lua binary. 
 
+\begin{table}[H]
 \begin{tabular}{@{}p{7.5cm}ll@{}}
 \toprule
 \textbf{Yklua binaries built without using yk-config} & \textbf{Mean} & \textbf{95\% CI} \\ 
@@ -728,14 +736,21 @@ lua binary build with gcc O3 & 0.030 & 0.003 \\
 lua binary build using clang and opt (O2 mode) & 0.034 & 0.004 \\
 \bottomrule
 \end{tabular}
-
-\iti{add why with yk retrofitted into the interpreter there is 3x slowdown}
+\caption{blah blah}
+\end{table}
 
 \subsection{Performance impact of yk-based flags with full O2 optimisation
 turned on}
 
-% Flags turned off (O2 passes are set)}
+To verify if yk-based passes contribute to 3x slowdown to yklua I start to turn
+off yk related flags. First, I turn them off individually and then in
+combinations. The speedup of the interpreter when the passes are turned off
+indicates that the flag (or combination of them) are contributing slowdown by
+ratio of: $$\frac{(performance of baseline)}{(performance of row n)}$$ The numbers in
+Table proves H2 to be true. The majority of overhead is caused when the yk flags
+are used in combination with row 14 causing maximum slowdown.
 
+\begin{table}[H]
 \begin{tabular}{@{}cllr@{}}
 \toprule
 \# & \multicolumn{1}{c}{Flags turned off (O2 passes are set)} & \multicolumn{1}{c}{Execution Time} & \multicolumn{1}{c}{95\% CI} \\ 
@@ -756,32 +771,38 @@ turned on}
 14 & \begin{tabular}[c]{@{}l@{}}—yk-no-fallthrough + —yk-block-disambiguate +\\ —yk-patch-control-point + —yk-insert-stackmaps +\\ —yk-split-blocks-after-calls\end{tabular} & 54.5ms & 0.003 \\
 \bottomrule
 \end{tabular}
-
+\caption{blah blah}
+\end{table}
 
 \subsection{Performance retrieval by improving yk based flags}
-\iti{add content about why this was need} \\
-\iti{add performance improvement} \\
-\iti{add link to the PR} \\
 
-To optimise yk-insert-stackmaps: 1) Currently we insert
-stackmaps before every function unless it's an intrinsic. However, we don't need
-to insert stackmaps before calls to unmappable functions, as we don't trace
-those and thus never have to deopt out of them. This might claw back a few ms
-for this flag. 
+Now that I have shown that yk-based flags contribute upto 1.5 times slowdown in
+yklua the next task is to figure out how much performance can be retrieved back
+by optimising some (or maybe all) flags above. 
+The best target to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
+the latter being a little more difficult to fix because ... \iti{ask edd}.
 
-\iti{1 was solved, add link to the PR}
+Currently in yk-insert-stackmaps stackmaps is inserted before every function
+unless it's an intrinsic. However, stackmaps are not needed before calls to
+unmappable functions, as these are not traced and thus never need
+deoptimisation. This might claw back a few ms for this flag. 
 
-2) Similarly, we also don't need to insert stackmaps before
-functions that we know have no conditions inside them (no condition = no guard =
-no deopt). This is a bit more difficult to implement because we will need to
-store which function have no condition inside them. This can compromise as a
-future work.
+With code changes and by adding test case in this\iti{add link to the PR}PR, I
+show the performance improvement of yklua binary from \iti{add number} to
+\iti{add number}.
+
+Similarly, stackmap is not needed for functions which don't have any conditions
+inside them, this is because no condition means there are no gaurds which means
+the function doesn't need to be traced or deoptimised. This is a bit more
+difficult to implement because we will need to store which function have no
+condition inside them. This can be targetted as a future work.
 
 As for the yk-split-blocks-after-calls pass. If we adjust jitmodbuilder a bit,
 we could also refrain from splitting blocks after calls to unmappable functions.
 But that could turn out to be a bit fiddly in jitmodbuilder as the splitting
-helps us to know when to start/stop outlining. \iti{Can we work out another way to
-solve this?}
+helps us to know when to start/stop outlining. Jitmodbuilder is ...\iti{ask
+lukas}
+\iti{Can we work out another way to solve this?}
 
 % \textbf{Hypothesis I: The sequence order of the optimisation passes is non-critical for
 % obtaining successful optimisation pass sequence (for the target oracle).}
