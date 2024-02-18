@@ -681,29 +681,38 @@ list of O2 (pre and postlink) and applied on the interpreter. This list however
 is not compatible with yk meta-tracing system (i.e~ the list fails yk's tests)}
 \end{table}
 
-So, for this experiment we consider 2 ways to build lua binary:
+For first experiment we consider 2 ways to build lua binary:
 \begin{itemize}
     \item{With the help of yk-config, we call this yklua}
     \item{With the help of traditional compilers such as gcc or clang and llvm opt tool.}
 \end{itemize}
 
-For 1): We can build yklua with and without optimisations. yk-config has support
-to add `cflags` (compiler) and `ldflags` (linker), and we can use the prelink and postlink we got
-from the genetic algorithm to append to the cflags and ldflags, this makes sure our
-optimisations are applied on the yklua binary.
+yk-config is tool to apply yk specific compiler and linker flags on the
+interpreter and other systems which uses yk's meta-tracing system. \iti{why were
+they added?} For 1): We can build yklua with and without optimisations.
+yk-config has support to add `cflags` (compiler) and `ldflags` (linker), and we
+can use the prelink and postlink pass sequence we found via the genetic
+algorithm, append them to cflags and ldflags, yk's clang (via ykllvm) apply the optimisations 
+the yklua binary.
 
 clang by default adds an `optnone` attribute to all the functions, which makes
 any optimisation we add ineffective. For this, yk-config already has
 `disable-O0-optnone` (which works with `-O0` flag). 
 
 Table I\iti{add label} (in attached doc) shows performance numbers for 30 runs of `db.lua` when
-built with and without optimisations. The first column is with no optimisations
+built with and without optimisations while yk meta-tracing system retrofitted
+into the interpreter. The first column is with no optimisations
 and the rest has some or all optimisations turned on while building yklua
 binary.
 
-\iti{add which specific rows are interesting and why} \\
-\iti{what result did we expect after applying full O2 passes (i.e~the last
-column)}
+In row 2 - 2, there is clearly some performance improvement (by 1.5-2 times) when applying
+optimisation pass sequence on yklua binary when yk is retrofitted into the
+interpreter and JIT is turned off. However, what's interesting is that even when
+we apply full O2 pass sequence on yklua binary*\footnote{we ignore the
+Compatibility of these passes with yk for the time being} the performance
+doesn't improve further. I propose applying full pass sequence should have
+resulted in 3-4 times performance improvement from the baseline binary. Let's 
+dig further why this might have happened.
 
 \subsection{Apply full O2 to yk retrofitted and traditionally compiled
 interpreter}
@@ -716,7 +725,7 @@ interpreter}
 \midrule
 lua binary build with gcc O2 & 0.034 & 0.004 \\
 lua binary build with gcc O3 & 0.030 & 0.003 \\
-lua binary build using clang and opt (O2 mode) & 0.075 & 0.004 \\
+lua binary build using clang and opt (O2 mode) & 0.034 & 0.004 \\
 \bottomrule
 \end{tabular}
 
