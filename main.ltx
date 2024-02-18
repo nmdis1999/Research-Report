@@ -30,50 +30,60 @@ dynamic languages tend to be quite slow to run when compiled\iti{add citation}.
 In dynamic languages such as Python, the type information may vary at runtime,
 which means compiler cannot rely on one type to transform operations into
 machine code and thus will have to generate all possible combinations. This can
-be very slow! JIT compilers overcome this problem by recording and using runtime
+be very slow. JIT compilers overcome this problem by recording and using runtime
 informations to optimise most executed paths (also known as "hot" paths). JIT
 compilation is combination of two traditional method: ahead of time compilation
-(AOT) and interpretation. Tracing JIT is a variation of JIT compilation. In
+(AOT) and interpretation.
+
+Tracing JIT is a variation of \laurie{``is a kind of''?} JIT compilation. In
 tracing JIT compilation, the VM identifies frequently executed, ‘hot’ program
 paths at runtime. Once a hot path is detected, the VM records all instructions
 in this path into a trace until execution loops back to the first instruction of
 this path. The trace is then compiled and subsequent iterations of this path
 execute the compiled trace instead of the original code. But developing custom
 tracing JITs is hard undertaking. To solve this, Bolz et al \iti{add cite}
-mentions meta-tracing approach in 2009. With meta-tracing system such as yk
+mentions \laurie{mentions?!} meta-tracing approach in 2009 \laurie{meta-tracing has an older history: you can see that in some of the things other papers cite}.
+
+With meta-tracing system such as yk
 language implementers don't need to implement their own tracing JITs instead
 they can use yk meta-tracing system and the tracing JIT compilation will
 automatically be embedded in the language implementations. yk traces the
 execution of the interpreter instead of tracing the program executed by the
 interpreter. However, not all compiler optimisations are safe to be used with
-meta-tracing systems like yk. Therefore, yk pessimistically turns off all the
+meta-tracing systems like yk \laurie{because...}. Therefore, yk pessimistically turns off all the
 optimisations by default. This results in much slower interpreter than the
 baseline (i.e~ interpreter compiled without the meta-tracer.) My work focuses on
 minimising performance overhead of the yk meta-tracer and thus speeding the C
 interpreter to as much extent as possible. In later sections, I'll discuss work
 done so far on this and future directions.
 
+\laurie{we have now moved from ``introduction'' to ``detailed background''. Move most of the next few paragraphs to the background section}
+
 Since meta-tracing is retrofitted onto the interpreter and then traces the
 interpreter's execution, it involves two interpreters: one that tracing JIT
 uses called tracing interpreter and the other that AOT uses to run users
-programs called language interpreter. The program that language interpreter
+programs called language interpreter \laurie{this is what rpython does: it is not currently what yk does. we currently use a single copy of the interpreter}. The program that language interpreter
 executes is called user program. At first when the program starts everything is
 interpreted (i.e~the user program), however when the hot loop is identified the
 meta-tracer enters into tracing mode. During tracing, the interpreter records a
 history of all the operations it executes. It traces until it has recorded the
 execution of one iteration of the hot loop. To decide when this is the case, the
-trace is repeatedly checked during tracing as to whether the interpreter is at a
+trace is repeatedly checked during tracing \laurie{huh?} as to whether the interpreter is at a
 position in the program where it had been earlier. The history recorded by the
 tracer is called a trace: it is a sequential list of operations, together with
 their actual operands and results. Such a trace can be used to generate
-efficient machine code. A trace is sequential path which only follows one of the
+efficient machine code.
+
+A trace is sequential path which only follows one of the
 many possible directions through the code. To ensure correctness, the trace
 contains a guard at every possible point where the path could have followed
 another direction, such as at conditions and indirect or virtual calls. When
 generating the machine code, every guard is turned into a quick check to
 guarantee that the path we are executing is still valid. If a guard fails, the
 tracing JIT immediately quit the machine code and continue the execution by
-falling back to interpretation (i.e~AOT mode). Further, at JIT time, the tracing
+falling back to interpretation (i.e~AOT mode).
+
+Further, at JIT time, the tracing
 interpreter records the basic blocks (i.e~jumps), when tracing interpreter 
 switches back to interpretation (at AOT) it needs to map the information back
 at AOT basic block. Meta-tracer such as yk need to do this with hundred percent
@@ -82,7 +92,9 @@ program for optimization. If the mapping from the traced addresses to the LLVM
 IR blocks is inaccurate, the JIT compiler might optimize the wrong code paths or
 apply optimizations based on incorrect assumptions. This can lead to the
 generation of incorrect or inefficient JIT-compiled code, affecting the
-program's correctness and performance. However, some llvm optimisations such as branch folding
+program's correctness and performance.
+
+However, some llvm optimisations such as branch folding
 and block placement passes messes with the mapping. Additionally,
 llvm applies some passes at different stages of the pipeline, even after the
 final IR has been generated. This again interferes with mapping and creates 
@@ -95,7 +107,7 @@ In this report I show that it is possible to minimise the performance overhead
 when the yk meta-tracing system is retrofitted in non-JITed C interpreter. Which
 means that the performance of non-JITed interpreter compiled with yk subsystem
 should be closer to the performance of the same interpreter when compiled with
-non-meta-tracing compiler. 
+non-meta-tracing compiler.
 The main contributions of this report are:
 \begin{itemize}
     \item{Genetic algorithm to find llvm optimisation passes which doesn't
@@ -126,12 +138,12 @@ improve the interpreter's performance.
 \\
 \\
 \textbf{H2} \hspace*{0.5cm} It is possible to get performance of yk compiled
-pure interpreter closer to that of traditionally compiled interpreter.
+pure interpreter closer to that of traditionally compiled interpreter. \laurie{this is just H1 using slightly different words: i don't see any meaningful difference}
 \\
 For this hypothesis, I applied the full O2 pass sequence to the pure
-interpreter. "Pure" here refers to a non-JIT-compiled interpreter.
+interpreter. "Pure" \laurie{use latex quotes here ``like this''} here refers to a non-JIT-compiled interpreter.
 Interestingly, even with full O2 optimisation, the yk-compiled interpreter is
-three times slower than a traditionally compiled interpreter (e.g., compiled
+three times slower than a traditionally compiled interpreter (e.g., \laurie{`e.g.' is never followed by `,'} compiled
 using clang or gcc). In this report, I investigate further and show that yk's
 pessimistic approach to optimisation, along with some specific yk flags,
 contributes to the slowdown. I achieved some initial speedup by optimising one
@@ -140,6 +152,8 @@ improvements are possible by refining other yk flags and making traditional
 optimisations compatible with the meta-tracing system.
 
 The report is structured as follows: 
+
+
 \section{Background}
 \label{sec:background}
 
@@ -230,7 +244,7 @@ Frontend                   LLVM
 \end{tcolorbox}
 
 \subsubsection{Type of optimisation pipelines}
-For hypothesis I,  we are mostly concerned with LLVM's middle-end optimisation
+For hypothesis I \laurie{`H1'?},  we are mostly concerned with LLVM's middle-end optimisation
 pipeline. LLVM has three kind of optimisation pipeline: default (non-LTO),
 ThinLTO, and FatLTO pipeline.
 
@@ -393,7 +407,7 @@ switching from JIT mode to AOT mode. Therefore, we need to carefully choose the
 optimisation pass sequence which doesn't interferes with basic block mapping
 while also improving the interpreters performance. Such problem is called
 optimising phase ordering problem. Optimising phase ordering is a long standing
-problem with tons of work done on it. However, the optimisation pass sequence
+problem with tons \laurie{`tons' is not really a word we expect to see in academia :)} of work done on it \laurie{don't tell, show: cite some of these many papers}. However, the optimisation pass sequence
 which might work for one system may not perform well or even work at all for the
 other. Finding right optimisation pass sequence depends on the algorithm and
 oracle used. Algorithm can be recursive or stochastic one while oracle means a
@@ -869,7 +883,7 @@ solve this?}
 \section{Conclusion and Future Work}
 
 Conclusion: In this report, I prove that retrofitting meta-tracing system such
-as yk brings challenges to performance of C based interpreter. I am able to
+as yk brings challenges to performance of C based interpreter \laurie{you didn't prove this: it was already known! what you have proven, rather, is that it is possible to `win back' some of the lost performance. of course this only works for 1 or 2 benchmarks, and we don't know if it's a local or global optima --- but it is a start!}. I am able to
 get back some performance by applying compatible pass sequence obtained with the
 help of genetic-algorithm, and by improving one of the costly yk-based flag used
 for compilation of the interpreter.
@@ -881,7 +895,7 @@ improve this}
 
 Another possible hypothesis, which might be worth testing is whether we can
 support optimisations which we have currently disabled because they interfere
-with basic block mappings. This would require change in llvm or to write our own
+with basic block mappings \laurie{i think you mean something like ``can partial versions of the disabled optimisations be created''}. This would require change in llvm or to write our own
 optimisation passes which performs most of the optimisations but don't mess with
 the mapping. One way could be to tweak the passes so that only optimisation
 within the basic blocks are allowed (and those which work across are not).
