@@ -114,7 +114,7 @@ The report is structured as follows:
 \iti{what is tracing? tracing a user program, tracing a bytecode interpreter}
 \iti{define meta-tracing jit}
 
-Tracing refers to the process of capturing the information about execution of a
+Tracing refers to the process of capturing information about an execution of a
 program. \iti{add about tracing and meta-tracing JIT}
 
 example:
@@ -162,7 +162,7 @@ However, some llvm optimisations such as branch folding
 and block placement passes mess with the mapping. Additionally,
 llvm applies some passes at different stages of the pipeline, even after the
 final IR has been generated. This again interferes with mapping and creates 
-problem for the meta-tracer. To avoid this problem the yk meta-tracing system
+problems for the meta-tracer. To avoid this problem, the yk meta-tracing system
 turns off all the optimisations by default, which slows down the interpreter 
 significantly even without the JIT being enabled.
 
@@ -179,45 +179,45 @@ example:
     /// consecutively, allowing bb1 to fall-thru to bb2. In the eyes of hwtracer, a fall-thru does
     /// not terminate a block, so whereas LLVM sees two blocks, hwtracer sees only one.
 
-Modern compilers have huge number of optimisation passes available. These
+Modern compilers have a huge number of optimisation passes available. These
 optimisation passes target unique segments of program, such as transforming a
-function, basic block or whole program. Further, these optimisations can be
+function, basic block(s) or whole program. Further, these optimisations can be
 applied at different stages of compilation pipelines. The sequence of passes try
-to retain the semantic of the program while potentially improving program's
+to retain the semantics of the program while potentially improving program's
 performance. There are are two type of passes: Analysis and Transformation. Both
-of these passes work together, the analysis passes collect information about the
+of these passes work together: the analysis passes collect information about the
 program and transformation passes are responsible for using the collected
 information and change the program. Example of optimisation level provided by
 modern compilers are: O0, O1, O2, O3, and Og. The two major compilers gcc and
-clang have 200 and 100+ optimisation passes respectively, their sequence is
-called as optimisation sequence. By default without optimisations level all of
+clang have 200 and 100+ optimisation passes respectively; their sequence is
+called as optimisation sequence. By default without optimisation level all of
 the passes are turned off, and an expert can choose to turn on and off passes
 accordingly.\iti{add reference}
 
 \subsection{LLVM Project}
-LLVM is a set of compiler and toolchain technologies. and has its owns
+LLVM is a set of compiler and toolchain technologies and has its own
 Intermediate Representation (LLVM IR). This language-independent IR helps LLVM
 compilation to be target and source independent. The LLVM IR is optimised
-through sequence of LLVM passes. Passes are operational unit of the IR which
+through a sequence of LLVM passes. Passes are an operational unit of the IR which
 can:
     \begin{itemize}
         \item{mutate the IR}
-        \item{performs some computation about the IR}
+        \item{perform some computation about the IR}
         \item{or just print something}
     \end{itemize}
 
-A unit of an IR is scope of the pass, it's what the pass is going 
+\iti{sentence might need rewriting, not vert clear}A unit of an IR is scope of the pass, it's what the pass is going 
 to operate on. This can be :
 \begin{itemize}
     \item{a module: LLVM module is a top-level structure that represents a
         single  unit of code which is processed together. It includes global
-        variable, function declaration, and implementations.}
+        variable(s), function declaration(s), and implementation(s).}
     \item{a function: LLVM function is a self-contained unit of execution within
-          a module, it corresponds to function in the source code and contains
+          a module. It corresponds to a function in the source code and contains
           a list of aruguments, a basic block, and a symbol table.}
     \item{a basic block: LLVM basic block is a linear sequence of instructions
-          within a function, this has a single entry and exit point. They are
-          used to represent straight-line code sequence that makes up function's
+          within a function, and has a single entry and exit point. They are
+          used to represent the straight-line code sequence that makes up a function's
           body.}
     \item{an instruction: an LLVM instruction is the smallest unit of execution
          in the LLVM IR, representing a single operation within a basic block.
@@ -226,14 +226,14 @@ to operate on. This can be :
          produces a result and can have zero or more operands, which are either constants
          or the results of other instructions.}
 \end{itemize}
-These passes are categorised into analysis, transformation and utility passes.
-Depending on whether they perform computation on the IR, mutate the IR, or do
+These passes are categorised into analysis, transformation and utility passes
+depending on whether they perform computation on the IR, mutate the IR, or do
 some other non-categorised task.
 
 \subsection{LLVM's optimisation pipeline}
 Classically, compilers are split into three parts, which is:
 frontend, middle-end and the backend. The frontend is responsible
-for dealing with programming-language specific analysis, this can be
+for dealing with programming-language specific analysis which can be
 operations such as parsing, type checking and so. The middle-end is where
 optimisations are performed. These optimisations are target independent \iti{add
 how}. Next, the backend is responsible for applying target-specific optimisation
@@ -267,11 +267,11 @@ Frontend                   LLVM
 
 \subsubsection{Type of optimisation pipelines}
 For hypothesis I \laurie{`H1'?},  we are mostly concerned with LLVM's middle-end optimisation
-pipeline. LLVM has three kind of optimisation pipeline: default (non-LTO),
+pipeline. LLVM has three kinds of optimisation pipelines: default (non-LTO),
 ThinLTO, and FatLTO pipeline.
 
 \subsubsection{Default Pipeline}
-The default pipeline separately optimize each module, without any
+The default pipeline separately optimises each module, without any
 special knowledge about other modules (apart from function/global declarations).
 “Module” here corresponds to “one source file” in C/C++ and one “codegen unit”
 in Rust.
@@ -303,9 +303,9 @@ pipeline. After the pre-link pipeline, ThinLTO will perform some lightweight
 cross-module analysis, and in particular import certain functions from other
 modules to make them eligible for inlining. However, the post-link optimization
 again works on individual modules.
-Pre-link optimisation are module simplication optimisations while contrary to
-the name post-link optimisation happen during link-time stage and involves both
-module simplication and optimisation passes.
+Pre-link optimisations are module simplication \iti{simplification?} optimisations, while contrary to
+the name, post-link optimisations happen during link-time stage and involve both
+module simplication \iti{simplification?} and optimisation passes.
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -356,7 +356,7 @@ Module 3 --(FatLTO pre-link)-------/
 
 While LTO stands for “link-time optimization”, it is not necessarily performed
 by the linker. For example, rustc will usually perform it as part of the
-compiler. The important property of LTO is that is allows cross-module
+compiler \iti{compilation?}. The important property of LTO is that it allows cross-module
 optimization.
 
 LLVM’s optimization pipeline looks like:
@@ -402,7 +402,7 @@ optimization, occurring post-link, applies global optimizations such as
 vectorization and runtime loop unrolling to enhance execution efficiency across
 the entire program. The backend phase then generates the final machine code,
 incorporating register allocation and architecture-specific optimizations to
-produce optimized executable code.
+produce an optimized executable code.
 
 For yk meta-tracer we work with FatLTO because \iti{ask edd/laurie}.
 \laurie{why is this a problem for yk but not rpython?}
