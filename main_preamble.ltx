@@ -39,7 +39,7 @@
 
 % TikZ Package and Libraries
 \usepackage{tikz}
-\usetikzlibrary{positioning}
+\usetikzlibrary{positioning, arrows.meta}
 % Must be loaded last
 \usepackage[capitalise]{cleveref}
 
@@ -64,7 +64,7 @@
   #1
 \end{itemize}
 }
-
+\tcbuselibrary{skins, breakable}
 \newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath{\displaystyle #2}}}}
 
 \definecolor{lightgray}{gray}{0.95}

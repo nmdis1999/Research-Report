@@ -111,13 +111,18 @@ The report is structured as follows:
 \section{Background}
 \label{sec:background}
 
-\iti{what is tracing? tracing a user program, tracing a bytecode interpreter}
-\iti{define meta-tracing jit}
-
-Tracing refers to the process of capturing information about an execution of a
-program. \iti{add about tracing and meta-tracing JIT}
-
-example:
+Tracing refers to the process of capturing information about execution of an
+program. Tracing JITs use the technique where they collect/record information
+about most executed (or ``hot'') paths via traces of the program and later at
+runtime uses the information to perform optimisations and inlining decisions. A
+trace is sequential path which follows only one of the many possible directions
+through the code. To ensure correctness, the trace contains a guard at every
+possible point where the path could have followed another direction, such as at
+conditions and indirect or virtual calls. When generating the machine code,
+every guard is turned into a quick check to guarantee that the path we are
+executing is still valid. If a guard fails, the tracing JIT immediately quits
+the machine code and continues the execution by falling back to interpretation
+(i.e~AOT compilation).
 
 \begin{figure}[ht!]
     \centering
@@ -134,50 +139,126 @@ example:
     \end{subfigure}
 \end{figure}
 
-Meta-tracing is retrofitted onto the interpreter and then traces the
-interpreter's execution. \iti{how does yk uses single interpreter to switch
-between AOT and JIT compilation mode?}
+Meta-tracing is a system where the tracing JIT is applied at one level down,
+which means instead of tracing the execution of user program the meta-tracer traces the 
+execution of the interpreter. 
 
-A trace is sequential path which follows only one of the
-many possible directions through the code. To ensure correctness, the trace
-contains a guard at every possible point where the path could have followed
-another direction, such as at conditions and indirect or virtual calls. When
-generating the machine code, every guard is turned into a quick check to
-guarantee that the path we are executing is still valid. If a guard fails, the
-tracing JIT immediately quits the machine code and continues the execution by
-falling back to interpretation (i.e~AOT mode).
+\iti{this should be caption of the figure}The yk meta-tracing uses ykllvm to
+compile the interpreter's source code into a binary, which is called ahead of
+time compilation (or AOT compilation). This binary has builtin tracer, a jit
+compiler and LLVM IR. The LLVM IR is used by the jit compiler to use the tracing
+information. The binary generated using ykllvm is then used to interpret the
+user program. If the program has a loop, where a loop means the tracer comes
+back to the point it started collecting trace from, then the builtin tacer
+records this information. A trace starts getting collected when the meta-tracing
+system detects control-point in the interpreter, which can be inserted by the
+user initially. This control-point is later converted into yk specific control
+point. After collecting the full trace, the trace is compiled which is called
+just-in-time compilation (or JIT compilation) part of the meta-tracing system.
+If, when executing the user program both loop and complete traces is detected
+(which can be a later iteration of the loop) then instead of recording and
+compiling the trace again, the already compiled trace is used.
 
-\iti{This sentence needs to be broken, does not connect after ther point marked ahead.}Further, at JIT time, the tracing
-interpreter records the basic blocks (i.e~jumps), \iti{does not connect from here onwards} when tracing interpreter 
-switches back to interpretation (at AOT) it needs to map the information back
-at AOT basic block. Meta-tracers such as yk need to do this with a hundred percent
-accuracy. The JIT compiler relies on the traces to identify hot paths in the
-program for optimization. If the mapping from the traced addresses to the LLVM
-IR blocks is inaccurate, the JIT compiler might optimize the wrong code paths or
-apply optimizations based on incorrect assumptions. This can lead to the
-generation of incorrect or inefficient JIT-compiled code, affecting the
-program's correctness and performance.
+In tracing JIT (which is the core of meta-tracing system), conditions are turned
+into guards. The guards are responsible to check whether the conditions are
+being met (i.e~are true) or not. If the conditions is true, and a trace of it is
+already compiled then instead of interpreting the condition the compiled trace
+is used by the interpreter.
 
-However, some llvm optimisations such as branch folding
-and block placement passes mess with the mapping. Additionally,
-llvm applies some passes at different stages of the pipeline, even after the
-final IR has been generated. This again interferes with mapping and creates 
-problems for the meta-tracer. To avoid this problem, the yk meta-tracing system
-turns off all the optimisations by default, which slows down the interpreter 
-significantly even without the JIT being enabled.
+yk uses hardware tracer\footnote{which is Intel PT based} to collect the traces.
+Intel PT can only store stream of basic blocks and give their virtual address,
+Block mapping is used in hardware tracing to get from a traced virtual address,
+to a file offset in the binary, to a LLVM IR block. The yk meta-tracing system 
+depends on loader API and a special LLVM section to do this. This section is 
+emitted just before backend optimisation.
 
-example:
-/// Suppose that the LLVM IR looked like this:
-    ///
-    ///   bb1:
-    ///     ...
-    ///     br bb2;
-    ///   bb2:
-    ///     ...
-    ///
-    /// During codegen LLVM may remove the unconditional jump and simply place bb1 and bb2
-    /// consecutively, allowing bb1 to fall-thru to bb2. In the eyes of hwtracer, a fall-thru does
-    /// not terminate a block, so whereas LLVM sees two blocks, hwtracer sees only one.
+At JIT time, the tracing interpreter records the basic blocks (i.e~jumps), when
+tracing interpreter switches back to interpretation (i.e~when a guard fails) it
+needs to map the information back at AOT basic block, this is where LLVM IR is
+used. Meta-tracers such as yk need to do this with a hundred percent accuracy.
+The JIT compiler relies on the traces to identify hot paths in the program for
+optimization. If the mapping from the traced addresses to the LLVM IR blocks is
+inaccurate, the JIT compiler might optimize the wrong code paths or apply
+optimizations based on incorrect assumptions. This can lead to the generation of
+incorrect or inefficient JIT-compiled code, affecting the program's correctness
+and performance.
+
+
+However, some llvm optimisations passes mess with the basic-block mapping. One
+such example is when basic blocks are merged, some blocks may be left
+unaccounted in the trace. Additionally, llvm applies some passes at different
+stages of the pipeline, even after the final IR has been generated. This again
+interferes with mapping and creates problems for the meta-tracer. To avoid this
+problem, the yk meta-tracing system turns off all the optimisations by default,
+which slows down the interpreter significantly even without the JIT being
+enabled.
+
+\iti{add the edd's figure example here}
+
+\begin{tcolorbox}[
+    enhanced,
+    boxrule=2pt,
+    sharp corners,
+    colback=white,
+    colframe=gray,
+    fontupper=\bfseries\footnotesize,
+    before={\parindent15pt}, % Apply indentation globally
+]
+\begin{minipage}[t]{.49\linewidth} % Adjusted for centering
+\begin{Verbatim}
++-----+
+| bb1 |
++-----+
+   |
+   v
++---------------+
+| bb2           |
+| %3 = add %1, %2 |
++---------------+
+   |
+   v
++---------------+
+| bb3           |
+| %6 = store %3, %8 |
++---------------+
+   |
+   v
++-----+
+| bb4 |
++-----+
+\end{Verbatim}
+\end{minipage}%
+\hfill % Fill space to ensure the line is centered
+{\vrule width 4pt} % Make line thicker
+\hfill % Fill space to ensure the line is centered
+\begin{minipage}[t]{.49\linewidth} % Adjusted for centering
+\begin{Verbatim}
++------+
+| mbb1 |
++------+
+   |
+   v
++----------------------+
+| mbb2                 |
+| %3 = add %1, %2      |
+| %6 = store %3, %8    |
++----------------------+
+   |
+   v
++-------------------+
+| mbb3              |
+| (empty/deleted)   |
++-------------------+
+   |
+   v
++------+
+| mbb4 |
++------+
+\end{Verbatim}
+\end{minipage}
+\end{tcolorbox}
+
+\captionof{figure}{High Level IR and Machine IR side by side after backend optimization.}
 
 Modern compilers have a huge number of optimisation passes available. These
 optimisation passes target unique segments of program, such as transforming a
