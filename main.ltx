@@ -425,7 +425,9 @@ such as yk cannot enable all the optimisation passes by default, as they
 reorganises the basic-blocks and thus messes the mapping when switching from JIT
 mode to AOT mode. Therefore, we need to carefully choose the optimisation pass
 sequence which doesn't interferes with basic block mapping while also improving
-the interpreters performance. Such problem is called optimising phase ordering
+the interpreters performance.
+
+Such a problem is called optimising phase ordering
 problem. Optimising phase ordering is a long standing problem with a lots of
 work done on it \iti{add citation(s)}. However, the optimisation pass sequence
 which might work for one system may not perform well or even work at all for the
@@ -440,18 +442,22 @@ transformation, choosing a right sequence (and order of passes) is important for
 program's performance either in respect to execution time, code size or both.
 However, the such large number of passes (around 90) makes our search space huge
 (i.e~if we try all sequence irrespective of ordering we would have to try
-$2^{90} - 1$ possible combinations!). In this report I start with
+$2^{90} - 1$ possible combinations!).
+
+In this report I start with
 divide-and-conquer algorithm to find meta-tracing compatible pass sequence, and
 later move on to genetic-algorithm for the same. Genetic algorithm is well-known
 stochastic algorithm which is adopted on the basis of theory of evolution. This
 algorithm has been used by several researchers to solve phase-ordering
-problem\iti{add cite}. Using genetic algorithm helps us to find an optimal pass
-sequence for our oracle in acceptable time, where acceptable time is finding
+problem\iti{add cite}.
+
+Using genetic algorithm helps us to find an optimal \laurie{it doesn't: it allows us, if we're lucky, to find a ``better than not doing anything'' pass. this might not even be a local optima, let alone a global optima!} pass
+sequence for our oracle in acceptable time, where \laurie{this is your definition of `acceptable time'. other people might be willing to run things for weeks or longer. so i would say ``I define `acceptable time' as at most two hours because XYZ''} acceptable time is finding
 compatible pass sequence within couple of hours if not minutes. Further, the
 genetic-algorithm not only able to find pass sequence that's compatible with the
 meta-tracing system but the pass sequence also ends up improving the C
 interpreter's performance. This is much better than divide-and-conquer algorithm
-which was only able to find pass sequence which sped up the interpreter.
+which was only able to find pass sequence which sped up the interpreter \laurie{huh?}.
 
 \section{Experimental Setup}
 
@@ -711,10 +717,11 @@ using PRELINK + POSTLINK (with handling arguments) & 0.096 & 0.003 \\
 O2 PRELINK + POSTLINK & 0.097 & 0.004 \\
 \bottomrule
 \end{tabular}
-\caption{The table shows performance of yklua interpreter when it has been built
+\caption{\laurie{note that the last 4 rows are all statistically equivalent}The table shows performance of yklua interpreter when it has been built
 either using no pass sequence (i.e baseline) and after applying prelink, postlink,
-or both prelink and postlink on yklua binary. These numbers are obtained with
-95\% confidence interval. The interpreter is built without JIT enabled,
+or both prelink and postlink on yklua binary with 95\% confidence intervals (the rightmost column).
+\laurie{For each of the definitions in the caption, be clear which row in the table they relate to, including capitalisation etc}
+The interpreter is built without JIT enabled,
 that is only yk is retrofited onto the interpreter but JIT is turned off. 
 The first row shows performance when no pass are applied on yklua, and the,
 second and third row indicates performance when only pre or postlink passes are
@@ -734,13 +741,13 @@ For first experiment we consider two ways to build lua binary:
 
 yk-config is tool to apply yk specific compiler and linker flags on the
 interpreter and other systems which uses yk's meta-tracing system. \iti{why were
-they added?} For 1): We can build yklua with and without optimisations.
+they added?}\laurie{yk-config makes configuring/compiling C interpreters easy. as part of that we decided that ``safe but slow'' was the order of the day, hence turning off most optimisations} For 1): We can build yklua with and without optimisations.
 yk-config has support to add `cflags` (compiler) and `ldflags` (linker), and we
 can use the prelink and postlink pass sequence we found via the genetic
 algorithm, append them to cflags and ldflags, yk's clang (via ykllvm) apply the optimisations 
 the yklua binary.
 
-clang by default adds an `optnone` attribute to all the functions, which makes
+clang by default adds an `optnone` attribute to all the functions \laurie{only in -O0}, which makes
 any optimisation we add ineffective. For this, yk-config already has
 `disable-O0-optnone` (which works with `-O0` flag). 
 
@@ -754,10 +761,12 @@ In row 2 - 7, there is clearly some performance improvement (by 1.5-2 times) whe
 optimisation pass sequence on yklua binary when yk is retrofitted into the
 interpreter and JIT is turned off. However, what's interesting is that even when
 we apply full O2 pass sequence on yklua binary*\footnote{we ignore the
-Compatibility of these passes with yk for the time being} the performance
+Compatibility of these passes with yk for the time being \laurie{this needs to be in the main text, as really what you're doing here is defining a new hypothesis along the lines of: ``H2: Enabling all optimisation passes, even those which can interfere with correctness, improves performance further over the subset found by the GA``. you invalidate that hypothesis, then in the subsequent subsections start to explain why this has been invalidated.}} the performance
 doesn't improve further. I propose applying full pass sequence should have
 resulted in 3-4 times performance improvement from the baseline binary. Let's 
 dig further why this might have happened.
+
+\laurie{at this point readers are probably going to be confused because we're saying `yklua with -O2 isn't faster, but lua with -O2 is much faster`. it's very easy for them to misread that, so make sure that you've signposted it approrpriately}
 
 \subsection{Apply full O2 to yk retrofitted and traditionally compiled
 interpreter}
