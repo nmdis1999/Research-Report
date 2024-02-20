@@ -703,7 +703,7 @@ successful and non-successful pass sequence. \footnote{commit with this change: 
 \subsection{Effects of applying meta-tracing compatible pass sequence on the yklua
 interpreter}
 
-Table \ref{tab:1} \laurie{broken reference} shows performance numbers for baseline as well as yklua binaries
+Table \ref{table:preandpostlink} shows performance numbers for baseline as well as yklua binaries
 when we apply prelink, postlink or both flags on the binary. Row I is when no
 pass sequence is applied, that is the baseline binary. Row II and III are when
 either just prelink or postlink passes are applied. In Row IV I applied both
@@ -716,14 +716,13 @@ that is Row VII, I apply full pass sequence for -O2 on yklua. Although this
 is the only pass sequence in the Table \ref{tab:1} which doesn't succeeds all
 the yk's test I still included it in the table for next hypothesis.
 
-Notice that the last four rows have statistically equivalent performance, the reason of this
-is that yk pessimistically blocks some optimisations at postlink time (that is
-some additional flags are passed in linker flags(i.e~ldflags) which hinders
-backend optimisations \laurie{this doesn't make sense and/or doesn't seem like an explanation}.
+Notice that the last four rows have statistically equivalent performance, this
+indicates that there is a wall created by some yk specific passes which might be
+limiting more performance gains that might be possible by applying bigger pass sequence (e.g.
+applying -O2 or -O3 pass sequence)
 
 \begin{table}[H]
 \centering
-\label{tab:a}
 \begin{tabular}{@{}p{7.5cm}ll@{}}
 \toprule
 \textbf{Yklua binaries built using yk-config} & \textbf{Mean} & \textbf{95\% CI} \\ 
@@ -750,6 +749,7 @@ combination to receive compatible prelink and postlink pass sequence in our
 genetic algorithm. Finally, last row represents yklua's performance when full
 list of -O2 (pre and postlink) and applied on the interpreter. This list however
 is not compatible with yk meta-tracing system (i.e~ the list fails yk's tests)}
+\label{table:preandpostlink}
 \end{table}
 
 For first experiment we consider two ways to build lua binary:
@@ -769,24 +769,26 @@ clang in -O0 by default adds an `optnone` attribute to all the functions, which
 makes any optimisation we add ineffective. For this, yk-config already has
 `disable-O0-optnone` (which works with `-O0` flag). 
 
-Table \ref{tab:1} shows performance numbers for 30 runs of ${db.lua}$ when built
+Table \ref{table:preandpostlink} shows performance numbers for 30 runs of ${db.lua}$ when built
 with and without optimisations and JIT turned off, with the yk meta-tracing
 system retrofitted into the interpreter. The first column is with no
 optimisations and the rest have some or all optimisations turned on while
 building yklua binary.
 
-And although rows with optimisations applied clearly have some performance improvement (by 1.5-2 times)
-when compared with the baseline (Row I). However, it is interesting that even when
-we apply full -O2 pass sequence on yklua binary (in ROW VII) the performance
-does not improve further. So I included an additional hypothesis \laurie{in the previous sentence you've already invalidated this hypothesis! i think you need to change the ordering somehow}:
 
 \textbf{H2} \hspace*{0.5cm} Enabling all optimisation passes, even those
 which can interfere with correctness, improves performance further over the
 subset found by the GA \\
 
-Table \ref{tab:1} clearly disapproves H2, the intuition behind this hypothesis
+Table \ref{table:preandpostlink} clearly disapproves H2, the intuition behind this hypothesis
 is that yklua when using full -O2 should have more performance improvement than
 using subset of -O2 passes. Let's dig further why this might have happened.
+
+And although rows with optimisations applied clearly have some performance
+improvement (by 1.5-2 times) when compared with the baseline (Row I). However,
+it is interesting that even when we apply full -O2 pass sequence on yklua binary
+(in ROW VII) the performance does not improve further. So I included an
+additional hypothesis. 
 
 In the subsections below, I show that when lua is built via clang/gcc and with
 -O2 passes it is 3 times faster than yklua when it is built using -O2. The
@@ -809,7 +811,6 @@ pass sequence. This indicates that yk-config might be including some flags
 which results in 3 times slowdown of yklua binary when compared to lua binary. 
 
 \begin{table}[H]
-\label{tab:b}
 \begin{tabular}{@{}p{7.5cm}ll@{}}
 \toprule
 \textbf{Yklua binaries built without using yk-config} & \textbf{Mean} & \textbf{95\% CI} \\ 
@@ -822,6 +823,7 @@ lua binary build using clang and opt (-O2 mode) & 0.034 & 0.004 \\
 \caption{Performance of lua binary when compiled with gcc's -O2 and -O3 mode,
 and when lua is compiled with clang and optimised using -O2 passes patched via
 opt. Where patching means applying optimisation passes on the IR.}
+\label{tab:b}
 \end{table}
 
 \subsection{Performance impact of yk-based flags with full -O2 optimisation
@@ -832,12 +834,11 @@ off yk related flags. First, I turn them off individually and then in
 combinations. The speedup of the interpreter when the passes are turned off
 indicates that the flag (or combination of them) are contributing slowdown by
 ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
-(performance of row n)}}$$ The numbers in Table \ref{tab: a} and \ref{tab:b}
+(performance of row n)}}$$ The numbers in Table \ref{table:preandpostlink} and \ref{tab:b}
 contradicts H2. The majority of overhead is caused when the yk flags are used in
 combination with row 14 causing maximum of slowdown.
 
 \begin{table}[H]
-\label{table:}
 \begin{tabular}{@{}cllr@{}}
 \toprule
 \# & \multicolumn{1}{c}{Flags turned off (-O2 passes are set)} & \multicolumn{1}{c}{Execution Time} & \multicolumn{1}{c}{95\% CI} \\ 
@@ -862,11 +863,12 @@ combination with row 14 causing maximum of slowdown.
 them are turned off. Row 1 is performance of baseline lua binary, when no flag
 is turned off. Row 14 shows maximum retrieval of performance when the particular
 combination of flags in the row are turned off.}
+\label{table:c}
 \end{table}
 
 \subsection{Performance retrieval by improving yk based flags}
 
-Now that I have shown that yk-based flags contribute upto 1.5 times slowdown in
+Now that I have shown in Table \ref{table:c} that yk-based flags contribute upto 1.5 times slowdown in
 yklua the next task is to figure out how much performance can be retrieved back
 by optimising some (or maybe all) flags above. 
 The best targets to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
@@ -892,7 +894,7 @@ As for the yk-split-blocks-after-calls pass, if we adjust jitmodbuilder a bit,
 we could also refrain from splitting blocks after calls to unmappable functions
 such as external function. But that could turn out to be a bit fiddly in
 jitmodbuilder as the splitting helps us to know when to start/stop outlining,
-outline is opposite of inlining (i.e~ we undo some inlined functions).
+outline is opposite of inlining (i.e~we undo some inlined functions).
 Jitmodbuilder is trace builder for yk which splits basic blocks after multiple
 calls, this is to understand efficiently what's going on in the trace because
 LLVM doesn't by default splits the blocks after the call. 
@@ -920,12 +922,12 @@ Optimisation phase ordering problem for compiler optimisations have been solved
 before \iti{add cite}. However, the solution for phase-ordering problem for one
 system may not work for other system. This is because the oracle (i.e~the
 testing conditions and target goal) may vary for different systems. And although
-there exists other meta-tracing systems, such as RPython~\cite{rpython} and
-Truffle(Graal)\iti{cite}\laurie{truffle isn't a meta-tracer}, they don't face same problem as yk does. This is
-because they use software tracing for their meta-tracing system \laurie{not exactly: rpython traces a version of the interpreter compiled in its own format: it actually interprets an interpreter!}. With software
-tracing you can inject code into the AOT compiled binary that directly records
-the IR blocks that were executed, and this entirely bypasses the need for
-mapping
+there exists other meta-tracing systems, such as RPython~\cite{rpython}, they
+don't face same problem as yk does. This is because  rpython traces a version of
+the interpreter compiled in its own format: it actually interprets an
+interpreter. With software tracing you can inject code into the AOT compiled
+binary that directly records the IR blocks that were executed, and this entirely
+bypasses the need for mapping
 
 \section{Conclusion and Future Work}
 
