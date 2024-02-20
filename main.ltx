@@ -355,13 +355,13 @@ Module 3 --(Optimise)--> Module 3'
 \subsubsection{ThinLTO Pipeline}
 
 The LTO pipelines are split into a pre-link and a post-link optimisation
-pipeline\cite{lto-prepost}. After the pre-link pipeline, ThinLTO will perform some lightweight
-cross-module analysis, and in particular import certain functions from other
-modules to make them eligible for inlining. However, the post-link optimisation
-again works on individual modules.
-Pre-link optimisations are module simplification optimisations, while contrary to
-the name, post-link optimisations happen during the link-time stage and involve both
-module simplification and optimisation passes.
+pipeline\cite{lto-prepost}. After the pre-link pipeline, ThinLTO performs some
+lightweight cross-module analysis, such as importing certain functions from
+other modules to make them ready for inlining. The post-link optimisation
+however  works only on individual modules. Pre-link optimisations simplifies the
+modules for optimisations, while contrary to the name, post-link optimisations
+happen during the link-time stage and performs both module simplification and
+optimisations through passes.
 
 \begin{tcolorbox}[
     enhanced,
@@ -384,8 +384,8 @@ Module 3 --(ThinLTO pre-link)------/-\-----(ThinLTO post-link)--> Module 3'
 \end{tcolorbox}
 
 \subsubsection{FatLTO Pipeline}
-Finally, FatLTO will simply merge all modules together after the pre-link
-pipeline and then run the post-link pipeline on a single, huge module:
+Finally, after pre-link step FatLTO merges all modules together
+and then run the post-link optimisations on a single large module:
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -410,10 +410,8 @@ Module 3 --(FatLTO pre-link)-------/
 \end{tcolorbox}
 
 While LTO stands for ``link-time optimisation'', it is not necessarily performed
-by the linker. For example, rustc will usually perform it as part of the
-compilation process. An important property of LTO is that it allows cross-module
-optimisation.
-
+by the linker. For example, rustc performs LTO as part of its
+compilation process. 
 LLVM’s optimisation pipeline looks like:
 
 % Todo: add caption and citation to the diagram
@@ -451,14 +449,14 @@ LLVM’s optimisation pipeline looks like:
 \end{tcolorbox}
 
 
-Module simplification in LLVM's LTO pipeline involves pre-link optimisations
-like early cleanup, function inlining, and call graph optimisations to prepare
-modules for further optimisation by simplifying their structure. Module
-optimisation, occurring post-link, applies global optimisations such as
-vectorization and runtime loop unrolling to enhance execution efficiency across
-the entire program. The backend phase then generates the final machine code,
-incorporating register allocation and architecture-specific optimisations to
-produce an optimised executable code.
+In the LLVM LTO pipeline, module simplification includes pre-link optimizations
+such as initial cleanup, inlining of functions, and call graph optimisation to
+refine the modules for additional optimization processes. Following
+this, module optimization during the post-link phase implements optimizations
+like vectorization and dynamic loop unrolling to improve the program's overall
+performance. Finally, the backend phase compiles the machine code,
+integrating register allocation and optimizations tailored to the specific
+architecture, resulting in a faster executable code.
 
 For the yk meta-tracer, we work with FatLTO because it merges multiple modules into
 one giving us full IR. yk can potentially work with ThinLTO and the choice of
