@@ -486,17 +486,22 @@ within couple of hours if not minutes because of the vast search space. Further,
 the genetic-algorithm is not only able to find a pass sequence that is
 compatible with the meta-tracing system, but the pass sequence also ends up
 improving the C interpreter's performance. 
+
+
 \section{Experimental Setup}
 
+\laurie{empty section?}
+
+
 \section{Experiments}
-In order to prove first hypothesis, I conducted experiments\footnote{Pull
+In order to test H1, I conducted experiments\footnote{Pull
 request with my divide-and-conquer algorithm:
 https://github.com/ykjit/yk/pull/829 and genetic-algorithm:
 https://github.com/ykjit/yk/pull/900} by first writing a divide-and-conquer
 algorithm. And although this algorithm gave a pass sequence which did show some
 performance improvement of the interpreter, it however did not find a pass
 sequence which was compatible with the yk meta-tracing system whilst achieving
-lower execution time for the interpreter than the baseline. In the experiments
+lower execution time for the interpreter than the baseline \laurie{the second part of the sentence contradicts the first}. In the experiments
 done below we use yk as the meta-tracing system and yklua as the C interpreter
 being optimised.
 
@@ -698,7 +703,7 @@ successful and non-successful pass sequence. \footnote{commit with this change: 
 \subsection{Effects of applying meta-tracing compatible pass sequence on the yklua
 interpreter}
 
-Table \ref{tab:1} shows performance numbers for baseline as well as yklua binaries
+Table \ref{tab:1} \laurie{broken reference} shows performance numbers for baseline as well as yklua binaries
 when we apply prelink, postlink or both flags on the binary. Row I is when no
 pass sequence is applied, that is the baseline binary. Row II and III are when
 either just prelink or postlink passes are applied. In Row IV I applied both
@@ -711,10 +716,10 @@ that is Row VII, I apply full pass sequence for -O2 on yklua. Although this
 is the only pass sequence in the Table \ref{tab:1} which doesn't succeeds all
 the yk's test I still included it in the table for next hypothesis.
 
-Notice that the last four rows have equivalent performance, the reason of this
+Notice that the last four rows have statistically equivalent performance, the reason of this
 is that yk pessimistically blocks some optimisations at postlink time (that is
 some additional flags are passed in linker flags(i.e~ldflags) which hinders
-backend optimisations.  
+backend optimisations \laurie{this doesn't make sense and/or doesn't seem like an explanation}.
 
 \begin{table}[H]
 \centering
@@ -773,7 +778,7 @@ building yklua binary.
 And although rows with optimisations applied clearly have some performance improvement (by 1.5-2 times)
 when compared with the baseline (Row I). However, it is interesting that even when
 we apply full -O2 pass sequence on yklua binary (in ROW VII) the performance
-does not improve further. So I included an additional hypothesis:
+does not improve further. So I included an additional hypothesis \laurie{in the previous sentence you've already invalidated this hypothesis! i think you need to change the ordering somehow}:
 
 \textbf{H2} \hspace*{0.5cm} Enabling all optimisation passes, even those
 which can interfere with correctness, improves performance further over the
@@ -915,9 +920,9 @@ Optimisation phase ordering problem for compiler optimisations have been solved
 before \iti{add cite}. However, the solution for phase-ordering problem for one
 system may not work for other system. This is because the oracle (i.e~the
 testing conditions and target goal) may vary for different systems. And although
-there exists other meta-tracing systems, such as RPythoni~\cite{rpython} and
-Truffle(Graal)\iti{cite}, they don't face same problem as yk does. This is
-because they use software tracing for their meta-tracing system. With software
+there exists other meta-tracing systems, such as RPython~\cite{rpython} and
+Truffle(Graal)\iti{cite}\laurie{truffle isn't a meta-tracer}, they don't face same problem as yk does. This is
+because they use software tracing for their meta-tracing system \laurie{not exactly: rpython traces a version of the interpreter compiled in its own format: it actually interprets an interpreter!}. With software
 tracing you can inject code into the AOT compiled binary that directly records
 the IR blocks that were executed, and this entirely bypasses the need for
 mapping
