@@ -59,7 +59,7 @@ hardware meta-tracing systems because some backend optimisations interfere with
 basic block positions and thus mapping their address from AOT to JIT compilation
 and vice-versa becomes challenging. Therefore, yk pessimistically turns off all
 optimisations by default. This results in a much slower interpreter than the
-baseline (i.e.~ interpreter compiled without the meta-tracer.) My work focuses on
+baseline (i.e.~interpreter compiled without the meta-tracer.) My work focuses on
 minimising the performance overhead of the yk meta-tracer and thus speeding the C
 interpreter to as much an extent as possible. In later sections, I'll discuss
 the work done so far on this and future directions.
@@ -72,7 +72,7 @@ the work done so far on this and future directions.
     }
     \caption{Example of how dynamic languages need individual JITs without
     meta-tracing system, while with meta-tracing system multiple languages can
-    use same JIT without having to write their own tracing JITs}
+    use the same JIT without having to write their own tracing JITs}
 \end{figure}
 
 In this report, I show that it is possible to minimise the performance overhead
@@ -87,9 +87,11 @@ The main contributions of this report are:
     \item{Identfying and fixing the cause of overhead when using yk to build
         yklua}
 \end{itemize}
-Through this work, I aim to bridge the gap between the achievable performance of
-meta-tracing JIT compilation and its current practical performance for the  C
-interpreter.
+Through this work, I aim to bridge the gap between the achievable
+performance\footnote{Achievable performance is defined as convergence of
+execution time of meta-tracer compiled interpreter to that of traditionally
+compiled interpreter}  of meta-tracing JIT compilation, and its current
+practical performance for the  C interpreter.
 
 \subsection{Defining the problem}
 For my work done in this report, I lay out the hypothesis:
@@ -107,7 +109,6 @@ performance and in some cases, even made it worse. Later, I will present a
 better approach using a stochastic genetic algorithm, which not only found
 multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
-\\
 
 The report is structured as follows: Section \ref{sec:background} is the background,
 the next section i.e~Section \ref{section:3} addresses interpreter's performance in
@@ -123,7 +124,7 @@ report with Section \ref{section:8} i.e~conclusions and future Work.
 Tracing refers to the process of capturing information about the execution of a
 program. Tracing JITs use the technique where they collect/record information
 about most executed (or ``hot'') paths via traces of the program and later at
-runtime, use the information to perform optimisations and make inlining
+runtime, uses the information to perform optimisations and make inlining
 decisions\cite{tracing-jit}. A trace is a sequential path which follows only one
 of the many possible directions through the code. To ensure correctness, the
 trace contains a guard at every possible point where the path could have
@@ -196,14 +197,17 @@ execution of the interpreter\cite{meta-tracing}.
 \label{traces}
 \end{figure}
 
+\begin{samepage}
 yk uses hardware tracer\footnote{The hardware tracer is Intel PT based, Intel
 Processor Trace (Intel PT) is a feature available in some Intel processors that
 provides a hardware-based tracing mechanism, enabling low overhead collection of
-program execution traces.} Intel PT can only store a stream of basic blocks and
-give their virtual addressi\cite{intel-pt}. So, block mapping is used in hardware tracing to get
-from a traced virtual address to a file offset in the binary, to a LLVM IR
-block. The yk meta-tracing system depends on loader API and a special LLVM
-section to do this. This section is emitted just before backend optimisation.
+program execution traces.}.And Intel PT can only store a stream of basic blocks
+and give their virtual addresses~\cite{intel-pt}. So, block mapping is used in
+hardware tracing to get from a traced virtual address to a file offset in the
+binary, to a LLVM IR block. The yk meta-tracing system depends on loader API and
+a special LLVM section to do this. This section is emitted just before backend
+optimisation.
+\end{samepage}
 
 At JIT time, the tracing interpreter records the basic blocks (jumps). When
 the tracing interpreter switches back to interpretation (when a guard fails), it
@@ -560,7 +564,7 @@ the C interpreter being optimised.
     \EndFunction
     \end{algorithmic} 
 \textbf{Algorithm 1:} this algorithm has two functions, attempt1 tries each pass
-individually to see which passes succeed and which ones fail in isolation. It
+individually to see which passes succeeds and which ones fail in isolation. It
 takes a total of 36 hours to run attempt1. In attempt2, the algorithm starts with
 an empty list of ok passes, recursively tests combinations of passes starting with
 a full list and then splits the list in two if the initial list fails and only
@@ -729,13 +733,12 @@ Example: Some passes are in form of a function such as $function(a,b,c,..)$. For
 rows V and VI, I treat every argument as a seperare pass like $function(a),
 function(b), function(c), function(a,b), function(a,c)...$. In the last row,
 that is Row VII, I apply full pass sequence for -O2 on yklua. Although this
-is the only pass sequence in the Table \ref{tab:1} which does not succeed all
+is the only pass sequence in the Table \ref{table:preandpostlink} which does not succeed all
 of yk's tests, I still included it in the table for the next hypothesis.
 
 Notice that the last four rows have statistically equivalent performance, this
 indicates that there is a wall created by some yk specific passes which might be
-limiting more performance gains that might be possible by applying a bigger pass sequence (e.g.
-applying -O2 or -O3 pass sequence)
+limiting more performance gains. 
 
 \begin{table}[H]
 \centering
@@ -777,16 +780,17 @@ For the first experiment we consider two ways to build the lua binary:
 yk-config is a tool to apply yk-specific compiler and linker flags on the
 interpreter and other systems which use yk's meta-tracing system. yk-config
 makes configuring/compiling C interpreters easy by having the support to add
-`cflags` (compiler) and `ldflags` (linker), this can used to add the prelink and
+`cflags` (compiler) and `ldflags` (linker), this can be used to add the prelink and
 postlink pass sequences found via the genetic algorithm by appending them to cflags
 and ldflags. Finally, I use ykllvm's clang to compile yklua binary.
 
-Clang in -O0 by default adds an `optnone` attribute to all the functions, which
+Clang in -O0 by default adds an `optnone` attribute to all of the functions, which
 makes any optimisation we add ineffective. For this, yk-config already has
 `disable-O0-optnone` (which works with the `-O0` flag). 
 
-Table \ref{table:preandpostlink} shows performance numbers for 30 runs of ${db.lua}$ when built
-with and without optimisations and JIT turned off, with the yk meta-tracing
+Table \ref{table:preandpostlink} shows performance numbers for 30 runs of
+${db.lua}$\footnote{link to the benchmark test: https://github.com/ykjit/yklua/blob/main/tests/db.lua} when built
+with and without optimisations and JIT turned off, and with yk meta-tracing
 system retrofitted into the interpreter. The first column is with no
 optimisations and the rest have some or all optimisations turned on while
 building yklua binary.
@@ -803,8 +807,7 @@ using subset of -O2 passes. Let's dig further why this might have happened.
 The rows with optimisations applied clearly have some performance
 improvement (by 1.5-2 times) when compared with the baseline (Row I). However,
 it is interesting that even when we apply full -O2 pass sequence on yklua binary
-(in ROW VII) the performance does not improve further. So I included an
-additional hypothesis. 
+(in ROW VII) the performance does not improve further. 
 
 In the subsections below, I show that when lua is built via clang/gcc and with
 -O2 passes it is 3 times faster than yklua when it is built using -O2. The
@@ -885,8 +888,8 @@ combination of flags in the row are turned off.}
 \subsection{Performance retrieval by improving yk based flags}
 
 Now that I have shown in Table \ref{table:c} that yk-based flags contribute upto 1.5 times slowdown in
-yklua the next task is to figure out how much performance can be retrieved back
-by optimising some (or maybe all) flags above. 
+yklua, the next task is to figure out how much performance can be retrieved back
+by optimising some (and if possible maybe all) flags above. 
 The best targets to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
@@ -923,7 +926,7 @@ are merged. If we can store the information about how many blocks are
 merged and transfer this information to the hardware tracer then we can tell which
 blocks were single basic blocks and which have been merged. Encoding
 extra information about merged basic blocks can help us figure back the mapping
-for the merged basic block.
+for the merged basic blocks.
 
 \section{Related Work}
 \label{section:7}
@@ -947,7 +950,7 @@ benchmarks, they show the possibility of improving yk-based interpreters. We can
 expand the oracle suite of the genetic algorithm to include more comprehensive
 benchmarks and extend the above experiments.
 
-Future work: Future work includes improving yk-based flags such as
+Future work: includes improving yk-based flags such as
 yk-insert-stackmaps, yk-split-blocks-after-calls, and yk-no-fallthrough.
 
 Another possible hypothesis which might be worth testing is whether we can
