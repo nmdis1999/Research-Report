@@ -271,16 +271,14 @@ depending on whether they perform computation on the IR, mutate the IR, or do
 some other non-categorised task.
 
 \subsection{LLVM's optimisation pipeline}
-Classically, compilers are split into three parts, which is:
-frontend, middle-end and the backend. The frontend is responsible
-for dealing with programming-language specific analysis which can be
-operations such as parsing, type checking and so. The middle-end is where
-optimisations are performed. These optimisations are target independent.
-Next, the backend is responsible for applying target-specific optimisation
-and emitting the machine code.
+Classically, compilers are split into three parts: frontend, middle-end and the
+backend. The frontend deals language specific analysis i.e~operations such as
+parsing, type checking and so on. The target independent optimisations are
+performed in the middle-end. And finally the backend is applies  target-specific
+optimisation and emits the machine code.
 
-Different languages like C, C++, and Rust (and many more) have their own
-frontends but rely on LLVM for middle and backends optimisations.
+And although languages such as C, C++, and Rust etc. have their own frontends
+but rely on LLVM for middle and backends optimisations.
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -307,14 +305,13 @@ Frontend                   LLVM
 
 \subsubsection{Type of optimisation pipelines}
 For H1, we are mostly concerned with LLVM's middle-end optimisation
-pipeline. LLVM has three kinds of optimisation pipelines: default (non-LTO),
-ThinLTO, and FatLTO pipeline.
+pipeline. LLVM has three kinds of optimisation pipelines: the default (non-LTO)
+pipeline, ThinLTO pipeline, and FatLTO pipeline.
 
 \subsubsection{Default Pipeline}
-The default pipeline separately optimises each module, without any
-special knowledge about other modules (apart from function/global declarations).
-“Module” here corresponds to “one source file” in C/C++ and one “codegen unit”
-in Rust.
+The default pipeline optimises each module separately, without any special
+knowledge about other modules. ``Module'' here refers to ``single source file''
+in C/C++ and a single ``codegen unit'''in Rust language.
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -339,7 +336,7 @@ Module 3 --(Optimise)--> Module 3'
 \subsubsection{ThinLTO Pipeline}
 
 The LTO pipelines are split into a pre-link and a post-link optimisation
-pipeline. After the pre-link pipeline, ThinLTO will perform some lightweight
+pipeline\cite{lto-prepost}. After the pre-link pipeline, ThinLTO will perform some lightweight
 cross-module analysis, and in particular import certain functions from other
 modules to make them eligible for inlining. However, the post-link optimisation
 again works on individual modules.
@@ -347,7 +344,6 @@ Pre-link optimisations are module simplification optimisations, while contrary t
 the name, post-link optimisations happen during link-time stage and involve both
 module simplification and optimisation passes.
 
-% Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
     enhanced,
     title=LLVM Compilation Process, % Caption
