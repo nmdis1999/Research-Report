@@ -149,7 +149,10 @@ execution of the interpreter\cite{meta-tracing}.
     \scalebox{0.5}{
         \includegraphics[scale=0.01, width=\linewidth]{images/yk_metatracer.pdf} 
     }
-    \caption{blah blah}
+    \caption{Figure shows how ykllvm introduces control-point and compile
+    (yk)lua binary. The control-point is necessary so that the meta-tracing
+    system can identify at what point to start recording tracing. ykllvm also add
+    some additional data such as builtin tracer and LLVM IR into the yklua binary}
     \label{traces}
 \end{figure}
 
@@ -944,3 +947,4 @@ which work across the basic blocks are not allowed).
 \bibliography{local.bib}
 
 \end{document}
+
