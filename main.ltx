@@ -64,7 +64,17 @@ minimising the performance overhead of the yk meta-tracer and thus speeding the 
 interpreter to as much an extent as possible. In later sections, I'll discuss
 the work done so far on this and future directions.
 
-\iti{add diagram for multiple JIT and single meta-jit for languages}
+\begin{figure}[ht!]
+    \label{figure:example}
+    \centering
+    \scalebox{0.8}{
+    \includegraphics[scale=0.5, width=\linewidth]{images/multilang.pdf} 
+    }
+    \caption{Example of how dynamic languages need individual JITs without
+    meta-tracing system, while with meta-tracing system multiple languages can
+    use same JIT without having to write their own tracing JITs}
+\end{figure}
+
 In this report, I show that it is possible to minimise the performance overhead
 when the yk meta-tracing system is retrofitted in a non-JITed C interpreter. Which
 means that the performance of a non-JITed interpreter compiled with the yk subsystem
@@ -235,7 +245,7 @@ modern compilers are: -O0, -O1, -O2, -O3, and -Og. The two major compilers gcc a
 Clang have 200 and 100+ optimisation passes respectively; their sequence is
 called an optimisation sequence. By default, without an optimisation level, all of
 the passes are turned off and an expert can choose to turn on and off passes
-accordingly.\iti{add reference}
+accordingly~\cite{kulkarni}.
 
 \subsection{LLVM Project}
 LLVM is a set of compiler and toolchain technologies and has its own
@@ -434,6 +444,7 @@ LLVM’s optimisation pipeline looks like:
 \end{Verbatim}
 \end{tcolorbox}
 
+
 Module simplification in LLVM's LTO pipeline involves pre-link optimisations
 like early cleanup, function inlining, and call graph optimisations to prepare
 modules for further optimisation by simplifying their structure. Module
@@ -456,8 +467,8 @@ sequence which does not interfere with basic block mapping while also improving
 the interpreter's performance.
 
 Such a problem is called optimising phase ordering problem. Optimising phase
-ordering is a long standing problem with a substantial work done on it \iti{add
-citation(s)}. However, the optimisation pass sequence which might work for one
+ordering is a long standing problem with a substantial work done on
+it~\cite{guidedGA, kulkarni, genetic-algo}. However, the optimisation pass sequence which might work for one
 system may not perform well or even work at all for another. Finding the right
 optimisation pass sequence depends on the algorithm and the oracle used. The
 algorithm can be a recursive or stochastic one, while oracle is a test set which
@@ -478,7 +489,8 @@ In this report I start with a divide-and-conquer algorithm to find a
 meta-tracing compatible pass sequence, and later move on to a genetic-algorithm
 for the same. Genetic algorithm is well-known class of stochastic algorithm
 which is adopted on the basis of theory of evolution. This algorithm has been
-used by several researchers to solve phase-ordering problems\iti{add cite}.
+used by several researchers to solve phase-ordering problems~\cite{guidedGA,
+kulkarni, genetic-algo}.
 
 Using genetic algorithm allows us to find a pass sequence for our oracle in
 acceptable time, where acceptable time is finding compatible pass sequence
@@ -490,20 +502,19 @@ improving the C interpreter's performance.
 
 \section{Experimental Setup}
 
-\laurie{empty section?}
-
+The experiments were conducted on a dual-socket Intel Xeon Platinum 8452Y
+system, featuring an x86\_64 architecture with 72 total cores distributed across
+two NUMA nodes, operating between 800 MHz and 3200 MHz.
 
 \section{Experiments}
-In order to test H1, I conducted experiments\footnote{Pull
-request with my divide-and-conquer algorithm:
-https://github.com/ykjit/yk/pull/829 and genetic-algorithm:
-https://github.com/ykjit/yk/pull/900} by first writing a divide-and-conquer
-algorithm. And although this algorithm gave a pass sequence which did show some
-performance improvement of the interpreter, it however did not find a pass
-sequence which was compatible with the yk meta-tracing system whilst achieving
-lower execution time for the interpreter than the baseline \laurie{the second part of the sentence contradicts the first}. In the experiments
-done below we use yk as the meta-tracing system and yklua as the C interpreter
-being optimised.
+In order to test H1, I conducted experiments\footnote{Pull request with my
+divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829 and
+genetic-algorithm: https://github.com/ykjit/yk/pull/900} by first writing a
+divide-and-conquer algorithm. And although this algorithm gave a pass sequence
+which did show some performance improvement of the interpreter, it however did
+not find a pass sequence which was compatible with the yk meta-tracing system.
+In the experiments done below we use yk as the meta-tracing system and yklua as
+the C interpreter being optimised.
 
 \subsection{Methodology}
 
@@ -605,7 +616,7 @@ and prevents the algorithm from getting stuck in local optima.}
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.5]{images/genetic_algo.pdf}
-    \caption{\small a parallel genetic algorithm used to find an optimisation pass
+    \caption{\small Figure retrieved from~\cite{guidedGA}, a parallel genetic algorithm used to find an optimisation pass
         sequence compatible with yk and yklua. Initially, it randomly generates
         a population of passes, where each entity is a binary array indicating
         whether a specific pass is active (1) or inactive (0). The main parallel
@@ -919,7 +930,7 @@ for the merged basic blocks.
 
 \section{Related Work}
 Optimisation phase ordering problem for compiler optimisations have been solved
-before \iti{add cite}. However, the solution for phase-ordering problem for one
+before~\cite{guidedGA} However, the solution for phase-ordering problem for one
 system may not work for other system. This is because the oracle (i.e~the
 testing conditions and target goal) may vary for different systems. And although
 there exists other meta-tracing systems, such as RPython~\cite{rpython}, they
