@@ -8,9 +8,9 @@
     \noindent
      JIT compilation gives dynamic languages speed of compiled code with
      flexibility of interpretation. Tracing JIT is a variation that records
-     instructions of the most executed path in a trace and uses it instead of the
-     original code in hot paths. But tracing JITs are fairly hard to implement. In
-     meta-tracing, language interpreters are built on top of a common tracing
+     instructions of the most executed path in a trace and uses it instead of
+     original code in hot paths. But racing JITs are quite hard to implement. In
+     Meta-tracing, language interpreters are built on top of a common tracing
      JIT compiler, removing the need to re-implement tracing JIT for every
      language. This separates language implementation concerns from JIT
      compilation. The yk meta-tracing system turns existing C interpreters into
@@ -18,14 +18,14 @@
      optimisations, as not all compiler optimisations are safe to use with yk or
      meta-tracing in general. This significantly slows down the non-JITed
      interpreter. I am investigating regaining as much performance as possible
-     for such interpreters. This report covers progress for the above problem
-     to date and plans for the future. 
+     for such interpreters. This reports covers progress for the above problem
+     till date and plans for the future. 
 \end{abstract}
 
 \section{Introduction}
 Dynamic languages such as Python and JavaScript are very popular because of
 their ease of writing programs and expressiveness. They are used to write small
-scripts as well as large and complex programs such as web applications. However,
+scripts as well as large and complex programs such as web-applications. However,
 dynamic languages tend to be quite slow to run when compiled~\cite{pypy}.
 In dynamic languages such as Python, the type information may vary at runtime,
 which means the compiler cannot rely on one type to transform operations into
@@ -39,41 +39,41 @@ Tracing JIT is a kind of JIT compilation. In tracing JIT compilation, the VM
 identifies frequently executed, ``hot'' program paths at runtime. Once a hot
 path is detected, the VM records all instructions in this path into a trace
 until execution loops back to the first instruction of this path. The trace is
-then compiled and the subsequent iterations of this path are executed using the
+then compiled and then subsequent iterations of this path is executed using the
 compiled trace instead of the original code. But developing custom tracing JITs
-is a hard undertaking. The concept of tracing optimisations was initially
+is a hard undertaking. The concept of tracing optimisations were initially
 explored by Dynamo Project~\cite{dynamo}, the project was successful in using
 tracing information at runtime to optimise most executed paths. This technique
 is also used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}and in
 Chrome's V8 through their Chromium tracing system~\cite{v8jit}.
  
 
-With meta-tracing systems such as yk, language implementers do not need to
-implement their own tracing JITs; instead, they can use yk meta-tracing system
+With meta-tracing systems such as yk, language implementers don't need to
+implement their own tracing JITs; instead they can use yk meta-tracing system
 and the tracing JIT compilation will automatically be embedded in the language
 implementation(s). yk traces the execution of the interpreter instead of tracing
 the program executed by the interpreter. However, not all compiler optimisations
-are safe to use with meta-tracing systems like yk because they use a hardware
-tracing mechanism to collect the program's traces. This creates a problem for
-hardware meta-tracing systems because some backend optimisations interfere with
-basic block positions and thus mapping their address from AOT to JIT compilation
+are safe to be used with meta-tracing systems like yk because it uses hard-ware
+tracing mechanism to collect program's traces. This creates a problem for
+hardware meta-tracing system because some backend optimisations interferes with
+basic blocks position and thus mapping their address from AOT to JIT compilation
 and vice-versa becomes challenging. Therefore, yk pessimistically turns off all
 optimisations by default. This results in a much slower interpreter than the
-baseline (i.e.~ interpreter compiled without the meta-tracer.) My work focuses on
-minimising the performance overhead of the yk meta-tracer and thus speeding the C
+baseline (i.e~ interpreter compiled without the meta-tracer.) My work focuses on
+minimising performance overhead of the yk meta-tracer and thus speeding the C
 interpreter to as much an extent as possible. In later sections, I'll discuss
 the work done so far on this and future directions.
 
 \iti{add diagram for multiple JIT and single meta-jit for languages}
-In this report, I show that it is possible to minimise the performance overhead
+In this report I show that it is possible to minimise the performance overhead
 when the yk meta-tracing system is retrofitted in a non-JITed C interpreter. Which
-means that the performance of a non-JITed interpreter compiled with the yk subsystem
+means that the performance of a non-JITed interpreter compiled with yk subsystem
 should be closer to the performance of the same interpreter when compiled with
 non-meta-tracing compiler.
 The main contributions of this report are:
 \begin{itemize}
     \item{A genetic algorithm to find llvm optimisation passes that do not
-        break yk's tests and improve the performance of yklua, a C interpreter.}
+        break yk's tests and improves performance of yklua, a C interpreter.}
     \item{Identfying and fixing the cause of overhead when using yk to build
         yklua}
 \end{itemize}
@@ -85,7 +85,7 @@ interpreter.
 For my work done in this report, I lay out the hypothesis:
 
 \textbf{H1} \hspace*{0.5cm} There is a subset of existing compiler optimisation passes
-that is compatible with meta-tracing system and meaningfully improves the interpreter's
+that is compatible with meta-tracing system and meaningfully improves interpreter's
 performance.
 \\
 To validate this hypothesis, I began by running a divide-and-conquer algorithm
@@ -93,7 +93,7 @@ to find a pass sequence compatible with the meta-tracing system. Compatibility
 is defined as the successful passing of the meta-tracer system's test cases and the
 pass sequence's ability to build and run the interpreter. However, while this
 method found a compatible pass sequence, it did not improve the interpreter's
-performance and in some cases, even made it worse. Later, I will present a
+performance and, in some cases, even made it worse. Later, I will present a
 better approach using a stochastic genetic algorithm, which not only found
 multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
@@ -105,7 +105,7 @@ The report is structured as follows:
 \section{Background}
 \label{sec:background}
 
-Tracing refers to the process of capturing information about the execution of a
+Tracing refers to the process of capturing information about execution of a
 program. Tracing JITs use the technique where they collect/record information
 about most executed (or ``hot'') paths via traces of the program and later at
 runtime, use the information to perform optimisations and make inlining
@@ -181,16 +181,16 @@ execution of the interpreter\cite{meta-tracing}.
 yk uses hardware tracer\footnote{The hardware tracer is Intel PT based, Intel
 Processor Trace (Intel PT) is a feature available in some Intel processors that
 provides a hardware-based tracing mechanism, enabling low overhead collection of
-program execution traces.} Intel PT can only store a stream of basic blocks and
+program execution traces.} Intel PT can only store stream of basic blocks and
 give their virtual addressi\cite{intel-pt}. So, block mapping is used in hardware tracing to get
-from a traced virtual address to a file offset in the binary, to a LLVM IR
+from a traced virtual address, to a file offset in the binary, to a LLVM IR
 block. The yk meta-tracing system depends on loader API and a special LLVM
 section to do this. This section is emitted just before backend optimisation.
 
-At JIT time, the tracing interpreter records the basic blocks (jumps). When
-the tracing interpreter switches back to interpretation (when a guard fails), it
-needs to map the information back at the AOT basic block; this is where LLVM IR is
-used. Meta-tracers such as yk need to do this with a hundred per cent accuracy.
+At JIT time, the tracing interpreter records the basic blocks (i.e~jumps). When
+the tracing interpreter switches back to interpretation (i.e~when a guard fails), it
+needs to map the information back at AOT basic block; this is where LLVM IR is
+used. Meta-tracers such as yk need to do this with a hundred percent accuracy.
 The JIT compiler relies on the traces to identify hot paths in the program for
 optimisation\cite{hot-trace}. If the mapping from the traced addresses to the LLVM IR blocks is
 inaccurate, the JIT compiler might optimise the wrong code paths or apply
@@ -198,9 +198,9 @@ optimisations based on incorrect assumptions. This can lead to the generation of
 incorrect or inefficient JIT-compiled code, affecting the program's correctness
 and performance.
 
-However, some llvm optimisation passes mess with the basic-block mapping. One
+However, some llvm optimisations passes mess with the basic-block mapping. One
 such example is when basic blocks are merged, some blocks may be left
-unaccounted for in the trace. Additionally, llvm applies some passes at different
+unaccounted in the trace. Additionally, llvm applies some passes at different
 stages of the pipeline, even after the final IR has been generated. This again
 interferes with mapping and creates problems for the meta-tracer. To avoid this
 problem, the yk meta-tracing system turns off all the optimisations by default,
@@ -220,18 +220,18 @@ empty or deleted. This creates mapping issue in meta-tracing systems.}
 \end{figure}
 
 Modern compilers have a huge number of optimisation passes available. These
-optimisation passes target unique segments of a program, such as transforming a
+optimisation passes target unique segments of program, such as transforming a
 function, basic block(s) or whole program\cite{llvm-pass}. Further, these optimisations can be
-applied at different stages of compilation pipelines. The sequence of passes tries
-to retain the semantics of the program while potentially improving the program's
-performance. There are two types of passes: Analysis and Transformation. Both
+applied at different stages of compilation pipelines. The sequence of passes try
+to retain the semantics of the program while potentially improving program's
+performance. There are are two type of passes: Analysis and Transformation. Both
 of these passes work together: the analysis passes collect information about the
 program and transformation passes are responsible for using the collected
-information and changing the program. Examples of optimisation levels provided by
+information and change the program. Example of optimisation level provided by
 modern compilers are: -O0, -O1, -O2, -O3, and -Og. The two major compilers gcc and
-Clang have 200 and 100+ optimisation passes respectively; their sequence is
-called an optimisation sequence. By default, without an optimisation level, all of
-the passes are turned off and an expert can choose to turn on and off passes
+clang have 200 and 100+ optimisation passes respectively; their sequence is
+called as optimisation sequence. By default without optimisation level all of
+the passes are turned off, and an expert can choose to turn on and off passes
 accordingly.\iti{add reference}
 
 \subsection{LLVM Project}
@@ -246,7 +246,7 @@ can:
         \item{or just print something}
     \end{itemize}
 
-The scope of each pass is a unit of an IR; it is what the pass is going to operate on. This
+A unit of an IR is pass's scope, it's what the pass is going to operate on. This
 can be :
 \begin{itemize}
     \item{a module: LLVM module is a top-level structure that represents a
@@ -273,14 +273,14 @@ some other non-categorised task.
 \subsection{LLVM's optimisation pipeline}
 Classically, compilers are split into three parts, which is:
 frontend, middle-end and the backend. The frontend is responsible
-for dealing with programming language specific analysis which can be
-operations such as parsing, type checking and so on. The middle-end is where
-optimisations are performed. These optimisations are target-independent.
+for dealing with programming-language specific analysis which can be
+operations such as parsing, type checking and so. The middle-end is where
+optimisations are performed. These optimisations are target independent.
 Next, the backend is responsible for applying target-specific optimisation
 and emitting the machine code.
 
 Different languages like C, C++, and Rust (and many more) have their own
-frontends but rely on LLVM for middle and backend optimisations.
+frontends but rely on LLVM for middle and backends optimisations.
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -344,7 +344,7 @@ cross-module analysis, and in particular import certain functions from other
 modules to make them eligible for inlining. However, the post-link optimisation
 again works on individual modules.
 Pre-link optimisations are module simplification optimisations, while contrary to
-the name, post-link optimisations happen during the link-time stage and involve both
+the name, post-link optimisations happen during link-time stage and involve both
 module simplification and optimisation passes.
 
 % Todo: add caption and citation to the diagram
@@ -396,7 +396,7 @@ Module 3 --(FatLTO pre-link)-------/
 
 While LTO stands for ``link-time optimisation'', it is not necessarily performed
 by the linker. For example, rustc will usually perform it as part of the
-compilation process. An important property of LTO is that it allows cross-module
+compilation process. The important property of LTO is that it allows cross-module
 optimisation.
 
 LLVM’s optimisation pipeline looks like:
@@ -444,8 +444,8 @@ the entire program. The backend phase then generates the final machine code,
 incorporating register allocation and architecture-specific optimisations to
 produce an optimised executable code.
 
-For the yk meta-tracer, we work with FatLTO because it merges multiple modules into
-one giving us full IR. yk can potentially work with ThinLTO and the choice of
+For yk meta-tracer we work with FatLTO because it merges multiple modules into
+one giving us full IR, yk can potentially work with ThinLTO and the choice of
 going with FatLTO is just for the sake of convenience.
 
 \section{Addressing interpreter performance in a meta-tracing system}
