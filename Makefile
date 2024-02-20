@@ -6,9 +6,9 @@ clean:
 	rm -f *.aux *.log *.pdf
 	rm -rf main.log main.bbl main.blg main.aux main.pdf main.out main_preamble.fmt
 
-main.pdf: bib.bib main.ltx main_preamble.fmt softdev.sty
+main.pdf: local.bib main.ltx main_preamble.fmt
 	pdflatex main.ltx
-	# bibtex main
+	bibtex main
 	pdflatex main.ltx
 	pdflatex main.ltx
 
@@ -20,13 +20,3 @@ main_preamble.fmt: main_preamble.ltx
 	  pdftex -ini -jobname="${@:.fmt=}" "&pdflatex" mylatexformat.ltx $${tmpltx}; \
 	  rm $${tmpltx}
 
-softdevbib-update: softdevbib
-	cd softdevbib && git pull
-
-bib.bib: softdevbib/softdev.bib local.bib
-	softdevbib/bin/prebib -x month softdevbib/softdev.bib > bib.bib
-	softdevbib/bin/prebib -x month local.bib >> bib.bib
-
-softdevbib/softdev.bib:
-	git submodule init
-	git submodule update

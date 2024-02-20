@@ -6,221 +6,87 @@
 }
 
 @article{dynamo,
-    title = {Dynamic native optimization of interpreters.},
-    author = {G. T. Sullivan, D. L. Bruening, I. Baron, T. Garnett,
-              and S. Amarasinghe},
+    title = {Dynamic native optimization of interpreters},
+    author = {G. T. Sullivan and D. L. Bruening and I. Baron and T. Garnett and S. Amarasinghe},
     journal = {ACM Proceedings of the 2003 Workshop on Interpreters, Virtual Machines and Emulators},
     year = {2003},
 }
 
 @misc{tracemonkey,
     title = {Mozilla's TraceMonkey},
-    howpublished = {\href{https://wiki.mozilla.org/JavaScript:TraceMonkey}},
+    howpublished = {\url{https://wiki.mozilla.org/JavaScript:TraceMonkey}},
     note = {Accessed: 2024-02-20},
-    year = {},
     author = {Mozilla},
 }
 
-@misc{v8,
-    title = {Mozilla's TraceMonkey},
-    howpublished = {\href{https://wiki.mozilla.org/JavaScript:TraceMonkey}},
+@misc{v8jit,
+    title = {V8 Trace JIT for Chrome},
+    howpublished = {\url{https://v8.dev/docs/trace}},
     note = {Accessed: 2024-02-20},
-    year = {},
     author = {Google},
 }
 
-@article{HFsort,
-    title={Optimizing Function Placement for
-Large-Scale Data-Center Applications},
-    author={Guilherme Ottoni and Bertrand Maher},
-    month=Feb,
-    journal={ISCGO},
-    year={2017},
-    publisher={IEEE}
-}
-@article{gp,
-    title={Propeller: A Profile Guided, Relinking Optimizer for Warehouse-Scale Applications},
-    author={H Shen and K Pszeniczny and R Lavaee and S Kumar and S Tallam and Xinliang and D Li},
-    month=Jan,
-    journal={ASPLOS},
-    year={2023},
-    publisher={ACM}
-}
-@article{ExtTSP,
-    title={Optimizing Function Placement for
-Large-Scale Data-Center Applications},
-    author={Andy Newell and Sergey Pupyrev},
-    month=Sep,
-    journal={IEEE Transactions on Computers},
-    year={2018},
-    publisher={IEEE}
-}
-@article{SPGO,
-    title={,SamplePGO - The Power of Profile Guided Optimizations
-without the Usability Burden},
-    author={Diego Novillo},
-    month=Nov,
-    journal={LLVM Compiler Infrastructure in HPC},
-    year={2014},
-    publisher={IEEE}
-}
-@article{bolt,
-    title={BOLT: A Practical Binary Optimizer for Data Centers and Beyond},
-    author={Maksim Panchenko and Rafael Auler and Bill Nell and Guilherme Ottoni},
-    month=Feb,
-    journal={International Symposium on Code Generation and Optimization},
-    year={2019},
-    publisher={IEEE}
+@article{tracing-jit,
+    title = {Tracing vs. partial evaluation: comparing meta-compilation approaches for self-optimizing interpreters},
+    author = {Stefan Marr and Stéphane Ducasse},
+    journal = {OOPSLA 2015: Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
+    year = {2015},
 }
 
-@article{bolt2,
-    title={Lightning BOLT: Powerful, Fast, and Scalable Binary Optimization},
-    author={Maksim Panchenko and Rafael Auler and Laith Sakka and Guilherme Ottoni},
-    month=Mar,
-    journal={SIGPLAN},
-    year={2021},
-    publisher={ACM}
+@article{hot-trace,
+    title = {Trace-based Just-in-Time Type Specialization for Dynamic Languages},
+    author = {Andreas Gal and Brendan Eich and Mike Shaver},
+    journal = {ACM SIGPLAN},
+    year = {2009},
 }
-
-@article{chen,
-    title={Taming hardware event samples for precise and versatile feedback directed optimizations},
-    author={D. Chen and N. Vachharajani and R. Hundt and X. Li and S. Eranian and W. Chen and W. Zheng},
-    month=Dec,
-    year={2011},
-    journal={IEEE Transactions on Computers},
-    publisher={IEEE}
-}
-
-@misc{nadav,
-    title = {Taming hardware event samples for precise and versatile feedback directed optimizations},
-    howpublished = {https://arxiv.org/abs/2112.14679},
-    note = {Accessed: 2023-06-30},
-    author = {Nadav Rotem and Chris Cummins},
-    month=Dec,
-    year={2021},
-}
-
-@misc{mlgo,
-    title = {MLGO: a Machine Learning Guided Compiler Optimizations Framework},
-    howpublished = {https://arxiv.org/abs/2101.04808},
-    note = {Accessed: 2023-06-30},
-    author = {M. Trofin and Y. Qian and E. Brevdo and and Z. Lin and K. Choromanski and D. Li },
-    month=Jan,
-    year={2021},
-}
-
-@article{cs,
-    title={Codestitcher: inter-procedural basic block layout optimization},
-    author={Rahman Lavaee and John Criswell and Chen Ding},
-    month=Feb,
-    year={2019},
-    journal={International Conference on Compiler Construction},
-    publisher={ACM},
-}
-
-@misc{gcc,
-    title = {Link-Time Optimization in GCC: Requirements and High-Level
-        Design},
-    howpublished = {\url{https://gcc.gnu.org/projects/lto/lto.pdf}},
-    note = {Accessed: 2023-06-23},
-    month=Nov,
-    year = {2005},
-    author = {GNU Compiler Collection},
-}
-
-@misc{perfbook,
-    title = {Performance Analysis and Tuning on Modern CPU},
-    howpublished = {\url{}https://github.com/dendibakh/perf-book},
-    note = {Accessed: 2023-07-3},
-    month=Nov,
-    year = {2020},
-    author = {Denis Bakhvalov},
-}
-
-@article{weibin,
-    title={Profile-Guided Optimization for Function
-Reordering: A Reinforcement Learning Approach},
-    author={Weibin Chen and Yeh-Ching Chung},
-    month=Oct,
-    journal={IEEE International Conference on
-Systems, Man, and Cybernetics},
-    year={2022},
-    publisher={IEEE}
-}
-
-- year is from the git import date of the doc file
-@misc{amd,
-    title = {AMD Supports LbrExtV2},
-    howpublished = {\url{https://lwn.net/Articles/904482/}},
-    note = {Accessed: 2023-06-13},
-    year = {2022},
-    author = {Perf Mailing List},
-}
-
-https://easyperf.net/blog/2019/03/27/Machine-code-layout-optimizatoins#profile-guided-optimizations-pgo
-
-@misc{instrument,
-    title = {Machine code layout optimizations.},
-    howpublished = {\url{https://easyperf.net/blog/2019/03/27/Machine-code-layout-optimizatoins#profile-guided-optimizations-pgo}},
-    note = {Accessed: 2023-07-03},
-    year = {2019},
-    author = {Denis Bakhvalov},
-}
-
-@misc{perf,
-    title = "Perf wiki",
-    howpublished = {\url{https://perf.wiki.kernel.org/index.php/Main_Page}},
-    note = {Accessed: 2023-06-13},
-    year = {2023},
-    author = {Linux Perf},
-}
-
-@misc{easyperf,
-    title = "Precise timing of machine code with Linux perf.",
-    howpublished = {\url{https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf}},
-    note = {Accessed: 2023-06-29},
-    year = {2019},
-    author = {Denis Bakhvalov},
-}
-
-@misc{exe,
-    title = "Security Feature Measurement for Frequent Dynamic
-Execution Paths in Software System",
-    howpublished = {\url{https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf}},
-    note = {Accessed: 2023-06-29},
-    year = {2018},
-    author = {Qian Wang and Jiadong Ren and Xiaoli Yang and Yongqiang Cheng},
-}
-
-
-@misc{multitime,
-    title = "Multitime",
-    howpublished = {\url{https://tratt.net/laurie/src/multitime/}},
-    note = {Accessed: 2023-06-13},
+@thesis{meta-tracing,
+    school = {Erlangung des Doktorgrades der
+    Mathematisch-Naturwissenschaftlichen Fakultät
+    der Heinrich-Heine-Universität Düsseldorf},
+    title = {Meta-tracing just in time compilation for RPython},
+    author = {Carl Friedrich Bolz},
     year = {2012},
-    author = {Laurence Tratt},
+    month = {September},
 }
 
-@misc{lbr,
-    title = {Intel {Last Branch Record}, {Linux} Kernel Documentation},
-    howpublished = {\url{https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3b-part-2-manual.pdf}},
-    note = {Accessed: 2023-06-13},
+@misc{intel-pt,
+    title ={Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3C:},
+    url = {https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3c-part-3-manual.pdf},
+    author={Intel},
     year = {2016},
-    author = {The Linux Kernel Developers},
 }
 
-@misc{pt,
-    title = {Intel {Processor-Trace}, {Linux} Kernel Documentation},
-    howpublished = {\url{https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3b-part-2-manual.pdf}},
-    note = {Accessed: 2023-06-13},
-    year = {2016},
-    author = {The Linux Kernel Developers},
+@misc{llvm-pass,
+    title = {LLVM's Analysis and Transform Passes},
+    url = {https://opensource.apple.com/source/llvmCore/llvmCore-3418.0.78/docs/Passes.html},
+    author = {LLVM},
 }
 
-@misc{andikleen,
-    title = {A primer on Processor Trace timing},
-    howpublished = {\url{https://halobates.de/blog/p/432}},
-    note = {Accessed: 2023-07-17},
-    year = {2020},
-    author = {Andi Kleen},
+@article{webtracer,
+  author    = {M. Chang and E. Smith and R. Reitmaier and M. Bebenita and A. Gal and C. Wimmer and B. Eich and M. Franz},
+  title     = {Tracing for Web 3.0: Trace Compilation for the Next Generation Web Applications},
+  journal   = {Proceedings of the 2009 ACM SIGPLAN/SIGOPS International Conference on Virtual Execution Environments},
+  year      = {2009},
+}
+
+@inproceedings{sullivan,
+  author    = {G. T. Sullivan},
+  title     = {Dynamic Partial Evaluation},
+  booktitle = {Proceedings of the Second Symposium on Programs as Data Objects},
+  publisher = {Springer-Verlag},
+  year      = {2001},
+}
+@inproceedings{stoodley,
+  author    = {M. Zaleski and A. D. Brown and K. Stoodley},
+  title     = {YETI: A graduallY Extensible Trace Interpreter},
+  booktitle = {Proceedings of the International Conference on Virtual Execution Environments},
+  publisher = {ACM Press},
+  year      = {2007},
+}
+
+@inproceedings{rpython,
+  author    = {D. Ancona and M. Ancona and A. Cuni and N. D. Matsakis},
+  title     = {RPython: A Step Towards Reconciling Dynamically and Statically Typed OO Languages},
+  booktitle = {Proceedings of the 2007 Symposium on Dynamic Languages},
+  year      = {2007},
 }
