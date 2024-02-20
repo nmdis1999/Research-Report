@@ -20,6 +20,9 @@ main_preamble.fmt: main_preamble.ltx
 	  pdftex -ini -jobname="${@:.fmt=}" "&pdflatex" mylatexformat.ltx $${tmpltx}; \
 	  rm $${tmpltx}
 
+softdevbib-update: softdevbib
+	cd softdevbib && git pull
+
 bib.bib: softdevbib/softdev.bib local.bib
 	softdevbib/bin/prebib -x month softdevbib/softdev.bib > bib.bib
 	softdevbib/bin/prebib -x month local.bib >> bib.bib

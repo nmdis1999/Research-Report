@@ -26,7 +26,7 @@
 Dynamic languages such as Python and JavaScript are very popular because of
 their ease of writing programs and expressiveness. They are used to write small
 scripts as well as large and complex programs such as web-applications. However,
-dynamic languages tend to be quite slow to run when compiled\iti{add citation}.
+dynamic languages tend to be quite slow to run when compiled\cite{pypy}.
 In dynamic languages such as Python, the type information may vary at runtime,
 which means the compiler cannot rely on one type to transform operations into
 machine code and thus will have to generate all possible combinations. This can
@@ -42,10 +42,12 @@ until execution loops back to the first instruction of this path. The trace is
 then compiled and then subsequent iterations of this path is executed using the
 compiled trace instead of the original code. But developing custom tracing JITs
 is a hard undertaking. The concept of tracing optimisations were initially
-explored by Dynamo Project\iti{add cite}, the project was successful in using
+explored by Dynamo Project~\cite{dynamo}, the project was successful in using
 tracing information at runtime to optimise most executed paths. This technique
-is also used in Mozilla's TraceMonkey JavaScript VM \iti{add ref} and in
-Chrome's V8 through their Chromium tracing system \iti{add ref}.
+is also used in Mozilla's TraceMonkey JavaScript VM~\cite{tacemonkey}and in
+Chrome's V8 through their Chromium tracing system~\cite{v8}.
+
+blah blah
 
 With meta-tracing systems such as yk, language implementers don't need to
 implement their own tracing JITs; instead they can use yk meta-tracing system
@@ -130,7 +132,11 @@ the machine code and continues the execution by falling back to interpretation
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.2]{images/trace.pdf}
-    \caption{\small blah blah}
+    \caption{\small In tracing JIT (which is the core of meta-tracing system), conditions are turned
+    into guards. The guards are responsible for checking whether the conditions are
+    being met (i.e~they are true) or not. If the conditions are true, and a trace of it is
+    already compiled then instead of interpreting the condition again, the compiled trace
+    is used by the interpreter.}
     \label{traces}
 \end{figure}
 
@@ -139,46 +145,42 @@ Meta-tracing is a system where the tracing JIT is applied at one level down,
 which means instead of tracing the execution of user program, the meta-tracer traces the 
 execution of the interpreter. 
 
-\begin{figure}[ht!]
-    \label{figure:example}
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[scale=0.01, width=\linewidth]{images/yk_metatracer.pdf} 
-    \caption{A python program to perform square of a number}
-    \label{fig:image1}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[scale=0.5, width=\linewidth]{images/aot_and_jit.pdf} 
-    \caption{Example of a trace}
-    \label{fig:image2}
-    \end{subfigure}
-    \caption{Example of how trace of a program looks like(retrieved from
-    Wikipedia). Left hand side is a python program and right hand side is image
-    of the program's trace}
+    \scalebox{0.5}{
+        \includegraphics[scale=0.01, width=\linewidth]{images/yk_metatracer.pdf} 
+    }
+    \caption{blah blah}
+    \label{traces}
 \end{figure}
-\iti{this should be caption of the figure}The yk meta-tracing system uses ykllvm
-to compile the interpreter's source code into a binary, which is called ahead of
-time compilation (or AOT compilation). This binary has a built-in tracer, a jit
-compiler and LLVM IR. The LLVM IR is then used to get the tracing information
-from the binary. The binary is generated via ykllvm and is used to interpret the
-user program. If the program has a loop, where a loop means the tracer comes
-back to the point it started collecting trace from, then the builtin tacer
-records this information. A trace starts getting collected when the meta-tracing
-system detects control-point in the interpreter, which can be inserted by the
-user initially. This control-point is later converted into a yk specific control
-point. After collecting the full trace, the trace is compiled which is called
-just-in-time compilation (or JIT compilation) and then executed as a part of the
-meta-tracing system. If, while executing the user program, both loop and
-complete traces are detected (which can be a later iteration of the loop) then
-instead of recording and compiling the trace again, the already compiled trace
-is used for execution.
 
-In tracing JIT (which is the core of meta-tracing system), conditions are turned
-into guards. The guards are responsible for checking whether the conditions are
-being met (i.e~they are true) or not. If the conditions are true, and a trace of it is
-already compiled then instead of interpreting the condition again, the compiled trace
-is used by the interpreter.
+\begin{figure}[htbp]
+    \centering
+    \scalebox{0.8}{
+        \includegraphics[scale=0.5, width=\linewidth]{images/aot_and_jit.pdf} 
+    }
+    \caption{\small The yk meta-tracing system uses ykllvm
+    to compile the interpreter's source code into a binary, which is called ahead of
+    time compilation (or AOT compilation). This binary has a built-in tracer, a jit
+    compiler and LLVM IR. The LLVM IR is then used to get the tracing information
+    from the binary. The binary is generated via ykllvm and is used to interpret the
+    user program. If the program has a loop, where a loop means the tracer comes
+    back to the point it started collecting trace from, then the builtin tacer
+    records this information. A trace starts getting collected when the meta-tracing
+    system detects control-point in the interpreter, which can be inserted by the
+    user initially. This control-point is later converted into a yk specific control
+    point. After collecting the full trace, the trace is compiled which is called
+    just-in-time compilation (or JIT compilation) and then executed as a part of the
+    meta-tracing system. If, while executing the user program, both loop and
+    complete traces are detected (which can be a later iteration of the loop) then
+    instead of recording and compiling the trace again, the already compiled trace
+    is used for execution.
+    }
+\label{traces}
+\end{figure}
+
+\iti{this should be caption of the figure}
+
 
 yk uses hardware tracer\footnote{The hardware tracer is Intel PT based, Intel
 Processor Trace (Intel PT) is a feature available in some Intel processors that
@@ -209,73 +211,17 @@ problem, the yk meta-tracing system turns off all the optimisations by default,
 which slows down the interpreter significantly even without the JIT being
 enabled.
 
-\iti{add the edd's figure example here}
 
-\begin{tcolorbox}[
-    enhanced,
-    boxrule=2pt,
-    sharp corners,
-    colback=white,
-    colframe=gray,
-    fontupper=\bfseries\footnotesize,
-    before={\parindent15pt}, % Apply indentation globally
-]
-\begin{minipage}[t]{.49\linewidth} % Adjusted for centering
-\begin{Verbatim}
-+-----+
-| bb1 |
-+-----+
-   |
-   v
-+-----------------+
-| bb2             |
-| %3 = add %1, %2 |
-+-----------------+
-   |
-   v
-+-------------------+
-| bb3               |
-| %6 = store %3, %8 |
-+-------------------+
-   |
-   v
-+-----+
-| bb4 |
-+-----+
-\end{Verbatim}
-\end{minipage}%
-\hfill % Fill space to ensure the line is centered
-{\vrule width 4pt} % Make line thicker
-\hfill % Fill space to ensure the line is centered
-\begin{minipage}[t]{.49\linewidth} % Adjusted for centering
-\begin{Verbatim}
-+------+
-| mbb1 |
-+------+
-   |
-   v
-+----------------------+
-| mbb2                 |
-| %3 = add %1, %2      |
-| %6 = store %3, %8    |
-+----------------------+
-   |
-   v
-+-------------------+
-| mbb3              |
-| (empty/deleted)   |
-+-------------------+
-   |
-   v
-+------+
-| mbb4 |
-+------+
-\end{Verbatim}
-\end{minipage}
-\end{tcolorbox}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.2]{images/block-merge.pdf}
+    \caption{\small High Level IR and Machine IR side by side after backend
+optimisation. After some backend optimisations some basic blocks get merged into
+one. And the previous basic block which contained some operations are either
+empty or deleted. This creates mapping issue in meta-tracing systems.}
 
-\captionof{figure}{High Level IR and Machine IR side by side after backend
-optimisation.}
+    \label{traces}
+\end{figure}
 
 Modern compilers have a huge number of optimisation passes available. These
 optimisation passes target unique segments of program, such as transforming a
@@ -545,9 +491,8 @@ within couple of hours if not minutes because of the vast search space. Further,
 the genetic-algorithm is not only able to find a pass sequence that is
 compatible with the meta-tracing system, but the pass sequence also ends up
 improving the C interpreter's performance. 
-
 \section{Experimental Setup}
-\begin{samepage}
+
 \section{Experiments}
 In order to prove first hypothesis, I conducted experiments\footnote{Pull
 request with my divide-and-conquer algorithm:
@@ -614,7 +559,6 @@ to give them information. So if the order of pass sequence is not right some
 optimisation might not work because their dependencies are not present before
 they are processed.
 \end{tcolorbox}}
-\end{samepage}
 
 \subsubsection{Genetic Algorithm for phase-ordering problem}
 Genetic algorithm is a stochastic search algorithm which borrows the concept of
@@ -1004,7 +948,7 @@ passes so that only optimisations within the basic blocks are allowed (and those
 which work across the basic blocks are not allowed).
 
 
-% \bibliographystyle{plain}
-% \bibliography{bib}
+\bibliographystyle{plain}
+\bibliography{bib}
 
 \end{document}
