@@ -109,14 +109,13 @@ multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 \\
 
-The report is structured as follows: Section \ref{sec:background} is Background,
-next section i.e~Section \ref{section:3} addresses interpreter's performance in
+The report is structured as follows: Section \ref{sec:background} is the background,
+the next section i.e~Section \ref{section:3} addresses interpreter's performance in
 meta-tracing system. This is followed by Section \ref{section:4} and
-\ref{section:5} describing experimental setup and what is methodology is used to
-conduct the experiments. Section \ref{section:6} discussed results and finally I
+\ref{section:5} describing the experimental setup and what methodology is used to
+conduct the experiments. Section \ref{section:6} discusses results, and finally I
 present Section \ref{section:7} for addressing related works and wrapping the
 report with Section \ref{section:8} i.e~conclusions and future Work.
-
 
 \section{Background}
 \label{sec:background}
@@ -358,9 +357,9 @@ The LTO pipelines are split into a pre-link and a post-link optimisation
 pipeline\cite{lto-prepost}. After the pre-link pipeline, ThinLTO performs some
 lightweight cross-module analysis, such as importing certain functions from
 other modules to make them ready for inlining. The post-link optimisation
-however  works only on individual modules. Pre-link optimisations simplifies the
+however, works only on individual modules. Pre-link optimisations simplify the
 modules for optimisations, while contrary to the name, post-link optimisations
-happen during the link-time stage and performs both module simplification and
+happen during the link-time stage and perform both module simplification and
 optimisations through passes.
 
 \begin{tcolorbox}[
@@ -384,8 +383,8 @@ Module 3 --(ThinLTO pre-link)------/-\-----(ThinLTO post-link)--> Module 3'
 \end{tcolorbox}
 
 \subsubsection{FatLTO Pipeline}
-Finally, after pre-link step FatLTO merges all modules together
-and then run the post-link optimisations on a single large module:
+Finally, after the pre-link step, FatLTO merges all modules together
+and then runs the post-link optimisations on a single large module:
 
 % Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
@@ -466,41 +465,41 @@ going with FatLTO is just for the sake of convenience.
 \label{section:3}
 As mentioned earlier, meta-tracing systems which use hardware tracing mechanism
 such as yk cannot enable all the optimisation passes by default, as they
-reorganise the basic-blocks and thus messe the mapping when switching from JIT
-mode to AOT mode. Therefore, we need to carefully choose the optimisation pass
+reorganise the basic-blocks and thus mess the mapping when switching from JIT
+mode to AOT mode. Therefore, we need to carefully choose an optimisation pass
 sequence which does not interfere with basic block mapping while also improving
 the interpreter's performance.
 
-Such a problem is called optimising phase ordering problem. Optimising phase
-ordering is a long standing problem with a substantial work done on
+Such a problem is called an optimising phase ordering problem. Optimising phase
+ordering is a long-standing problem with substantial work done on
 it~\cite{guidedGA, kulkarni, genetic-algo}. However, the optimisation pass sequence which might work for one
 system may not perform well or even work at all for another. Finding the right
 optimisation pass sequence depends on the algorithm and the oracle used. The
-algorithm can be a recursive or stochastic one, while oracle is a test set which
-establishes initial constraint. Unless the pass sequence satisfies all the
+algorithm can be a recursive or stochastic one, while an oracle is a test set which
+establishes an initial constraint. Unless the pass sequence satisfies all the
 constraints, it will not be selected in the algorithm. The oracle can contain
-constraints such as tests as well as execution time of the program.
+constraints such as tests as well as the execution time of the program.
 
 Since some optimisation passes depend on others to enable a program's
-transformation, choosing a right sequence (and order of passes) is important for
-a program's performance either in respect to execution time, code size or both.
-The pass sequence is subset of passes from the larger set, while the order of
-passes means in which position the passes are places with respect to
-one-another. However, the such high number of passes (around 90) makes our
-search space large (i.e~if we try all sequence irrespective of ordering we would
+transformation, choosing the right sequence (and order of passes) is important for
+a program's performance either with respect to execution time, code size or both.
+The pass sequence is a subset of passes from the larger set, while the order of
+passes means in which position the passes are placed with respect to
+one another. However, such a high number of passes (around 90) makes our
+search space large (if we try all sequences irrespective of ordering we would
 have to try $2^{90} - 1$ possible combinations!).
 
-In this report I start with a divide-and-conquer algorithm to find a
-meta-tracing compatible pass sequence, and later move on to a genetic-algorithm
-for the same. Genetic algorithm is well-known class of stochastic algorithm
-which is adopted on the basis of theory of evolution. This algorithm has been
+In this report, I start with a divide-and-conquer algorithm to find a
+meta-tracing compatible pass sequence and later move on to a genetic algorithm
+for the same. Genetic algorithm is a well-known class of stochastic algorithms
+which is adopted based on the theory of evolution. This algorithm has been
 used by several researchers to solve phase-ordering problems~\cite{guidedGA,
 kulkarni, genetic-algo}.
 
-Using genetic algorithm allows us to find a pass sequence for our oracle in
-acceptable time, where acceptable time is finding compatible pass sequence
-within couple of hours if not minutes because of the vast search space. Further,
-the genetic-algorithm is not only able to find a pass sequence that is
+Using a genetic algorithm allows us to find a pass sequence for our oracle in
+acceptable time, where acceptable time is finding a compatible pass sequence
+within a couple of hours if not minutes because of the vast search space. Further,
+the genetic algorithm is not only able to find a pass sequence that is
 compatible with the meta-tracing system, but the pass sequence also ends up
 improving the C interpreter's performance. 
 
@@ -517,9 +516,9 @@ In order to test H1, I conducted experiments\footnote{Pull request with my
 divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829 and
 genetic-algorithm: https://github.com/ykjit/yk/pull/900} by first writing a
 divide-and-conquer algorithm. And although this algorithm gave a pass sequence
-which did show some performance improvement of the interpreter, it however did
+which did show some performance improvement of the interpreter, it did
 not find a pass sequence which was compatible with the yk meta-tracing system.
-In the experiments done below we use yk as the meta-tracing system and yklua as
+In the experiments done below, we use yk as the meta-tracing system and yklua as
 the C interpreter being optimised.
 
 \subsection{Methodology}
@@ -564,24 +563,24 @@ the C interpreter being optimised.
 individually to see which passes succeed and which ones fail in isolation. It
 takes a total of 36 hours to run attempt1. In attempt2, the algorithm starts with
 an empty list of ok passes, recursively tests combinations of passes starting with
-full list and then splits the list in two if the initial list fails and only
+a full list and then splits the list in two if the initial list fails and only
 adds the subsets which succeed to the okay pass list. The run time for attempt2
 is between 9-10 hours. The initial version of the algorithm used to reshuffle
 the list as well to make it stochastic, however, I noticed that we received no
 pass sequence which was compatible with yk as well as improved yklua's
 performance. Removing stochastic elements helped me to get at least a pass
 sequence which was compatible with yk, but failed to provide performance
-improvement to yklua. This is because some LLVM optimisations depends on others
+improvement to yklua. This is because some LLVM optimisations depend on others
 to give them information. So if the order of pass sequence is not right some 
 optimisation might not work because their dependencies are not present before
 they are processed.
 \end{tcolorbox}}
 
 \subsubsection{Genetic Algorithm for phase-ordering problem}
-Genetic algorithm is a stochastic search algorithm which borrows the concept of
+A genetic algorithm is a stochastic search algorithm which borrows the concept of
 evolution from nature. This algorithm starts from an initial list (often
 represented in a bitwise form) called entities and explores different
-combinations. This is done by combining elements from two entities by the way of
+combinations. This is done by combining elements from two entities by way of
 crossover and mutation into a third entity, which may represent a new point in
 the vast search space, that otherwise would have been left unexplored by search
 methods like divide-and-conquer.
@@ -602,8 +601,8 @@ to the problem.}
 \item{Crossover: Crossover (also known as ``recombination'') is another genetic operator
 used to combine the genetic information of two parent entities to generate new
 offspring entities. The process involves swapping sections of the parents'
-encodings to produce one or more children. The rationale behind crossover is to
-take the good characteristics from each parent and combine them to produce better
+encoding to produce one or more children. The rationale behind crossover is to
+take the good characteristics of each parent and combine them to produce better
 offsprings, potentially leading to better solutions in subsequent generations.
 There are various crossover techniques, such as single-point crossover,
 multi-point crossover, and uniform crossover, each differing in how and which
@@ -710,9 +709,9 @@ and prevents the algorithm from getting stuck in local optima.}
 \subsection{Algorithm's speed up after parallising}
 
 The first version of the genetic-algorithm was not parallised and it took 4-5
-hours to run 10 generation. I optimised the algorithm to calculate fitness function for each entity 
+hours to run 10 generations. I optimised the algorithm to calculate the fitness function for each entity 
 in parallel which reduced the run-time for 10 generation from 4-5 hours to 15
-minutes. This improved my efficiency to run experiments and find patterns in
+minutes. This improved my efficiency in running experiments and finding patterns in
 successful and non-successful pass sequence. \footnote{commit with this change: https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
@@ -722,20 +721,20 @@ interpreter}
 
 Table \ref{table:preandpostlink} shows performance numbers for baseline as well as yklua binaries
 when we apply prelink, postlink or both flags on the binary. Row I is when no
-pass sequence is applied, that is the baseline binary. Row II and III are when
-either just prelink or postlink passes are applied. In Row IV I applied both
+pass sequence is applied, that is the baseline binary. Rows II and III are when
+either just prelink or postlink passes are applied. In Row IV, I applied both
 prelink and postlink passes and so on. Handling arguments mean handling the
 function argument as a separate pass.
-Example: Some passes are in form of function such as $function(a,b,c,..)$ for
-Row V and VI, I treat every argument as a seperare pass like $function(a),
+Example: Some passes are in form of a function such as $function(a,b,c,..)$. For
+rows V and VI, I treat every argument as a seperare pass like $function(a),
 function(b), function(c), function(a,b), function(a,c)...$. In the last row,
 that is Row VII, I apply full pass sequence for -O2 on yklua. Although this
-is the only pass sequence in the Table \ref{tab:1} which doesn't succeeds all
-the yk's test I still included it in the table for next hypothesis.
+is the only pass sequence in the Table \ref{tab:1} which does not succeed all
+of yk's tests, I still included it in the table for the next hypothesis.
 
 Notice that the last four rows have statistically equivalent performance, this
 indicates that there is a wall created by some yk specific passes which might be
-limiting more performance gains that might be possible by applying bigger pass sequence (e.g.
+limiting more performance gains that might be possible by applying a bigger pass sequence (e.g.
 applying -O2 or -O3 pass sequence)
 
 \begin{table}[H]
@@ -758,33 +757,33 @@ either using no pass sequence (i.e baseline) and after applying prelink, postlin
 or both prelink and postlink on yklua binary with 95\% confidence intervals (the rightmost column).
 The interpreter is built without JIT enabled,
 that is only yk is retrofited onto the interpreter but JIT is turned off. 
-The first row shows performance when no passes are applied on yklua, and the,
+The first row shows performance when no passes are applied on yklua, and the
 second and third rows indicate performance when only pre or postlink passes are
-applied on the interpreter. Third row indicates both passes being applied but
-arguments inside functions are not handled. In fourth row we handle all
-combination to receive compatible prelink and postlink pass sequence in our
-genetic algorithm. Finally, last row represents yklua's performance when full
-list of -O2 (pre and postlink) and applied on the interpreter. This list however
-is not compatible with yk meta-tracing system (i.e~ the list fails yk's tests)}
+applied on the interpreter. Third row indicates both passes are being applied but
+the arguments inside functions are not handled. In the fourth row, we handle all
+combinations to receive a compatible prelink and postlink pass sequence in our
+genetic algorithm. Finally, last row represents yklua's performance when the full
+list of -O2 (pre and postlink) is applied on the interpreter. This list however
+is not compatible with the yk meta-tracing system (i.e~ the list fails yk's tests)}
 \label{table:preandpostlink}
 \end{table}
 
-For first experiment we consider two ways to build lua binary:
+For the first experiment we consider two ways to build the lua binary:
 \begin{itemize}
     \item{With the help of yk-config, we call this yklua}
     \item{With the help of traditional compilers such as gcc or clang and llvm opt tool.}
 \end{itemize}
 
-yk-config is a tool to apply yk specific compiler and linker flags on the
+yk-config is a tool to apply yk-specific compiler and linker flags on the
 interpreter and other systems which use yk's meta-tracing system. yk-config
 makes configuring/compiling C interpreters easy by having the support to add
-`cflags` (compiler) and `ldflags` (linker), this can used to add prelink and
-postlink pass sequence found via the genetic algorithm by appending them to cflags
+`cflags` (compiler) and `ldflags` (linker), this can used to add the prelink and
+postlink pass sequences found via the genetic algorithm by appending them to cflags
 and ldflags. Finally, I use ykllvm's clang to compile yklua binary.
 
-clang in -O0 by default adds an `optnone` attribute to all the functions, which
+Clang in -O0 by default adds an `optnone` attribute to all the functions, which
 makes any optimisation we add ineffective. For this, yk-config already has
-`disable-O0-optnone` (which works with `-O0` flag). 
+`disable-O0-optnone` (which works with the `-O0` flag). 
 
 Table \ref{table:preandpostlink} shows performance numbers for 30 runs of ${db.lua}$ when built
 with and without optimisations and JIT turned off, with the yk meta-tracing
@@ -798,10 +797,10 @@ which can interfere with correctness, improves performance further over the
 subset found by the GA \\
 
 Table \ref{table:preandpostlink} clearly disapproves H2, the intuition behind this hypothesis
-is that yklua when using full -O2 should have more performance improvement than
+was that yklua when using full -O2 should have more performance improvement than
 using subset of -O2 passes. Let's dig further why this might have happened.
 
-And although rows with optimisations applied clearly have some performance
+The rows with optimisations applied clearly have some performance
 improvement (by 1.5-2 times) when compared with the baseline (Row I). However,
 it is interesting that even when we apply full -O2 pass sequence on yklua binary
 (in ROW VII) the performance does not improve further. So I included an
@@ -809,9 +808,9 @@ additional hypothesis.
 
 In the subsections below, I show that when lua is built via clang/gcc and with
 -O2 passes it is 3 times faster than yklua when it is built using -O2. The
-reason for this is yk's pessimistic approach to block some backend optimisation
-as they interferes with basic block mapping (as described in previous sections).
-To solve this I improve a yk specific flags(i.e~passes) and show that it is
+reason for this is yk's pessimistic approach to block some backend optimisations
+as they interfere with basic block mapping (as described in previous sections).
+To solve this I, improve some yk specific flags(passes) and show that it is
 possible to win back some of the lost performance, and present proposal for
 improving other passes. 
 
@@ -823,9 +822,9 @@ mode, and when lua is compiled with clang and optimisations were applied with
 the help of llvm's opt tool. The latter was to verify what is the performance of lua
 binary when optimisation pass sequences (pre+postlink) are applied with the help
 of another tool instead of using clang's default -O2 mode. Even with using opt tool to apply
-passes, the performance of lua binary remains same as that we get with gcc's -O2
+passes, the performance of lua binary remains the same as what we get with gcc's -O2
 pass sequence. This indicates that yk-config might be including some flags
-which results in 3 times slowdown of yklua binary when compared to lua binary. 
+which results in a 3 times slowdown of yklua binary when compared to lua binary. 
 
 \begin{table}[H]
 \begin{tabular}{@{}p{7.5cm}ll@{}}
@@ -846,13 +845,13 @@ opt. Where patching means applying optimisation passes on the IR.}
 \subsection{Performance impact of yk-based flags with full -O2 optimisation
 turned on}
 
-To verify if yk-based passes contribute to 3x slowdown to yklua I start to turn
+To verify if yk-based passes contribute to a 3x slowdown to yklua I start to turn
 off yk related flags. First, I turn them off individually and then in
 combinations. The speedup of the interpreter when the passes are turned off
-indicates that the flag (or combination of them) are contributing slowdown by
+indicates that the flag (or combination of them) is contributing slowdown by
 ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
 (performance of row n)}}$$ The numbers in Table \ref{table:preandpostlink} and \ref{tab:b}
-contradicts H2. The majority of overhead is caused when the yk flags are used in
+contradict H2. The majority of the overhead is caused when the yk flags are used in
 combination with row 14 causing maximum of slowdown.
 
 \begin{table}[H]
@@ -890,71 +889,71 @@ yklua the next task is to figure out how much performance can be retrieved back
 by optimising some (or maybe all) flags above. 
 The best targets to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
 
-Currently in yk-insert-stackmaps stackmaps is inserted before every function
+Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it's intrinsic. However, stackmaps are not needed before calls to
 unmappable functions, as these are not traced and thus never need
-deoptimisation. Example of unmappable functions are external calls and functions
-with no condition inside them. This might claw back a few `ms` for this flag. 
+de-optimisation. Example of unmappable functions are external calls and functions
+with no condition(s) inside them. This might claw back a few `ms` for this flag. 
 
-With code changes and by adding test case in this\footnote{link to the PR
+With code changes and by adding a test case in this\footnote{link to the PR
 containing the change for --yk-insert-stackmaps and the test case:
 https://github.com/ykjit/ykllvm/pull/114}PR, I show the performance improvement
 of yklua binary from ${89.9ms}$ to ${86.3ms}$.
 
 Similarly, stackmap is not needed for functions which do not have any conditions
 inside them, this is because no condition means there are no gaurds which means
-the function does not need to be traced or deoptimised. This is a bit more
+the function does not need to be traced or de-optimised. This is a bit more
 difficult to implement because we will need to store which functions have no
 condition inside them. This can be targetted as a future work.
 
 As for the yk-split-blocks-after-calls pass, if we adjust jitmodbuilder a bit,
 we could also refrain from splitting blocks after calls to unmappable functions
-such as external function. But that could turn out to be a bit fiddly in
-jitmodbuilder as the splitting helps us to know when to start/stop outlining,
-outline is opposite of inlining (i.e~we undo some inlined functions).
-Jitmodbuilder is trace builder for yk which splits basic blocks after multiple
+such as external functions. But that could turn out to be a bit fiddly in
+jitmodbuilder as the splitting helps us to know when to start/stop outlining;
+outline is the opposite of inlining (we undo some inlined functions).
+Jitmodbuilder is a trace builder for yk which splits basic blocks after multiple
 calls, this is to understand efficiently what's going on in the trace because
-LLVM doesn't by default splits the blocks after the call. 
+LLVM does not by default split the blocks after the call. 
 
 Another pass which can be optimised (or maybe not needed) is --yk-no-fallthrough
 pass, this pass stops fallthrough optimisations which again interferes with
 basic block mapping. However, there is a possible solution to not disable this
-optimisation. LLVM has special code which provides information about how blocks
-are merged together. If we can store the information about how many blocks are
-merged and transfer this information to hardware tracer then we can tell which
-blocks were single basic blocks and which have been merged. Basically, encoding
+optimisation. LLVM has a special code which provides information about how blocks
+are merged. If we can store the information about how many blocks are
+merged and transfer this information to the hardware tracer then we can tell which
+blocks were single basic blocks and which have been merged. Encoding
 extra information about merged basic blocks can help us figure back the mapping
 for the merged basic block.
 
 \section{Related Work}
 \label{section:7}
-Optimisation phase ordering problem for compiler optimisations have been solved
-before~\cite{guidedGA} However, the solution for phase-ordering problem for one
-system may not work for other system. This is because the oracle (i.e~the
-testing conditions and target goal) may vary for different systems. And although
-there exists other meta-tracing systems, such as RPython~\cite{rpython}, they
-don't face same problem as yk does. This is because  rpython traces a version of
+The optimisation phase ordering problem for compiler optimisations has been solved
+before~\cite{guidedGA} However, the solution for the phase-ordering problem for one
+system may not work for another system. This is because the oracle (the
+testing conditions and target goal) may vary for different systems.
+There exist other meta-tracing systems, such as RPython~\cite{rpython} that
+do not face the same problem as yk does. This is because rpython traces a version of
 the interpreter compiled in its own format: it actually interprets an
-interpreter. With software tracing you can inject code into the AOT compiled
+interpreter. With software tracing you can inject code into the AOT-compiled
 binary that directly records the IR blocks that were executed, and this entirely
 bypasses the need for mapping
 
 \section{Conclusion and Future Work}
 \label{section:8}
 Conclusion: In this report, I prove that we can win back some of the lost
-performance when we retrofit a meta-tracing system such as yk to a C based
-interpreter. Although, the experiments above are run only on a couple of
-benchmarks, it shows the possibility of improving yk based interpreters. We can
-expand the oracle suite of genetic-algorithm to include more comprehensive
+performance when we retrofit a meta-tracing system such as yk to a C-based
+interpreter. Although the experiments above are run only on a couple of
+benchmarks, they show the possibility of improving yk-based interpreters. We can
+expand the oracle suite of the genetic algorithm to include more comprehensive
 benchmarks and extend the above experiments.
 
-Future work: Future work includes improving yk-based flag such as
+Future work: Future work includes improving yk-based flags such as
 yk-insert-stackmaps, yk-split-blocks-after-calls, and yk-no-fallthrough.
 
-Another possible hypothesis, which might be worth testing is whether we can
+Another possible hypothesis which might be worth testing is whether we can
 create a partial version of the disabled optimisations, which were disabled
 because they interfere with basic block mappings. This would require change(s)
-in llvm or to write our own optimisation passes which perform most of the
+in llvm or to write custom optimisation passes which perform most of the
 optimisations but do not mess with the mapping. One way could be to tweak the
 passes so that only optimisations within the basic blocks are allowed (and those
 which work across the basic blocks are not allowed).
