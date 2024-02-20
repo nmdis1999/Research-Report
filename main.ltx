@@ -109,7 +109,13 @@ multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 \\
 
-The report is structured as follows: 
+The report is structured as follows: Section \ref{sec:background} is Background,
+next section i.e~Section \ref{section:3} addresses interpreter's performance in
+meta-tracing system. This is followed by Section \ref{section:4} and
+\ref{section:5} describing experimental setup and what is methodology is used to
+conduct the experiments. Section \ref{section:6} discussed results and finally I
+present Section \ref{section:7} for addressing related works and wrapping the
+report with Section \ref{section:8} i.e~conclusions and future Work.
 
 
 \section{Background}
@@ -459,6 +465,7 @@ one giving us full IR. yk can potentially work with ThinLTO and the choice of
 going with FatLTO is just for the sake of convenience.
 
 \section{Addressing interpreter performance in a meta-tracing system}
+\label{section:3}
 As mentioned earlier, meta-tracing systems which use hardware tracing mechanism
 such as yk cannot enable all the optimisation passes by default, as they
 reorganise the basic-blocks and thus messe the mapping when switching from JIT
@@ -501,12 +508,13 @@ improving the C interpreter's performance.
 
 
 \section{Experimental Setup}
-
+\label{section:4}
 The experiments were conducted on a dual-socket Intel Xeon Platinum 8452Y
 system, featuring an x86\_64 architecture with 72 total cores distributed across
 two NUMA nodes, operating between 800 MHz and 3200 MHz.
 
 \section{Experiments}
+\label{section:5}
 In order to test H1, I conducted experiments\footnote{Pull request with my
 divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829 and
 genetic-algorithm: https://github.com/ykjit/yk/pull/900} by first writing a
@@ -710,7 +718,7 @@ minutes. This improved my efficiency to run experiments and find patterns in
 successful and non-successful pass sequence. \footnote{commit with this change: https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
-
+\label{section:6}
 \subsection{Effects of applying meta-tracing compatible pass sequence on the yklua
 interpreter}
 
@@ -918,17 +926,10 @@ are merged together. If we can store the information about how many blocks are
 merged and transfer this information to hardware tracer then we can tell which
 blocks were single basic blocks and which have been merged. Basically, encoding
 extra information about merged basic blocks can help us figure back the mapping
-for the merged basic block is --yk-no-fallthrough pass, this pass stops
-fallthrough optimisations which again interferes with basic block mapping.
-However, there is a possible solution to not disable this optimisation. LLVM has
-special code which provides information about how blocks
-are merged together. If we can store the information about how many blocks are
-merged and transfer this information to hardware tracer then we can tell which
-blocks were single basic blocks and which have been merged. Basically, encoding
-extra information about merged basic blocks can help us figure back the mapping
-for the merged basic blocks.
+for the merged basic block.
 
 \section{Related Work}
+\label{section:7}
 Optimisation phase ordering problem for compiler optimisations have been solved
 before~\cite{guidedGA} However, the solution for phase-ordering problem for one
 system may not work for other system. This is because the oracle (i.e~the
@@ -941,7 +942,7 @@ binary that directly records the IR blocks that were executed, and this entirely
 bypasses the need for mapping
 
 \section{Conclusion and Future Work}
-
+\label{section:8}
 Conclusion: In this report, I prove that we can win back some of the lost
 performance when we retrofit a meta-tracing system such as yk to a C based
 interpreter. Although, the experiments above are run only on a couple of
