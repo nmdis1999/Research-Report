@@ -6,63 +6,90 @@
 
 \begin{abstract}
     \noindent
-     JIT compilation gives dynamic languages speed of compiled code with
-     flexibility of interpretation. Tracing JIT is a variation that records
-     instructions of the most executed path in a trace and uses it instead of the
-     original code in hot paths. But tracing JITs are fairly hard to implement. In
-     meta-tracing, language interpreters are built on top of a common tracing
-     JIT compiler, removing the need to re-implement tracing JIT for every
-     language. This separates language implementation concerns from JIT
-     compilation. The yk meta-tracing system turns existing C interpreters into
-     tracing JIT compilers. However, yk pessimistically turns off all
-     optimisations, as not all compiler optimisations are safe to use with yk or
-     meta-tracing in general. This significantly slows down the non-JITed
-     interpreter. I am investigating regaining as much performance as possible
-     for such interpreters. This report covers progress for the above problem
-     to date and plans for the future. 
+    JIT compilation gives dynamically typed languages speed of compiled code along
+    with the flexibility of interpretation. One of the variants of JIT is tracing
+    just-in-time compiler, which observes the program at the runtime and collects
+    the most frequently executed parts in a linear execution trace.  and optimises it
+    into machine code. However, building a tracing JIT for a language can take up
+    significant engineering hours. Meta-tracing systems such as yk can easily turn
+    existing C interpreters into tracing JIT compilers. At the current stage,
+    however, yk pessimistically turns off all of the optimisations. 
+    The result is a significant slowdown of the
+    interpreter even when JIT is not enabled. My work aims to regain the lost
+    performance. In this report, I show that by enabling performance critical
+    passes at all levels of LLVM's optimisation pipeline, we can bridge the gap
+    between current performance and the target performance of the interpreter.
 \end{abstract}
-
 \section{Introduction}
-Dynamic languages such as Python and JavaScript are very popular because of
-their ease of writing programs and expressiveness. They are used to write small
-scripts as well as large and complex programs such as web applications. However,
-dynamic languages tend to be quite slow to run when compiled~\cite{pypy}.
-In dynamic languages such as Python, the type information may vary at runtime,
-which means the compiler cannot rely on one type to transform operations into
-machine code and thus will have to generate all possible combinations. This can
-be very slow. JIT compilers overcome this problem by recording and using runtime
-information to optimise the most executed paths (also known as ``hot'' paths).
-JIT compilation is a combination of two traditional methods: ahead of time
-compilation (AOT) and interpretation.
+\subsection{Overview}
+\subsubsection{yellow}
 
-Tracing JIT is a kind of JIT compilation. In tracing JIT compilation, the VM
-identifies frequently executed, ``hot'' program paths at runtime. Once a hot
-path is detected, the VM records all instructions in this path into a trace
-until execution loops back to the first instruction of this path. The trace is
-then compiled and the subsequent iterations of this path are executed using the
-compiled trace instead of the original code. But developing custom tracing JITs
-is a hard undertaking. The concept of tracing optimisations was initially
-explored by Dynamo Project~\cite{dynamo}, the project was successful in using
-tracing information at runtime to optimise most executed paths. This technique
-is also used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}and in
-Chrome's V8 through their Chromium tracing system~\cite{v8jit}.
+The popularity of dynamically typed languages stems from their ability to ease
+writing software and rich library framework they provide. In recent years,
+dynamically typed languages such as Python and JavaScript are not just popular
+for writing scripts but also complex server side applications\cite{dyn-server}.
+The most commonly used implementation of these languages are interpreters, as
+they are quite flexible to use and the developer don't need to incur cost of
+compilation\footnote{example: }. However, the same flexibility that makes these
+languages popular among software developers also bring challenges to
+optimisations and code generations. As these languages have become one of the
+key tools in software development kit they demand improvement to their execution
+speed\iti{rewrite this line}. An argument can be made that developers can pick
+compiler for these languages instead of using interpreter. But there is a catch,
+dynamic languages tend to be quite slow to run when compiled~\cite{pypy}. In
+statically typed languages compilers rely on the type information for generating
+machine code. However, for dynamic languages such as that of Python, the type
+information may vary at the runtime. This means that compiler will have to emit
+generalised machine code to deal with all the possible type combinations every
+time we run the program, which can be very expensive in terms of space and time
+complexity.
+
+It has been stated that implementations of dynamically typed languages are often
+slower than the implementation of statically typed languages\cite{ltratt
+dynamically typed}. {why?} There has been continuous research on making
+interpreters faster which dates back to Self project\cite{add here} but they
+aren't used as frequently as one would want. Most dynamically typed languages
+uses bytecode interpreter without any advance optimisations such as just-in-time
+compilations. The reason for limited use of JIT compilers is difficulty of their
+implementations\cite{bolz thesis}. A JIT compiler for the dynamically typed
+language would need to handle all the complex interactions of the language while
+simultaneously generating efficient code for the common cases. 
+
+One solution to this problem is using meta-tracing system. With meta-tracing
+systems such as yk, language implementers do not need to implement their own
+tracing JITs; instead, they can use yk meta-tracing system and the tracing JIT
+compilation will automatically be embedded in the language implementation(s). 
+
+One of the newer approaches of implementing just-in-time compilers is tracing
+JIT. In tracing JIT compilation, the Virtual Machine\iti{introduce} identifies
+frequently executed, ``hot'' program paths at runtime. Once a hot path is
+detected, the VM records all instructions in this path into a trace until
+execution loops back to the first instruction of this path. The trace is then
+compiled and the subsequent iterations of this path are executed using the
+compiled trace instead of the original code. But developing custom tracing
+JITs is a hard undertaking. The concept of tracing optimisations was initially
+explored by Dynamo Project~\cite{dynamo}, which was successful in using tracing
+information at runtime to optimise most executed paths. This technique is also
+used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}and in Chrome's V8
+through their tracing V8 system~\cite{v8jit}.
  
 
-With meta-tracing systems such as yk, language implementers do not need to
-implement their own tracing JITs; instead, they can use yk meta-tracing system
-and the tracing JIT compilation will automatically be embedded in the language
-implementation(s). yk traces the execution of the interpreter instead of tracing
-the program executed by the interpreter. However, not all compiler optimisations
-are safe to use with meta-tracing systems like yk because they use a hardware
-tracing mechanism to collect the program's traces. This creates a problem for
-hardware meta-tracing systems because some backend optimisations interfere with
-basic block positions and thus mapping their address from AOT to JIT compilation
-and vice-versa becomes challenging. Therefore, yk pessimistically turns off all
-optimisations by default. This results in a much slower interpreter than the
-baseline (i.e.~interpreter compiled without the meta-tracer.) My work focuses on
-minimising the performance overhead of the yk meta-tracer and thus speeding the C
-interpreter to as much an extent as possible. In later sections, I'll discuss
-the work done so far on this and future directions.
+YK is a meta-tracing system which traces the execution of the interpreter instead of tracing
+the user program executed by the interpreter. At current stage, yk does not
+support interpreter compilation using any other level than -O0, and even at that
+level it disables all of the backend optimisations. When we enable optimisation
+passes at different level of optimisation passes they either interfere or undo
+work done by some of the yk's passes by changing the intermediate
+representation. In yk, when the \iti{add word} switches from JIT compilation to
+interpretation the yk system tries to map back machine basic blocks to LLVM IR
+basic block. The yk passes makes sure that the mapping is accurate else
+correctness and efficiency of the meta-tracing system will be compromised. We
+discuss this further in \label{blah}.
+
+The result of yk pessimistically turning off all of the optimisation passes is
+that the performance of yk compiled interpreter is significantly slow even when
+JIT is turned off. What this means is simply embedding yk onto the interpreter
+has \iti{add word} cost.
 
 \begin{figure}[ht!]
     \label{figure:example}
@@ -75,41 +102,44 @@ the work done so far on this and future directions.
     use the same JIT without having to write their own tracing JITs}
 \end{figure}
 
-In this report, I show that it is possible to minimise the performance overhead
-when the yk meta-tracing system is retrofitted in a non-JITed C interpreter. Which
-means that the performance of a non-JITed interpreter compiled with the yk subsystem
-should be closer to the performance of the same interpreter when compiled with
-non-meta-tracing compiler.
+In this report, I show improvements I made which reduced the performance overhead
+when retrofitting yk onto existing C interpreter. The aim of the report is to lessen the
+gap between performance of interpreter which is compiled via yk's modified
+implementation of llvm called ykllvm and the interpreter which is compiled with
+gcc or llvm's clang.
+
 The main contributions of this report are:
 \begin{itemize}
-    \item{A genetic algorithm to find llvm optimisation passes that do not
+    \item{A parallel genetic algorithm to find llvm optimisation passes that do not
         break yk's tests and improve the performance of yklua, a C interpreter.}
-    \item{Identfying and fixing the cause of overhead when using yk to build
+    \item{}
+        {Identfying and fixing some of the causes of overhead when using yk to build
         yklua}
 \end{itemize}
-Through this work, I aim to bridge the gap between the achievable
-performance\footnote{Achievable performance is defined as convergence of
-execution time of meta-tracer compiled interpreter to that of traditionally
-compiled interpreter}  of meta-tracing JIT compilation, and its current
-practical performance for the  C interpreter.
 
 \subsection{Defining the problem}
-For my work done in this report, I lay out the hypothesis:
+The first hypothesis I test in this report is:
 
-\textbf{H1} \hspace*{0.5cm} There is a subset of existing compiler optimisation passes
-that is compatible with meta-tracing system and meaningfully improves the interpreter's
-performance.
+\textbf{H1} \hspace*{0.5cm} There exists a subset of existing compiler
+optimization passes (drawn from the current list of optimizations available in
+LLVM) that is compatible with the meta-tracing system and meaningfully improves
+the interpreter's performance.
 \\
-To validate this hypothesis, I began by running a divide-and-conquer algorithm
+To validate this hypothesis, I started out with a divide-and-conquer algorithm
 to find a pass sequence compatible with the meta-tracing system. Compatibility
-is defined as the successful passing of the meta-tracer system's test cases and the
-pass sequence's ability to build and run the interpreter. However, while this
-method found a compatible pass sequence, it did not improve the interpreter's
-performance and in some cases, even made it worse. Later, I will present a
+is defined as the successful passing of the meta-tracer system's test cases and
+the pass sequence's ability to build and run the C interpreter. However, while
+this method found a compatible pass sequence (which didn't break yk's test
+cases), it did not find a pass sequence which improved the interpreter's
+performance and, in some cases, even made it worse. Later, I will present a
 better approach using a stochastic genetic algorithm, which not only found
 multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 
+There are total of 3 hypothesis in this report, the second and third hypothesis
+are discussed in Section x.
+
+\iti{write structure in better way}
 The report is structured as follows: Section \ref{sec:background} is the background,
 the next section i.e~Section \ref{section:3} addresses interpreter's performance in
 meta-tracing system. This is followed by Section \ref{section:4} and
@@ -121,18 +151,167 @@ report with Section \ref{section:8} i.e~conclusions and future Work.
 \section{Background}
 \label{sec:background}
 
-Tracing refers to the process of capturing information about the execution of a
-program. Tracing JITs use the technique where they collect/record information
-about most executed (or ``hot'') paths via traces of the program and later at
-runtime, uses the information to perform optimisations and make inlining
-decisions\cite{tracing-jit}. A trace is a sequential path which follows only one
-of the many possible directions through the code. To ensure correctness, the
-trace contains a guard at every possible point where the path could have
-followed another direction, such as at conditions and indirect or virtual calls.
-When generating the machine code, every guard is turned into a quick check to
-guarantee that the path we are executing is still valid. If a guard fails, the
-tracing JIT immediately quits the machine code and continues the execution by
-falling back to interpretation (i.e~AOT compilation).
+This section provides background on dynamically typed languages, just-in-time
+(JIT) compilation, the tracing JIT compilation technique, and meta-tracing. The
+highlight of this section is meta-tracing systems, as they are an important
+component of this report. Additionally, this section provides details on
+RPython, a production-grade meta-tracing system, and yk meta-tracing, a
+hardware-based meta-tracing system on which my experiments have been carried
+out.
+
+\subsection{Dynamic typed languages and their implementation}
+
+Dynamic typed languages have seen a rapid increase in their use for developing
+software not just for the web but also for domains that previously only used
+statically typed languages\iti{https://dl.acm.org/doi/pdf/10.1145/1543135.1542528}. The appeal
+often lies in their ease of development and the flexibility they offer. Dynamic
+languages defer type-safety to runtime, unlike statically typed languages which
+handle it at compile-time, which affects their performance negatively.
+
+Although dynamically typed languages can be compiled ahead-of-time (AOT), they
+often run slower when compiled. This is partly because, in statically typed
+languages, compilers can utilize type information to create optimized machine
+code. However, in dynamically typed languages, like JavaScript, types can
+change, leading to optimization challenges for compilers. Consequently, they
+must generate more general, slower code to accommodate various types. Attempts
+to get interesting static information for languages like Python have produced
+limited results [Can05] or are quite complex and don’t scale well [Sal04]
+because of the nature of dynamically typed languages.
+
+Techniques like static type inference can improve performance by predicting
+types, but these approaches are complex and not suited for environments that
+require rapid updates, such as web pages in real time. For example, optimizing a
+web app for quick loading and interaction becomes more challenging with dynamic
+typing due to the additional analysis required.
+
+Implementation of dynamically typed languages is not an easy task as they are
+not usually designed for speed. Some of the challenges when implementing
+dynamically typed languages are:
+\begin{itemize}
+    \item{Late Binding}
+    \item{Dispatching}
+    \item{Boxing}
+\end{itemize}
+
+However, the categorisation of dynamic and statically typed languages are not
+always very clear. A statically typed language can have dynamic feature, one
+such example is Jave which often use dynamic method dispatch, dynamic code
+execution, type inference etc. All the dynamic feature results in limited
+performance gain from ahead-of-time (AOT) compilation. This is because to generate efficient
+and type-specialised code the compiler knowledge of variable type.
+
+Interpreters are often preferred method for implementing dynamically typed
+languages such as Python, Ruby, and JavaScript. This preference stems from their
+ability to evaluate code line-by-line, which aligns better with the dynamic
+nature of these languages. This method is easier to manage with runtime
+type changes, making interpreters more suitable for dynamically typed languages
+than AOT compilationi\iti{[Can05]}.
+
+However, while interpreters provide convenience and simplicity, they inherently
+suffer from slower execution speeds.
+
+These challenges has resulted in years of research to bring performance of
+dynamically typed languages to an acceptable performance levels.Early results
+for Lisp [SJG93] and Smalltalk [DS84] involved extensive research around the
+Self language [CUE89, HU94, Hö94], which was later applied to the Hotspot VM
+[PVC01]. The common theme in all of these research was they used a JIT compiler
+[Ayc03] to compile and recompile parts of the program at runtime, this was done
+for most executed part of the program. JIT compilation gives advantages of 
+interpretation with the performance benefits of compiled code, optimizing
+execution speed without compromising the flexibility dynamic languages require.
+
+However, the challenge with Just-in-time compilation is that it is not an easy
+implementation technique, especially when the language it is targeting is 
+itself a complex one. The challenge is to maintain the development of such
+JIT compilers with the pace of the language development, this requires hundreds
+of engineers effort spanning over multiple years.
+
+Executing a dynamic programming language on interpreter has large overhead when
+compared to running same program using statically typed language like C. In next
+subsection we will be looking at how JIT techniques such as tracing JIT can help
+us to overcome some of these overheads.
+
+Figure shows typical working on JIT. 
+\subsection{PyPy and RPython}
+
+PyPy is a framework to write efficient implementation for dynamic languages such
+as Python. The necessary condition to use pypy is that the interpreter's implementation
+has to be written in RPython (``Restricted Python'')[AACM07]. RPython is a
+subset of python. First the language interpreter is written in RPython and then
+later translated into target environment (usually C/Posix). One of the low-level
+detail that is added while translation is MetaJIT, which is language independent
+tracing just-in-time compiler. In label{meta-tracing} I explain more in detail
+about what it is and how it works.
+
+Many dynamic languages use bytecode interpreters without advanced technique like
+JIT compilation. The reason for the limited use of JIT compiler is complexities
+of their implementation.  Languages such as JavaScript and Python have very
+complex core semantics with many corner case.  So how does these languages use
+JIT to improve their performance without dealing with writing their own JITs?
+One solution is meta-tracing. Meta-tracing is a technique to efficiently execute
+dynamic languages without having to rewrite a dedicated JIT for each of them,
+
+\subsection{JIT and Meta-compilation}
+
+There are different ways to implement just-in-time compilers, one way is by
+using tracing JIT. A tracing JIT records and compiles traces of program being
+interpreted. One of the important topic to be discussed in this report is
+insertion of MetaJIT in the interpreter. MetaJIT is a kind of tracing JIT
+compiler, in this section we will cover what tracing JIT is and how they relate
+to MetaJIT.
+
+The first project to explore tracing JIT was Dynamo, in which tracing
+optimisation were used to dynamically optimise machine code at runtime. Later
+the optimisation technique were used by Java Virtual Machines [GPF06, GF06, BCW+10, IHWN11].
+Due to ease of their implementation tracing JIT became popular and were later
+used in projects like Mozilla's TraceMonkey and LuaJIT. 
+
+A trace is a sequential instructions which can be executed consecutively during
+program's execution. Tracing refers to the process of capturing the information
+about the execution of a program i.e~traces of the program. Tracing JITs use the
+technique where they collect/record information about most executed (or ``hot'')
+paths via traces of the program and later at runtime, uses the information to
+perform optimisations and make inlining decisions\cite{tracing-jit}. 
+
+Tracing JIT makes assumptions such as:
+\begin{itemize}
+    \item{Programs spend most of their time inside the loops}
+    \item{Several iteration of the same loop are likely to take the same
+        execution path}
+\end{itemize}
+
+\iti{add figure about tracing jit from ipad}
+
+\subsection{Retrofitting tracing JIT to an interpreter}
+\label{meta-tracing}
+The tracing JIT in yk is applied to the interpreter running the user program
+instead of it being applied directly to the user program. A tracing JIT
+finds the hot loops in the program to compile. Since in yk's case that program is
+an interpreter the meta-tracing system care about interpreter's loop which is
+bytecode dispatch loop(i.e~if we consider bytecode interpreter) as well as
+the hot loop in the user program.
+
+In a simple bytecode interpreter the dispatch loop is sometimes the only hot
+loop present in the whole program. This loop is responsible for executing a
+opcode with each iteration. As it is unlikely that same opcode will run multiple
+times in a row the guards fails very often resulting in no performance
+difference\iti{add bolz paper} as the tracing JIT's assumptions fails. So, to
+optimise interpreter's performance yk uses loop unrolling. With loop unrolling
+we trace the execution of multiple opcodes effectively unrolling so much so that
+we end up with one user loop. A user loop is a hot loop in the user program, a
+loop is called hot when the interpreter's program counter reaches the same value
+multiple times.
+
+The program counter is stored in one of several variables in the interpreter.
+To figure out which variable holds value for the program counter, the MetaJIT
+needs hints (via a dummy control point). We need a dummy control point as LLVM
+also adds its temporary while generating the IR. The dummy control point is
+later(at runtime) replaced by original control-point. The loop is considered
+closed only when all the variables that make up the program counter are same in
+second iteration. This is how the interpreter traces a single user loop.
+\iti{draw a diagram}
+\iti{add example for adding hints}
+\iti{Figure 4 from Bolz example of trace in tracing and meta-tracing jit from Bolz paper}
 
 \begin{figure}[ht!]
     \label{figure:example}
@@ -156,9 +335,23 @@ falling back to interpretation (i.e~AOT compilation).
     \label{traces}
 \end{figure}
 
-Meta-tracing is a system where the tracing JIT is applied at one level down,
-which means instead of tracing the execution of user program, the meta-tracer traces the 
-execution of the interpreter\cite{meta-tracing}. 
+The main difference between a tracing JIT and meta-tracing JIT is that, the
+former is used to record and compile traces of a user program as it is being
+executed, while the later works one level down and is used to record and compile
+traces of interpreter as it executes the user program\cite{meta-tracing}.
+
+Meta-tracing (also often called MetaJIT) is a form of meta-compilation which
+can be used to build JIT virtual machines for dynamic languages by feeding some
+hints in the existing interpreter for the language. This makes it much easier
+for developers to use tracing JIT for their languages without writing one
+themselves.
+
+As MetaJIT is used to trace the operation of the interpreter, the tracing needs
+to record a full loop in the user program. Tracing the behaviour of the
+interpreter helps in reusing the MetaJIT for different language interpreters, as
+it would work independent of the language semantics.
+
+\iti{add diagram normal tracing JIT and Meta-JIT}
 
 \begin{figure}[htbp]
     \centering
@@ -198,6 +391,8 @@ execution of the interpreter\cite{meta-tracing}.
 \end{figure}
 
 \begin{samepage}
+\subsection{High level view of yk meta-tracing system}
+
 yk uses hardware tracer\footnote{The hardware tracer is Intel PT based, Intel
 Processor Trace (Intel PT) is a feature available in some Intel processors that
 provides a hardware-based tracing mechanism, enabling low overhead collection of
@@ -470,31 +665,33 @@ going with FatLTO is just for the sake of convenience.
 As mentioned earlier, meta-tracing systems which use hardware tracing mechanism
 such as yk cannot enable all the optimisation passes by default, as they
 reorganise the basic-blocks and thus mess the mapping when switching from JIT
-mode to AOT mode. Therefore, we need to carefully choose an optimisation pass
-sequence which does not interfere with basic block mapping while also improving
-the interpreter's performance.
+mode to AOT compiled interpreter mode. Therefore, we need to carefully choose an
+optimisation pass sequence which does not interfere with basic block mapping
+while also improving the interpreter's performance.
 
 Such a problem is called an optimising phase ordering problem. Optimising phase
 ordering is a long-standing problem with substantial work done on
-it~\cite{guidedGA, kulkarni, genetic-algo}. However, the optimisation pass sequence which might work for one
-system may not perform well or even work at all for another. Finding the right
-optimisation pass sequence depends on the algorithm and the oracle used. The
-algorithm can be a recursive or stochastic one, while an oracle is a test set which
-establishes an initial constraint. Unless the pass sequence satisfies all the
-constraints, it will not be selected in the algorithm. The oracle can contain
-constraints such as tests as well as the execution time of the program.
+it~\cite{guidedGA, kulkarni, genetic-algo}. However, the optimisation pass
+sequence which might work for one system may not perform well or even work at
+all for another. Finding the right optimisation pass sequence depends on the
+algorithm and the oracle used. The algorithm can be a recursive or stochastic
+one, while an oracle is a test set which establishes an initial constraint.
+Unless the pass sequence satisfies all the constraints, it will not be selected
+in the algorithm. The oracle can contain constraints such as tests as well as
+the execution time of the program. I have considered both yk's test case and
+execution of user program with yklua as the oracle.
 
 Since some optimisation passes depend on others to enable a program's
 transformation, choosing the right sequence (and order of passes) is important for
 a program's performance either with respect to execution time, code size or both.
 The pass sequence is a subset of passes from the larger set, while the order of
 passes means in which position the passes are placed with respect to
-one another. However, such a high number of passes (around 90) makes our
-search space large (if we try all sequences irrespective of ordering we would
+one another. However, with such a high number of passes (around 90) the search
+space becomes large (if we try all sequences irrespective of ordering we would
 have to try $2^{90} - 1$ possible combinations!).
 
 In this report, I start with a divide-and-conquer algorithm to find a
-meta-tracing compatible pass sequence and later move on to a genetic algorithm
+meta-tracing compatible pass sequence and later move on to a parallel genetic algorithm
 for the same. Genetic algorithm is a well-known class of stochastic algorithms
 which is adopted based on the theory of evolution. This algorithm has been
 used by several researchers to solve phase-ordering problems~\cite{guidedGA,
@@ -507,6 +704,16 @@ the genetic algorithm is not only able to find a pass sequence that is
 compatible with the meta-tracing system, but the pass sequence also ends up
 improving the C interpreter's performance. 
 
+However, there is scope for further improvement of yk retrofitted interpreter.
+First, the genetic algorithm currently only find pass sequence for pre and postlink
+optimisation pipeline and by default all backend optimisations are disabled both
+in `-O0` and `-O2`. Second, some of yk's passes incurs significant overhead.
+After finding the pass sequence which satisfies my oracle as well as improves
+the yklua interpreter I proceed to investigate the other blockers which stops
+yklua to be more efficient. The proceeding experiments start from understanding
+slowdown incurred by yk's passes and later I move to find impact of disabling
+all of the backend optimisations and whether it is possible to enable them
+back in both `-O0` and `-O2` optimisation level.
 
 \section{Experimental Setup}
 \label{section:4}
@@ -516,13 +723,18 @@ two NUMA nodes, operating between 800 MHz and 3200 MHz.
 
 \section{Experiments}
 \label{section:5}
-In order to test H1, I conducted experiments\footnote{Pull request with my
-divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829 and
-genetic-algorithm: https://github.com/ykjit/yk/pull/900} by first writing a
-divide-and-conquer algorithm. And although this algorithm gave a pass sequence
-which did show some performance improvement of the interpreter, it did
-not find a pass sequence which was compatible with the yk meta-tracing system.
-In the experiments done below, we use yk as the meta-tracing system and yklua as
+To verify H1, I wrote a simple divide-and-conquer algorithm\footnote{Pull request with my
+divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829, tested it
+against yk's test suite and compared performance of yklua compiled with pass
+sequence retried from the algorithm against the default yklua binary (i.e~ one
+compiled without any optimisations enabled). The result of this was that I
+didn't find a pass sequence which satisfied both constraints i.e~ passing yk's
+test suite and improving the yklua's interpreter's performance. Next, I wrote a 
+genetic-algorithm: https://github.com/ykjit/yk/pull/900}. The genetic algorithm
+successfully found multiple pass sequence which satisfied both constraint and
+emitted the most performant one at the end. 
+
+In all of the experiments done below, we use yk as the meta-tracing system and yklua as
 the C interpreter being optimised.
 
 \subsection{Methodology}
@@ -713,15 +925,31 @@ and prevents the algorithm from getting stuck in local optima.}
 \subsection{Algorithm's speed up after parallising}
 
 The first version of the genetic-algorithm was not parallised and it took 4-5
-hours to run 10 generations. I optimised the algorithm to calculate the fitness function for each entity 
-in parallel which reduced the run-time for 10 generation from 4-5 hours to 15
-minutes. This improved my efficiency in running experiments and finding patterns in
-successful and non-successful pass sequence. \footnote{commit with this change: https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
+hours to run 10 generations. I optimised the algorithm to calculate the fitness
+function for each entity in parallel which reduced the run-time for 10
+generation from 4-5 hours to 15 minutes. This improved my efficiency in running
+experiments and finding patterns in successful and non-successful pass sequence.
+\footnote{commit with this change:
+https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
 \label{section:6}
 \subsection{Effects of applying meta-tracing compatible pass sequence on the yklua
 interpreter}
+
+Now that we have meta-tracing compatible pass sequence through the genetic
+algorithm in this section I will be presenting performance of optimised yklua
+interpreter to that of non-optimised one (or rather we can say the default one).
+
+There are two ways to look at the baseline. One baseline can be yklua compiled
+with `-O0` i.e~ basically all optimisation turned off. And other is lua compiled
+with `-O2`. The reason I have considered making the latter baseline is because
+ideally we want to bring the performance of yk retrofitted interpreter as close
+to the best performance possible. Of course there is going to be performance
+overhead when embedding yk into the C interpreter, as we are adding extra
+information into the IR\iti{check with Lukas, write this better} and the binary
+so compiled with modified llvm (i.e~ ykllvm). However, with my optimisation we
+can clearly see the gap we are able to bridge. 
 
 Table \ref{table:preandpostlink} shows performance numbers for baseline as well as yklua binaries
 when we apply prelink, postlink or both flags on the binary. Row I is when no
@@ -739,6 +967,7 @@ of yk's tests, I still included it in the table for the next hypothesis.
 Notice that the last four rows have statistically equivalent performance, this
 indicates that there is a wall created by some yk specific passes which might be
 limiting more performance gains. 
+
 
 \begin{table}[H]
 \centering
@@ -927,6 +1156,12 @@ merged and transfer this information to the hardware tracer then we can tell whi
 blocks were single basic blocks and which have been merged. Encoding
 extra information about merged basic blocks can help us figure back the mapping
 for the merged basic blocks.
+
+H3: he performance for lua binary should be the same when adding a list of
+passes to -O0 to that of removing passes from -O2. 
+
+findings -> backend optimisation only interferes with basic block mappings because of
+some of yk's passes.
 
 \section{Related Work}
 \label{section:7}
