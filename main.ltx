@@ -697,7 +697,7 @@ which is adopted based on the theory of evolution. This algorithm has been
 used by several researchers to solve phase-ordering problems~\cite{guidedGA,
 kulkarni, genetic-algo}.
 
-Using a genetic algorithm allows us to find a pass sequence for our oracle in
+Using a genetic algorithm also allows us to find a pass sequence for our oracle in
 acceptable time, where acceptable time is finding a compatible pass sequence
 within a couple of hours if not minutes because of the vast search space. Further,
 the genetic algorithm is not only able to find a pass sequence that is
@@ -723,12 +723,12 @@ two NUMA nodes, operating between 800 MHz and 3200 MHz.
 
 \section{Experiments}
 \label{section:5}
-To verify H1, I wrote a simple divide-and-conquer algorithm\footnote{Pull request with my
+To verify H1, I wrote a divide-and-conquer algorithm\footnote{Pull request with my
 divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829, tested it
 against yk's test suite and compared performance of yklua compiled with pass
-sequence retried from the algorithm against the default yklua binary (i.e~ one
-compiled without any optimisations enabled). The result of this was that I
-didn't find a pass sequence which satisfied both constraints i.e~ passing yk's
+sequence retrieved from the algorithm against the default yklua binary (i.e~ one
+compiled without any optimisations enabled). The result showed that the
+algorithm couldn't find a pass sequence which satisfied both constraints i.e~ passing yk's
 test suite and improving the yklua's interpreter's performance. Next, I wrote a 
 genetic-algorithm: https://github.com/ykjit/yk/pull/900}. The genetic algorithm
 successfully found multiple pass sequence which satisfied both constraint and
@@ -934,96 +934,96 @@ https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8b
 
 \section{Results}
 \label{section:6}
+\subsections{Overview}
+Major takeaways from the results
+
 \subsection{Effects of applying meta-tracing compatible pass sequence on the yklua
 interpreter}
 
 Now that we have meta-tracing compatible pass sequence through the genetic
 algorithm in this section I will be presenting performance of optimised yklua
-interpreter to that of non-optimised one (or rather we can say the default one).
+interpreter to that of non-optimised interpreter (or rather we can say the
+default lua interpreter).
 
-There are two ways to look at the baseline. One baseline can be yklua compiled
-with `-O0` i.e~ basically all optimisation turned off. And other is lua compiled
-with `-O2`. The reason I have considered making the latter baseline is because
-ideally we want to bring the performance of yk retrofitted interpreter as close
-to the best performance possible. Of course there is going to be performance
+\iti{check this paragraph}
+There are two ways to look at the baseline. One baseline that can be considered
+is yklua compiled with `-O0` i.e~ basically all optimisation turned off. And the
+other is non-yk lua compiled with `-O2`. The reason I have considered making
+latter the baseline is because ideally we want to bring the performance of yk
+retrofitted interpreter as close to the best performance possible (non yk
+retrofitted interpreter). Of course there is going to be some performance
 overhead when embedding yk into the C interpreter, as we are adding extra
 information into the IR\iti{check with Lukas, write this better} and the binary
-so compiled with modified llvm (i.e~ ykllvm). However, with my optimisation we
-can clearly see the gap we are able to bridge. 
+so compiled with modified llvm (i.e~ ykllvm). However, with the optimisation
+found via the genetic algorithm and the other improvement made to the yk's code
+base (which will discussed later in this section) we can clearly see the gap we
+are able to bridge between the current performance of yk retrofitted interpreter
+and the non yk retrofitted interpreter.
 
-Table \ref{table:preandpostlink} shows performance numbers for baseline as well as yklua binaries
-when we apply prelink, postlink or both flags on the binary. Row I is when no
-pass sequence is applied, that is the baseline binary. Rows II and III are when
-either just prelink or postlink passes are applied. In Row IV, I applied both
-prelink and postlink passes and so on. Handling arguments mean handling the
-function argument as a separate pass.
-Example: Some passes are in form of a function such as $function(a,b,c,..)$. For
-rows V and VI, I treat every argument as a seperare pass like $function(a),
-function(b), function(c), function(a,b), function(a,c)...$. In the last row,
-that is Row VII, I apply full pass sequence for -O2 on yklua. Although this
-is the only pass sequence in the Table \ref{table:preandpostlink} which does not succeed all
-of yk's tests, I still included it in the table for the next hypothesis.
+As discussed in Section \iti{add lto section} there are three levels of llvm
+optimisation pipeline: prelink, postlink, and backend optimisation. I modified
+yk-config to accept prelink and postlink optimisation passes, however to
+overwriting backend optimisation is much more trickier. So, for the first set of
+performance number, I added passes sequence (both prelink and postlink) to -O0
+optimisation in yklua binary (i.e~ turning on the passes found via genetic
+algorithm) with the help of ${yk-config}$. yk-config is a tool to apply
+yk-specific compiler and linker flags on the interpreter and other systems which
+use yk's meta-tracing system. yk-config makes configuring/compiling C
+interpreters easy by having the support to add `cflags` (compiler) and `ldflags`
+(linker), this can be used to add the prelink and postlink pass sequences found
+via the genetic algorithm by appending them to cflags and ldflags. Finally, I
+use ykllvm's clang to compile yklua binary, ykllvm is a modified version of llvm
+which applied yk specific flags to the final binary.
 
-Notice that the last four rows have statistically equivalent performance, this
-indicates that there is a wall created by some yk specific passes which might be
-limiting more performance gains. 
+Table \ref{table:preandpostlink} shows performance numbers 
+of adding prelink, postlink or both to yklua -O0 optimisation level. 
 
+yklua currently don't support compilation with `-O2` optimisation level. The
+primary reason for this is because ykllvm patches `optnone` attribute on all
+backend optimisation functions and blocks them to perform any sort of
+optimisations. The obvious question is why does only compiling with `-O2` fails
+and not with `-O0`? The answer turned out to be quite simple, unlike `-O0` to
+block backend optimisation functions in `-02` we have to apply both `optnone`
+and `noinline` attribute\footnote{add link to PR}. After adding the fix yklua
+can be compiled with both `-O0` and `-O2`. However, the problem still remains
+that we cannot use full set of passes for yklua's compilation as they are not
+compatible with yk's test suite. The goal is to make a single optimisation level
+which works for all of our oracles (in this case they are yk test suite and
+yklua's compilation and test suite).
 
+\iti{change table with -O2 prelink + postlink passes}
+\iti{add why postlink passes are slower than prelink}
 \begin{table}[H]
 \centering
 \begin{tabular}{@{}p{7.5cm}ll@{}}
 \toprule
 \textbf{Yklua binaries built using yk-config} & \textbf{Mean} & \textbf{95\% CI} \\ 
 \midrule
-NO PRELINK + POSTLINK  & 0.140 & 0.002 \\
-using just PRELINK & 0.107 & 0.005 \\
-using just POSTLINK & 0.105 & 0.002 \\
-using PRELINK + POSTLINK (without handling arguments) & 0.101 & 0.002 \\
-using PRELINK (with handling arguments) & 0.097 & 0.003 \\
-using PRELINK + POSTLINK (with handling arguments) & 0.096 & 0.003 \\
--O2 PRELINK + POSTLINK & 0.097 & 0.004 \\
+NO PRELINK + POSTLINK (compiled with -O0)& 0.140 & 0.002 \\
+adding PRELINK pass sequence to -O0  & 0.097 & 0.003 \\
+adding POSTLINK pass sequence to -O0 & 0.104  & 0.001\\ 
+adding PRELINK + POSTLINK  to -O0 & 0.096 & 0.003 \\
+yklua Compiled with -O2 & 0.093 & 0.002 \\
+lua binary build with llvm clang -O2 & 0.034 & 0.004 \\
 \bottomrule
 \end{tabular}
-\caption{The table shows the performance of yklua interpreter when it has been built
-either using no pass sequence (i.e baseline) and after applying prelink, postlink,
-or both prelink and postlink on yklua binary with 95\% confidence intervals (the rightmost column).
-The interpreter is built without JIT enabled,
-that is only yk is retrofited onto the interpreter but JIT is turned off. 
-The first row shows performance when no passes are applied on yklua, and the
-second and third rows indicate performance when only pre or postlink passes are
-applied on the interpreter. Third row indicates both passes are being applied but
-the arguments inside functions are not handled. In the fourth row, we handle all
-combinations to receive a compatible prelink and postlink pass sequence in our
-genetic algorithm. Finally, last row represents yklua's performance when the full
-list of -O2 (pre and postlink) is applied on the interpreter. This list however
-is not compatible with the yk meta-tracing system (i.e~ the list fails yk's tests)}
+\caption{The table shows performance of yklua interpreter built with and without
+    pass sequence obtained from genetic algorithm with 95\% confidence
+    intervals. The performance numbers are for 30 runs of ${db.lua}$ when built
+    with and without optimisations turned on and JIT turned off. All of the
+    performance numbers represents cost of retrofitting yk onto the interpreter.
+    The first row is yklua built without any pass sequence and consecutive rows with
+    adding prelink, postlink, or both pass sequence to -OO. The last two rows
+    are yklua compiled with -O2 optimisation level and normal lua compiled with llvm
+    clang with -O2 optimisation level.}
 \label{table:preandpostlink}
 \end{table}
 
-For the first experiment we consider two ways to build the lua binary:
-\begin{itemize}
-    \item{With the help of yk-config, we call this yklua}
-    \item{With the help of traditional compilers such as gcc or clang and llvm opt tool.}
-\end{itemize}
 
-yk-config is a tool to apply yk-specific compiler and linker flags on the
-interpreter and other systems which use yk's meta-tracing system. yk-config
-makes configuring/compiling C interpreters easy by having the support to add
-`cflags` (compiler) and `ldflags` (linker), this can be used to add the prelink and
-postlink pass sequences found via the genetic algorithm by appending them to cflags
-and ldflags. Finally, I use ykllvm's clang to compile yklua binary.
-
-Clang in -O0 by default adds an `optnone` attribute to all of the functions, which
-makes any optimisation we add ineffective. For this, yk-config already has
-`disable-O0-optnone` (which works with the `-O0` flag). 
-
-Table \ref{table:preandpostlink} shows performance numbers for 30 runs of
-${db.lua}$\footnote{link to the benchmark test: https://github.com/ykjit/yklua/blob/main/tests/db.lua} when built
-with and without optimisations and JIT turned off, and with yk meta-tracing
-system retrofitted into the interpreter. The first column is with no
-optimisations and the rest have some or all optimisations turned on while
-building yklua binary.
-
+The prelink and postlink passes obtained from the genetic algorithm are subset of
+-O2 optimisation pass sequences. It is curious that
+applying subset versus full -O2 results in quite similar performance. This
+brings me to my second hypothesis.
 
 \textbf{H2} \hspace*{0.5cm} Enabling all optimisation passes, even those
 which can interfere with correctness, improves performance further over the
@@ -1033,58 +1033,25 @@ Table \ref{table:preandpostlink} clearly disapproves H2, the intuition behind th
 was that yklua when using full -O2 should have more performance improvement than
 using subset of -O2 passes. Let's dig further why this might have happened.
 
-The rows with optimisations applied clearly have some performance
-improvement (by 1.5-2 times) when compared with the baseline (Row I). However,
-it is interesting that even when we apply full -O2 pass sequence on yklua binary
-(in ROW VII) the performance does not improve further. 
-
-In the subsections below, I show that when lua is built via clang/gcc and with
--O2 passes it is 3 times faster than yklua when it is built using -O2. The
-reason for this is yk's pessimistic approach to block some backend optimisations
-as they interfere with basic block mapping (as described in previous sections).
-To solve this I, improve some yk specific flags(passes) and show that it is
-possible to win back some of the lost performance, and present proposal for
-improving other passes. 
-
-\subsection{Apply full -O2 to yk retrofitted and traditionally compiled
-interpreter}
-
-Next, I ran $db.lua$ 30 times when lua binary is compiled with gcc in -O2 \& -O3
-mode, and when lua is compiled with clang and optimisations were applied with
-the help of llvm's opt tool. The latter was to verify what is the performance of lua
-binary when optimisation pass sequences (pre+postlink) are applied with the help
-of another tool instead of using clang's default -O2 mode. Even with using opt tool to apply
-passes, the performance of lua binary remains the same as what we get with gcc's -O2
-pass sequence. This indicates that yk-config might be including some flags
-which results in a 3 times slowdown of yklua binary when compared to lua binary. 
-
-\begin{table}[H]
-\begin{tabular}{@{}p{7.5cm}ll@{}}
-\toprule
-\textbf{Yklua binaries built without using yk-config} & \textbf{Mean} & \textbf{95\% CI} \\ 
-\midrule
-lua binary build with gcc -O2 & 0.034 & 0.004 \\
-lua binary build with gcc -O3 & 0.030 & 0.003 \\
-lua binary build using clang and opt (-O2 mode) & 0.034 & 0.004 \\
-\bottomrule
-\end{tabular}
-\caption{Performance of lua binary when compiled with gcc's -O2 and -O3 mode,
-and when lua is compiled with clang and optimised using -O2 passes patched via
-opt. Where patching means applying optimisation passes on the IR.}
-\label{tab:b}
-\end{table}
+It turns out that yk based flags not just block backend optimisations but also
+some of the postlink optimisations. As postlink and backend optimisation share same
+lto backend. Adding optnone and noinline attribute to lto backend results in
+yk loosing significant performance improvement. Before I proceed to explain
+whether it is necessary to block all the backend optimisations, I'll like to
+show performance overhead of yk specific passes.
 
 \subsection{Performance impact of yk-based flags with full -O2 optimisation
 turned on}
 
-To verify if yk-based passes contribute to a 3x slowdown to yklua I start to turn
-off yk related flags. First, I turn them off individually and then in
-combinations. The speedup of the interpreter when the passes are turned off
+\label{table:c} shows performance overhead of individual yk passes.  
+
+The objective of this experiment is to understand what portion of total slowdown
+in yklua is contributed by yk-based passes (either individual pass or a
+combination of them). I start to turn
+off yk specific passes individually and then in combinations. The speedup of the interpreter when the passes are turned off
 indicates that the flag (or combination of them) is contributing slowdown by
 ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
-(performance of row n)}}$$ The numbers in Table \ref{table:preandpostlink} and \ref{tab:b}
-contradict H2. The majority of the overhead is caused when the yk flags are used in
-combination with row 14 causing maximum of slowdown.
+(performance of row n)}}$$ 
 
 \begin{table}[H]
 \begin{tabular}{@{}cllr@{}}
@@ -1114,12 +1081,10 @@ combination of flags in the row are turned off.}
 \label{table:c}
 \end{table}
 
-\subsection{Performance retrieval by improving yk based flags}
-
-Now that I have shown in Table \ref{table:c} that yk-based flags contribute upto 1.5 times slowdown in
+From Table \ref{table:c}  yk-based flags contribute upto 1.5 times slowdown in
 yklua, the next task is to figure out how much performance can be retrieved back
-by optimising some (and if possible maybe all) flags above. 
-The best targets to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
+by optimising some (and if possibly all) of the flags above. 
+The easiest targets to fix are yk-insert-stackmaps pass and yk-no-fallthrough,
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it's intrinsic. However, stackmaps are not needed before calls to
@@ -1130,13 +1095,14 @@ with no condition(s) inside them. This might claw back a few `ms` for this flag.
 With code changes and by adding a test case in this\footnote{link to the PR
 containing the change for --yk-insert-stackmaps and the test case:
 https://github.com/ykjit/ykllvm/pull/114}PR, I show the performance improvement
-of yklua binary from ${89.9ms}$ to ${86.3ms}$.
+of yklua binary from ${89.9ms}$ to ${86.3ms}$. \iti{change the number and pr
+link}
 
 Similarly, stackmap is not needed for functions which do not have any conditions
 inside them, this is because no condition means there are no gaurds which means
 the function does not need to be traced or de-optimised. This is a bit more
 difficult to implement because we will need to store which functions have no
-condition inside them. This can be targetted as a future work.
+condition inside them. This can be targeted as a future work.
 
 As for the yk-split-blocks-after-calls pass, if we adjust jitmodbuilder a bit,
 we could also refrain from splitting blocks after calls to unmappable functions
@@ -1157,11 +1123,21 @@ blocks were single basic blocks and which have been merged. Encoding
 extra information about merged basic blocks can help us figure back the mapping
 for the merged basic blocks.
 
-H3: he performance for lua binary should be the same when adding a list of
+\iti{edit passes optimisations paragraphs above.}
+
+After adding `noinline` attribute to lto backend we can now easily use `-O2` to
+compile yklua. This brings us opportunity to consider whether we want to start
+with `-O0` and add passes to it or start from `-O2` and remove passes from it.
+One would expect both should result in same performance when benchmarking with
+lua tests. 
+
+H3: The performance for lua binary should be the same when adding a list of
 passes to -O0 to that of removing passes from -O2. 
 
 findings -> backend optimisation only interferes with basic block mappings because of
 some of yk's passes.
+
+\iti{add verybig.lua slowdown cases}
 
 \section{Related Work}
 \label{section:7}
