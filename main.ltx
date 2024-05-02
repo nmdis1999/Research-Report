@@ -1354,9 +1354,20 @@ only blocks non-compatible optimisation but can use as much of the higher
 optimisation level passes as possible. The result will be 50\%, if not more, a
 reduction in the overhead of embedding yk onto the C interpreters.
 
-
 \section{Timeline}
- 
+\noindent
+\resizebox{1.1\textwidth}{!}{  % Increase scaling to 1.5
+    \begin{tabular}{lp{10cm}}
+        \toprule
+        \textbf{Year} & \textbf{Goals} \\
+        \midrule
+        \textbf{2024 June - August} & Adjust LLVM's Legacy Pass Manager to overwrite the backend optimization pipeline. Design a custom pipeline with yk-compatible optimizations. Perform macro-optimization on yk-based passes in ykllvm, reducing their overhead. \\
+        \textbf{2024 September - November} & Profile and benchmark yk-retrofitted C interpreters when compiled with a yk-compatible custom optimization level. This may introduce opportunities for further optimizations. \\
+        \textbf{2024 December - 2025 February} & Conduct a literature review on meta-tracing systems. Current design uses yk-based passes to embed additional data into the interpreter binary, ensuring the meta-tracer works correctly. Design hypotheses to explore introducing a new optimization pass for the yk meta-tracing system, performing optimizations at JIT compilation time. \\
+        \bottomrule
+    \end{tabular}
+}
+
 \nocite{*}
 \bibliographystyle{plain}
 \bibliography{local.bib}
