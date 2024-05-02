@@ -1261,8 +1261,8 @@ with `-O0` and add passes to it or start from `-O2` and remove passes from it.
 One would expect both should result in same performance when benchmarking with
 lua tests. 
 
-H3: The performance for lua binary should be the same when adding a list of
-passes to -O0 to that of removing passes from -O2.
+\textbf{H3} \hspace*{0.5cm} The performance for lua binary should be the same when adding a list of
+passes to -O0 to that of removing passes from -O2. \\
 
 \iti{note to self: update the benchmark similar to that of overview and format
 it to look similar to other tables}
@@ -1330,23 +1330,31 @@ bypasses the need for mapping
 
 \section{Conclusion and Future Work}
 \label{section:8}
-Conclusion: In this report, I prove that we can win back some of the lost
-performance when we retrofit a meta-tracing system such as yk to a C-based
-interpreter. Although the experiments above are run only on a couple of
-benchmarks, they show the possibility of improving yk-based interpreters. We can
-expand the oracle suite of the genetic algorithm to include more comprehensive
-benchmarks and extend the above experiments.
+In this report, I have shown that with the help of a genetic algorithm, we can
+use middle and possibly backend optimisation passes with the C interpreter,
+which not only maintain the correctness of the meta-tracer but simultaneously
+improves the interpreter's performance when compiled with meta-tracer
+retrofitted into it. As shown in the \label{section:6} I can win back around. 1.75x
+performance by applying middle-end passes and macro-optimisations to
+meta-tracer's passes. Although I have yet to catch problematic backend
+optimisation passes, it is not a very far-fetched goal. The next immediate
+experiment would be to change LLVM's legacy pass manager so that we can easily
+overwrite the backend optimisation pipeline at any optimisation level. After
+this change, we can easily use the genetic algorithm to find a combination of
+pass sequences which does not change the AOT IR in non-compatible way.
+Alternatively, turn off part of the optimisation which interferes with the AOT
+IR in an unwanted way for the meta-tracer. One way could be to tweak the passes
+so that only optimisations within the basic blocks are allowed (and those which
+work across the basic blocks are not allowed).
 
-Future work: includes improving yk-based flags such as
-yk-insert-stackmaps, yk-split-blocks-after-calls, and yk-no-fallthrough.
+Other future work includes enabling back fallthrough optimisation (i.e. ~
+retiring yk-no-fallthrough). Currently, yk is disabling some backend
+optimisation and compiling without any optimisations. With my changes, we can
+move in a direction to make a custom optimisation pass in LLVM for yk, which not
+only blocks non-compatible optimisation but can use as much of the higher
+optimisation level passes as possible. The result will be 50\%, if not more, a
+reduction in the overhead of embedding yk onto the C interpreters.
 
-Another possible hypothesis which might be worth testing is whether we can
-create a partial version of the disabled optimisations, which were disabled
-because they interfere with basic block mappings. This would require change(s)
-in llvm or to write custom optimisation passes which perform most of the
-optimisations but do not mess with the mapping. One way could be to tweak the
-passes so that only optimisations within the basic blocks are allowed (and those
-which work across the basic blocks are not allowed).
 
 \nocite{*}
 \bibliographystyle{plain}
