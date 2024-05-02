@@ -661,6 +661,11 @@ going with FatLTO is just for the sake of convenience.
 
 \section{Addressing interpreter performance in a meta-tracing system}
 \label{section:3}
+\laurie{don't give labels numbers, as that misses the point: you want textual
+labels, so that if you move sections around the numbers shown in the PDF
+automatically change. but if you use labels in the latex file itself, you'll
+just confuse yourself!}
+
 As mentioned earlier, meta-tracing systems which use hardware tracing mechanism
 such as yk cannot enable all the optimisation passes by default, as they
 reorganise the basic-blocks and thus mess the mapping when switching from JIT
@@ -714,16 +719,29 @@ slowdown incurred by yk's passes and later I move to find impact of disabling
 all of the backend optimisations and whether it is possible to enable them
 back in both `-O0` and `-O2` optimisation level.
 
+\section{Evaluation}
+\laurie{this should be the section name}
+
 \section{Experimental Setup}
+\laurie{this should be a subsection and should probably be `methodology'.}
 \label{section:4}
 The experiments were conducted on a dual-socket Intel Xeon Platinum 8452Y
 system, featuring an x86\_64 architecture with 72 total cores distributed across
-two NUMA nodes, operating between 800 MHz and 3200 MHz.
+two NUMA nodes, operating between 800 MHz and 3200 MHz \laurie{you'd better
+hope they didn't vary across that, or the numbers will be bonkers :p you want
+to do the benchmarking on whichever bencher you have exclusive access to. you
+will need to stick it in `performance' mode so that (as far as possible) its
+clock speed doesn't vary}.
+
+\laurie{list all versions of software, llvm, operating system, etc etc}
 
 \section{Experiments}
 \label{section:5}
-To verify H1, I wrote a divide-and-conquer algorithm\footnote{Pull request with my
-divide-and-conquer algorithm: https://github.com/ykjit/yk/pull/829, tested it
+
+\laurie{linking to prs isn't really the right thing to do here: you want a more abstract description, in general}
+
+To verify H1, I wrote a divide-and-conquer algorithm\footnote{\laurie{why is this a footnote?} Pull request with my
+divide-and-conquer \laurie{is this actually a divide-and-conquer algorithm? i think it's a GA, which i don't think is DaC, but maybe i'm wrong!} algorithm: https://github.com/ykjit/yk/pull/829, tested it
 against yk's test suite and compared performance of yklua compiled with pass
 sequence retrieved from the algorithm against the default yklua binary (i.e~ one
 compiled without any optimisations enabled). The result showed that the
@@ -800,7 +818,7 @@ crossover and mutation into a third entity, which may represent a new point in
 the vast search space, that otherwise would have been left unexplored by search
 methods like divide-and-conquer.
 
-Some terminology for the genetic algorithm:
+Some terminology for the genetic algorithm: \laurie{a general description of GAs would be better off in the background section}
 
 \begin{itemize}
 \item{Entity: In genetic algorithms, an entity (often also called an
@@ -836,7 +854,7 @@ and prevents the algorithm from getting stuck in local optima.}
 \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.5]{images/genetic_algo.pdf}
-    \caption{\small Figure retrieved from~\cite{guidedGA}, a parallel genetic algorithm used to find an optimisation pass
+    \caption{\small Figure retrieved \laurie{what does `retrieved' mean?} from~\cite{guidedGA}, a parallel genetic algorithm used to find an optimisation pass
         sequence compatible with yk and yklua. Initially, it randomly generates
         a population of passes, where each entity is a binary array indicating
         whether a specific pass is active (1) or inactive (0). The main parallel
@@ -853,6 +871,9 @@ and prevents the algorithm from getting stuck in local optima.}
     \label{genetic-algo}
 \end{figure}
 
+\laurie{this is a fairly weird way to define an algorithm: why not use more
+conventional pseudocode? see e.g. Fig 6 in the ``don't panic!'' paper as an
+example}
 \scalebox{0.80}{
 \label{algorithm:}
 \begin{tcolorbox}
@@ -925,7 +946,7 @@ and prevents the algorithm from getting stuck in local optima.}
 The first version of the genetic-algorithm was not parallised and it took 4-5
 hours to run 10 generations. I optimised the algorithm to calculate the fitness
 function for each entity in parallel which reduced the run-time for 10
-generation from 4-5 hours to 15 minutes. This improved my efficiency in running
+generation from 4-5 hours to 15 minutes \laurie{does that mean this is an ``embarrassingly parallel'' problem?}. This improved my efficiency in running
 experiments and finding patterns in successful and non-successful pass sequence.
 \footnote{commit with this change:
 https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
@@ -933,7 +954,13 @@ https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8b
 \section{Results}
 \label{section:6}
 \subsection{Overview}
-At the current stage, yklua performs ~5x worse than the non-yk lua interpreter. The
+
+\laurie{an overview is a good idea, but this is very hard to understand,
+because different baselines are being used at different places --- but that's
+never made clear. it's vital to be clear what the baseline is at each point,
+otherwise the numbers seem nonsensical.}
+
+At the current stage, yklua performs ~5x worse than the non-yk lua interpreter \laurie{i assume this means ``only when considering the interpreter''?}. The
 aim of the optimisations performed in this section is to reduce this gap 
 caused by embedding yk onto the lua interpreter. There is
 expected cost for profiling the interpreter without turning on the JIT. Ideally we would want
@@ -942,7 +969,7 @@ In this section I show:
 \begin{itemize}
     \item{the genetic algorithm is able to find pass sequences which satisfies our
         oracle's constraints as well as improves yklua interpreter's performance by 1.75x.}
-    \item{yk-based passes have around 1.5x overhead and we can reduce this
+    \item{yk-based passes have around 1.5x overhead \laurie{if we improved things by 1.75x but there's only 1.5x overhead, that means yklua must now be faster than normal lua! so something doesn't make sense with one of these numbers} and we can reduce this
         overhead by optimising some of the passes.}
     \item{how we may be able to make some if not all backend optimisations work
         with the oracle.}
@@ -958,7 +985,7 @@ The main contributions of this sections are:
     \item{Macro optimisation done on yklua's function improving performance of
         some benchmark by 200x (I'll be elaborating this in results sections.)}
     \item{Fixing errors in -O0 optimisation level, which were not letting us compile the interpreter and
-        the test programs with backend optimisations enabled. This fix is
+        the test programs with backend optimisations enabled \laurie{huh?}. This fix is
         important as it will help us figuring out which backend optimisation
         is problematic when combined with yk's passes. This is covered in \iti{add
         section label here.}}
@@ -1011,7 +1038,7 @@ lto backend.
 \textbf{Defining the baseline} \\
 There are two binaries which can be considered as potential baseline. First one being yklua 
 when compiled with `-O0` (i.e~ all optimisations are turned off). The other
-binary is non-yk lua compiled with `-O2`. I start with
+binary is non-yk lua compiled with `-O2` \laurie{find out what the right ticks are in latex -- you can't use ` for start and end ticks}. I start with
 yklua being the baseline when performing the experiments, and towards the end, I
 will move to making the latter the baseline. The motivation for using both of
 the binaries as the baseline at different stages of the experiment is that
