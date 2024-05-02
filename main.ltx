@@ -1347,7 +1347,7 @@ IR in an unwanted way for the meta-tracer. One way could be to tweak the passes
 so that only optimisations within the basic blocks are allowed (and those which
 work across the basic blocks are not allowed).
 
-Other future work includes enabling back fallthrough optimisation (i.e. ~
+Other future work includes enabling back fallthrough optimisation (i.e.~
 retiring yk-no-fallthrough). Currently, yk is disabling some backend
 optimisation and compiling without any optimisations. With my changes, we can
 move in a direction to make a custom optimisation pass in LLVM for yk, which not
@@ -1356,6 +1356,8 @@ optimisation level passes as possible. The result will be 50\%, if not more, a
 reduction in the overhead of embedding yk onto the C interpreters.
 
 
+\section{Timeline}
+ 
 \nocite{*}
 \bibliographystyle{plain}
 \bibliography{local.bib}
