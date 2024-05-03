@@ -756,6 +756,7 @@ the C interpreter being optimised.
 
 \subsection{Methodology}
 
+\iti{add a section defining the oracle}
 \subsubsection{Divide-and-conquer algorithm for phase ordering problem}
 \scalebox{0.65}{
 \label{dac-algo}
@@ -960,42 +961,41 @@ because different baselines are being used at different places --- but that's
 never made clear. it's vital to be clear what the baseline is at each point,
 otherwise the numbers seem nonsensical.}
 
-At the current stage, yklua performs ~5x worse than the non-yk lua interpreter \laurie{i assume this means ``only when considering the interpreter''?}. The
-aim of the optimisations performed in this section is to reduce this gap 
-caused by embedding yk onto the lua interpreter. There is
-expected cost for profiling the interpreter without turning on the JIT. Ideally we would want
-to bring the difference between the two variants to 2x or lesser. 
-In this section I show:
+When I started the experiments, yklua without JIT turned on performed ~5x worse
+than the non-yk lua interpreter. The aim of the optimisations performed in
+the upcoming section was to reduce this gap caused by embedding yk onto the lua
+interpreter. There is expected cost for profiling the interpreter without
+turning on the JIT. Ideally we would want to bring the difference between the
+two variants to 2x or lesser.
+
+Results at a glance: \iti{format this list}
 \begin{itemize}
     \item{the genetic algorithm is able to find pass sequences which satisfies our
         oracle's constraints as well as improves yklua interpreter's performance by 1.75x.}
     \item{yk-based passes have around 1.5x overhead \laurie{if we improved things by 1.75x but there's only 1.5x overhead, that means yklua must now be faster than normal lua! so something doesn't make sense with one of these numbers} and we can reduce this
         overhead by optimising some of the passes.}
-    \item{how we may be able to make some if not all backend optimisations work
-        with the oracle.}
-\end{itemize}
-
-The main contributions of this sections are:
-\begin{itemize}
     \item{Optimising stackmap insert pass resulting in about 7\% performance
         improvement.}
-    \item{On average improving interpreters by 1.5x while respecting our oracles
-            constraint with the help of pass sequences obtained through the
-        genetic algorithm}
-    \item{Macro optimisation done on yklua's function improving performance of
+    \item{Macro optimisation done on yklua's code improving performance of
         some benchmark by 200x (I'll be elaborating this in results sections.)}
-    \item{Fixing errors in -O0 optimisation level, which were not letting us compile the interpreter and
-        the test programs with backend optimisations enabled \laurie{huh?}. This fix is
-        important as it will help us figuring out which backend optimisation
-        is problematic when combined with yk's passes. This is covered in \iti{add
-        section label here.}}
 \end{itemize}
 
+In addition to the above, I explore how we may be able to make some if not all
+backend optimisations work with the oracle.
+
+\iti{I also fixed...} Fixing errors in -O0 optimisation level, which were not letting us compile the interpreter and
+the test programs with backend optimisations enabled \laurie{huh?}. This fix is
+important as it will help us figuring out which backend optimisation
+is problematic when combined with yk's passes. This is covered in \iti{add
+section label here.}
+
+\iti{add this section in introduction?}
 Adding passes obtained through genetic algorithm to -O0 and by applying my macro
 optimisations, I am able to show average performance improvement of \%. These
 optimisations (both pipeline and macro-optimisation) respects the constraints
 laid out by the oracle indicating they are sound to use.
 
+\iti{move the table to appropriate section}
 \begin{table}[h]
 \centering
 \begin{tabular}{lcc}
@@ -1019,12 +1019,31 @@ files.lua       & ±                    & 0.201 ± \\
 \label{tab:yk_lua_benchmarks}
 \end{table}
 
+\iti{add this either in the introduction of future work}
 The bigger goal is to be able to make a custom optimisation with selected passes
 from the middle and backend optimisation pipeline, thus decreasing the overhead
 induced by retrofitting yk onto the interpreter (starting with the Lua
 interpreter). Working on this goal also means that along the way, I'll have to
 make macro-optimisation to yk and sometimes to the interpreter itself (i.e.~ the
 way we introduce hints for JIT in the interpreter).
+
+\subsection{Defining the Baselines}
+There are two binaries which can be considered as potential baseline. We shall
+refer to them as baseline 1 and baseline 2.
+
+\textbf{Baseline 1:} yklua compiled with `-O0` (i.e~ all optimisations are turned off).
+
+\textbf{Baseline 2:} non-yk lua compiled with `-O2` \laurie{find out what the right ticks are in latex -- you can't use ` for start and end ticks}.
+
+\iti{make sure to put baseline 1/2 in further tables and references}
+
+My initial goal is to reduce the overhead of retrofitting yk onto the
+interpreter. To achieve this, I apply yk-compatible optimisation passes onto the
+-O0 compiled yklua interpreter. The  optimisation passes that satisfy
+the oracle are considered to be yk-compatible. Once I reduce the performance overhead when
+compared to Baseline 1, I shift my aim to bring the performance of the already
+optimised yklua closer to that of the -O2 compiled non-yk lua interpreter (i.e~
+Baseline 2).
 
 \subsection{Effects of applying a meta-tracing compatible pass sequence on the yklua
 interpreter}
@@ -1035,43 +1054,34 @@ after applying full -O2 optimisation level we are still 3x slower than non-yk
 lua partially due to yk-based flags interfering with optimisations which use the
 lto backend.
 
-\textbf{Defining the baseline} \\
-There are two binaries which can be considered as potential baseline. First one being yklua 
-when compiled with `-O0` (i.e~ all optimisations are turned off). The other
-binary is non-yk lua compiled with `-O2` \laurie{find out what the right ticks are in latex -- you can't use ` for start and end ticks}. I start with
-yklua being the baseline when performing the experiments, and towards the end, I
-will move to making the latter the baseline. The motivation for using both of
-the binaries as the baseline at different stages of the experiment is that
-initially we want to apply passes to yklua in `-O0` and see how much improvement
-we can get or if we can make any significant performance improvements at all
-with the help of pelink and/or postlink passes. \iti{divide this sentence, make it more formal and intentional from your perspective.}
-Later when I start moving towards macro optimisations and making backend
-optimisations compatible with different optimisation levels, I focus on
-how much gap I can bridge when compared to non-yk lua.
-
+\textbf{Adding Passes at -O0 Level} \\
 As discussed in Section \iti{add lto section}, there are three levels of llvm
 optimisation pipeline: prelink, postlink, and backend optimisation. I modified
 yk-config to accept prelink and postlink optimisation passes, however
 overwriting backend optimisation is rather challenging and will be discussed
 later in this section. For the first set of performance numbers, I added a pass sequence (both
 prelink and postlink) to the -O0 optimisation in yklua binary (i.e~ turning on the
-passes found via genetic algorithm) with the help of yk-config. yk-config is a
-tool to apply yk-specific compiler and linker flags on the interpreter and other
+passes found via genetic algorithm) with the help of yk-config.
+\iti{APPENDIX}yk-config is a tool to apply yk-specific compiler and linker flags on the interpreter and other
 systems which use yk's meta-tracing system. yk-config makes
 configuring/compiling C interpreters easy by having the support to add `cflags`
 (compiler) and `ldflags` (linker), this can be used to add the prelink and
 postlink pass sequences found via the genetic algorithm by appending them to
-cflags and ldflags. Finally, I use ykllvm's clang to compile yklua binary, as
-described in Section \iti{add about ykllvm} ykllvm is a modified version of llvm
+cflags and ldflags.
+
+Finally, I use ykllvm's clang to compile yklua binary, as
+described in Section \iti{add about ykllvm}.
+\iti{APPENDIX}ykllvm is a modified version of llvm
 which applied yk specific flags to the final binary.
 
 Table \ref{table:preandpostlink} shows performance numbers 
-of adding prelink, postlink or both to yklua -O0 optimisation level. 
+of adding prelink, postlink or both to yklua -O0 optimisation level. \iti{Row 1 and row 4 function as our reference points/baseline}.
 
+\textbf{Compiling yklua with -O2} \\
 yklua currently does not support compilation with a `-O2` optimisation level.
 With the help of yk pass YkAfterIRPasses `optnone` attribute is applied on all
 of the backend optimisation functions, which results in blocking all of the
-backend optimisation. The obvious question is, why does compiling only with
+backend optimisation. \iti{the previous statement is ambiguous. Tell that it works for O0 and you assumed it should work for O2 but does not.} The obvious question is, why does compiling only with
 `-O2` fails and not with `-O0`? The answer turned out to be quite simple; unlike
 `-O0`, to block backend optimisation functions in `-O2` we have to apply both
 `optnone` and `noinline` attribute. 
@@ -1122,6 +1132,8 @@ optimisation level.}
 \label{table:preandpostlink}
 \end{table}
 
+\textbf{Improvements with -O2} \\
+
 The prelink and postlink passes obtained from the genetic algorithm are a subset
 of -O2 optimisation pass sequences. Observing Table \ref{table:preandpostlink}
 it is curious that applying a subset of -O2 pass sequences results in similar
@@ -1131,9 +1143,10 @@ are sole contributors to the performance. While the other possibility is that yk
 based flags interfere with some of non-backend optimisations in -O2. This brings
 me to my second hypothesis.
 
+\iti{maybe write the complete word "Hypothesis 2"? H2 does not grab attention. Possibly put it in a box or like a quote or something.}
 \textbf{H2} \hspace*{0.5cm} Enabling all optimisation passes, even those
 which can interfere with correctness, improves performance further over the
-subset found by the GA \\
+subset found by the GA \iti{rewrite hypothesis}\\
 
 Table \ref{table:preandpostlink} clearly disapproves H2, the intuition behind
 this hypothesis was that yklua when using full -O2 should have further performance
@@ -1142,23 +1155,24 @@ have happened.
 
 Postlink and backend optimisation share same LTO backend code (in
 LTOBackend.cpp), which means that when YkAfterIRPasses (a ykllvm pass) applies
-optnone attribute to backend optimisation functions it end up blocking some of
-postlink optimisations as well.
-This results in interpreter loosing significant performance opportunities. In
-upcoming section I'll show performance overhead of yk specific passes and then
+optnone attribute to backend optimisation functions, it ends up blocking some of
+the postlink optimisations as well.
+This results in the interpreter loosing significant performance opportunities. In
+the next section I'll show the performance overhead of yk specific passes, and then
 proceed to investigate whether it is necessary to block all of the backend
-optimisations. 
+optimisations.
 
 \subsection{Performance impact of yk-based flags with full -O2 optimisation
-turned on}
+turned on} \iti{language!}
 
+\textbf{Overhead introduced by yk passes} \\
 \label{table:c} shows performance overhead of individual yk passes.  
 
-The objective of this experiment is to understand what portion of total slowdown
+The objective of the following experiment is to understand what portion of total slowdown
 in yklua is contributed by yk-based passes (either individual pass or a
 combination of them). I start to turn off yk specific passes individually and
-then in combinations. The speedup of the interpreter when the passes are turned
-off indicates that the flag (or combination of them) is contributing slowdown by
+then in combinations, and record the execution times. The speedup of the interpreter when the passes are turned
+off indicates that the flag (or combination of them) is contributing a slowdown by
 the ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
 (performance of row n)}}$$ 
 
@@ -1193,9 +1207,12 @@ combination of flags in the row are turned off.}
 From Table \ref{table:c}  yk-based flags contribute upto 1.5 times slowdown in
 yklua. As I aim to figure out how much performance can be retrieved back by
 optimising some (and possibly all of the expensive passes) in the table shown
-above, i'll  be elaborating how to achieve that in next couple of paragraphs. 
+above, I'll  be elaborating on how to achieve this in the following text. 
 
+\textbf{Optimising yk-based Passes} \\
 \iti{in the next 4 points, you discuss 'possible' solutions. Pitch your ideas with more force?}
+
+\iti{Do you want to make the topic textbfs subsection? Like 7.3.1 so that you can use textbf for these point headers?}
 1) yk-insert-stackmaps
 
 Stackmaps describe how the stack looks like i.e~ where the variables are stored
@@ -1226,7 +1243,7 @@ containing the change for --yk-insert-stackmaps and the test case:
 https://github.com/ykjit/ykllvm/pull/98}PR, \iti{old performance: of yklua
 binary from ${89.9ms}$ to ${86.3ms}$}.
 
-Similarly, another opportunity of macro optimisation is not add stackmaps for
+Similarly, another opportunity of macro optimisation is to not add stackmaps for
 the functions which do not have conditions in them (i.e~ no gaurds) as they have
 no need for de-optimisations. This however is more complex to fix as currently
 there is no direct way to figure whether a function has a condition in it or
@@ -1268,18 +1285,21 @@ store the information about how many blocks are merged and transfer this
 information to the hardware tracer, then we can tell which blocks were single
 basic blocks and which have been merged when mapping back from JIT IR to AOT IR.
 
-\begin{tcolorbox}[colback=lightgray!10, colframe=black!75] One of the macro
-    optimizations I made while benchmarking yklua was directly to yklua's source
-    code. Earlier yklua would perform reallocation of yk's location
-    array for every instruction. Yk's location array indicates the point from
-    which the loop starts and is then sent to the control point \textit{confirm
-    this}. However, this was done for every instruction instead of
-    performing reallocation only for those instructions whose bytecode size was
-    larger than the current location array size. This turned out to be quite
-    performance-intensive and made some programs (such as `verybig.lua` in lua
-    benchmark) almost 10x slower. The fix for this was checking and reallocating
-    the location array only when the resize was 
-    necessary.\footnote{https://github.com/ykjit/yklua/pull/84} \end{tcolorbox}
+textbf{An Optimisation to yk} \\
+One of the macro
+optimizations I made while benchmarking yklua was directly to yklua's source
+code. Earlier yklua would perform reallocation of yk's location
+array for every instruction. Yk's location array indicates the point from
+which the loop starts and is then sent to the control point \textit{confirm
+this}. However, this was done for every instruction instead of
+performing reallocation only for those instructions whose bytecode size was
+larger than the current location array size. This turned out to be quite
+performance-intensive and made some programs (such as `verybig.lua` in lua
+benchmark) almost 10x slower. The fix for this was checking and reallocating
+the location array only when the resize was 
+necessary.\footnote{https://github.com/ykjit/yklua/pull/84}
+
+\textbf{Where to begin: -O0 or -O2?} \\
 
 After adding `noinline` attribute to lto backend we can now easily use `-O2` to
 compile yklua. This gives us an opportunity to consider whether we want to start
@@ -1325,6 +1345,8 @@ it the default compilation level.
 
 But before we proceed to investigate 
 
+\subsection{Understanding yk's test suite}
+
 \subsection{Compiling yklua with backend optimisations turned on}
 
 Now, I'll show my finding for my final hypothesis for this report:
@@ -1337,14 +1359,13 @@ some of yk's passes.
 
 
 Consequence of turning on backend optimisation passes on yk's test suite
-\iti{discuss with luckas}
-\subsection{Understanding yk's test suite}
+\iti{discuss with lukas}
 
 
 \section{Related Work}
 \label{section:7}
 The optimisation phase ordering problem for compiler optimisations has been solved
-before~\cite{guidedGA} However, the solution for the phase-ordering problem for one
+before~\cite{guidedGA}. However, the solution for the phase-ordering problem for one
 system may not work for another system. This is because the oracle (the
 testing conditions and target goal) may vary for different systems.
 There exist other meta-tracing systems, such as RPython~\cite{rpython} that
@@ -1352,23 +1373,23 @@ do not face the same problem as yk does. This is because rpython traces a versio
 the interpreter compiled in its own format: it actually interprets an
 interpreter. With software tracing you can inject code into the AOT-compiled
 binary that directly records the IR blocks that were executed, and this entirely
-bypasses the need for mapping
+bypasses the need for mapping \iti{incomplete?}
 
 \section{Conclusion and Future Work}
 \label{section:8}
 In this report, I have shown that with the help of a genetic algorithm, we can
-use middle and possibly backend optimisation passes with the C interpreter,
+use middle \iti{middle-end?} and possibly backend optimisation passes with the C interpreter,
 which not only maintain the correctness of the meta-tracer but simultaneously
 improves the interpreter's performance when compiled with meta-tracer
-retrofitted into it. As shown in the \label{section:6} I can win back around. 1.75x
+retrofitted into it. As shown in the \label{section:6} I can win back around 1.75x
 performance by applying middle-end passes and macro-optimisations to
-meta-tracer's passes. Although I have yet to catch problematic backend
+meta-tracer's passes. Although I am yet to catch problematic backend
 optimisation passes, it is not a very far-fetched goal. The next immediate
 experiment would be to change LLVM's legacy pass manager so that we can easily
 overwrite the backend optimisation pipeline at any optimisation level. After
-this change, we can easily use the genetic algorithm to find a combination of
+this change, we can use the genetic algorithm to find a combination of
 pass sequences which does not change the AOT IR in non-compatible way.
-Alternatively, turn off part of the optimisation which interferes with the AOT
+Alternatively, turn off the part of the optimisation which interferes with the AOT
 IR in an unwanted way for the meta-tracer. One way could be to tweak the passes
 so that only optimisations within the basic blocks are allowed (and those which
 work across the basic blocks are not allowed).
