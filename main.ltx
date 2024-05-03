@@ -970,28 +970,19 @@ Results at a glance: \iti{format this list}
 \begin{itemize}
     \item{the genetic algorithm is able to find pass sequences which satisfies our
         oracle's constraints as well as improves yklua interpreter's performance by 1.75x.}
-    \item{yk-based passes have around 1.5x overhead \laurie{if we improved things by 1.75x but there's only 1.5x overhead, that means yklua must now be faster than normal lua! so something doesn't make sense with one of these numbers} and we can reduce this
-        overhead by optimising some of the passes.}
-    \item{Optimising stackmap insert pass resulting in about 7\% performance
+    \item{50\% of the total overhead caused by retrofitting yk onto the lua
+        interpreter is contributed by yk-based passes.}
+    \item{Optimised stackmap insert pass resulting in about 7\% performance
         improvement.}
     \item{Macro optimisation done on yklua's code improving performance of
-        some benchmark by 200x (I'll be elaborating this in results sections.)}
+        some benchmark by 200x (I'll be elaborating this in upcoming subsections.)}
 \end{itemize}
 
-In addition to the above, I explore how we may be able to make some if not all
-backend optimisations work with the oracle.
-
-\iti{I also fixed...} Fixing errors in -O0 optimisation level, which were not letting us compile the interpreter and
-the test programs with backend optimisations enabled \laurie{huh?}. This fix is
-important as it will help us figuring out which backend optimisation
-is problematic when combined with yk's passes. This is covered in \iti{add
-section label here.}
-
-\iti{add this section in introduction?}
-Adding passes obtained through genetic algorithm to -O0 and by applying my macro
-optimisations, I am able to show average performance improvement of \%. These
-optimisations (both pipeline and macro-optimisation) respects the constraints
-laid out by the oracle indicating they are sound to use.
+In addition to the above, I explore the possibility of making some, if not all,
+backend optimisations work with the oracle. As a prerequisite to designing and
+executing experiments for hypotheses related to backend optimisation, I needed
+to fix the compilation errors that occurred when enabling backend optimisation
+with both -O0 and -O2 flags.
 
 \iti{move the table to appropriate section}
 \begin{table}[h]
@@ -1076,13 +1067,16 @@ Table \ref{table:preandpostlink} shows performance numbers
 of adding prelink, postlink or both to yklua -O0 optimisation level. \iti{Row 1 and row 4 function as our reference points/baseline}.
 
 \textbf{Compiling yklua with -O2} \\
-yklua currently does not support compilation with a `-O2` optimisation level.
-With the help of yk pass YkAfterIRPasses `optnone` attribute is applied on all
-of the backend optimisation functions, which results in blocking all of the
-backend optimisation. \iti{the previous statement is ambiguous. Tell that it works for O0 and you assumed it should work for O2 but does not.} The obvious question is, why does compiling only with
-`-O2` fails and not with `-O0`? The answer turned out to be quite simple; unlike
-`-O0`, to block backend optimisation functions in `-O2` we have to apply both
-`optnone` and `noinline` attribute. 
+yklua blocked all backend optimisation to run by adding a pass in ykllvm called
+YkAfterIRPasses, which would patch the `optnone` attribute on all of the
+functions in the backend optimisations. However, this pass assumed that this
+would be enough to block backend optimisation for all the optimisation levels
+while still not causing problems when compiling with the optimisation level.
+Contradictory to the assumption made by the pass, this resulted in a compilation
+error in yklua when using the -O2 optimisation level. The obvious question is,
+why does compiling yklua only fails with `-O2`  and not with `-O0`? The answer
+turned out to be quite simple; unlike `-O0`, to block backend optimisation
+functions in `-O2`, we have to apply both `optnone` and `noinline` attribute. 
 
 The reason for using both noinline and optnone attributes together when blocking
 optimizations at higher optimization levels like -O2 is related to how the LLVM
@@ -1099,11 +1093,13 @@ for that function. However, if the function is called from other functions that
 are being optimized, the optimizer may still decide to inline the optnone
 function into the calling function.
 
-After adding the fix, yklua can be compiled using both `-O0` and
-`-O2`. However, the problem remains that we cannot use the full set of passes
-for yklua's compilation as they are incompatible with yk's test suite. The goal
-is to make a single optimisation level which works for all of our oracles (in
-this case they are the yk test suite and yklua's compilation and test suite).
+After adding the fix, yklua can be compiled using both `-O0` and `-O2`. However,
+the problem remains that we cannot use the full set of passes for yklua's
+compilation as they are incompatible with yk's test suite. This is due to wrong
+runtime behaviour caused by interaction between yk-bases passes and the backend
+optimisations. The goal is to make a single optimisation level which works for
+all of our oracles (in this case they are the yk test suite and yklua's
+compilation and test suite).
 
 \begin{table}[H]
 \centering
@@ -1125,7 +1121,7 @@ intervals. The performance numbers are for 30 runs of `db.lua` when the JIT is
 turned off. All of the performance numbers represent the cost of retrofitting yk
 onto the interpreter. The first row is yklua built without any pass sequence,
 and consecutive rows with adding prelink, postlink, or both pass sequences to
-`-O0`. The last two rows are ykllvm and llvm clang compiled lua with `-O2`
+`-O0`. The last two rows are yklua and non-yk lua compiled lua with `-O2`
 optimisation level.}
 \label{table:preandpostlink}
 \end{table}
@@ -1137,49 +1133,58 @@ of -O2 optimisation pass sequences. Observing Table \ref{table:preandpostlink}
 it is curious that applying a subset of -O2 pass sequences results in similar
 performance as that of directly compiling with -O2 optimisation level. There is
 a possibility that genetic algorithm found all the passes in the sequence which
-are sole contributors to the performance. While the other possibility is that yk
-based flags interfere with some of non-backend optimisations in -O2. This brings
-me to my second hypothesis.
+are sole contributors to the performance. The other possibility
+is that yk based flags interfere with some of non-backend optimisations in -O2
+limiting -O2's full potential for optimisations.
+This brings me to my second hypothesis.
 
-\iti{maybe write the complete word "Hypothesis 2"? H2 does not grab attention. Possibly put it in a box or like a quote or something.}
-\textbf{H2} \hspace*{0.5cm} Enabling all optimisation passes, even those
-which can interfere with correctness, improves performance further over the
-subset found by the GA \iti{rewrite hypothesis}\\
+\textbf{H2} \hspace*{0.5cm} compiling yk retrofitted interpreter with -O2 should
+result in fastest performing interpreter by significant margin. \\
 
 Table \ref{table:preandpostlink} clearly disapproves H2, the intuition behind
-this hypothesis was that yklua when using full -O2 should have further performance
-improvement over using subset of -O2 passes. Let's dig further why this might
-have happened.
+this hypothesis was that yklua when using full -O2 should have further
+performance improvement over using subset of -O2 passes. However, the
+performance of -O2 compiled yklua lies in the range of performance of yklua when
+compiled with subset of -O2 passes. Let's dig further why this might have
+happened.
 
+The reason -O2 is not optimising yklua interpreter to it's full potential is
+that some middle-end optimisation passes are getting blocked by yk-based pass.
 Postlink and backend optimisation share same LTO backend code (in
-LTOBackend.cpp), which means that when YkAfterIRPasses (a ykllvm pass) applies
-optnone attribute to backend optimisation functions, it ends up blocking some of
-the postlink optimisations as well.
-This results in the interpreter loosing significant performance opportunities. In
-the next section I'll show the performance overhead of yk specific passes, and then
-proceed to investigate whether it is necessary to block all of the backend
-optimisations.
+LTOBackend.cpp), since YkAfterIRPasses (a ykllvm pass) applies optnone attribute
+via LTO backend, it ends up blocking some of the postlink optimisations along
+with intended backend optimisations. This results in the interpreter loosing
+significant performance opportunities. However, we cannot remove the `optnone`
+and `noinline` attributes from the lto backend as they produce wrong runtime
+behaviour. The easiest way to remove these attributes from lto backend while
+still maintaining the soundness of the meta-tracing system is disabling only
+problematic backend optimisation passses. \iti{edit this line to show the
+intension behind these macro-optimisations} However, before designing
+experiments to find problematic backend optimisation passes I'll focus on
+another macro-optimisation opportunity. In next subsection I'll show the
+performance overhead of yk specific passes, this will help us to figure out
+which pass and then proceed to investigate whether it is necessary to block all
+of the backend optimisations.
 
-\subsection{Performance impact of yk-based flags with full -O2 optimisation
-turned on} \iti{language!}
-
+\subsection{Performance impact of yk-based flags when compiling yklua with -O2} 
 \textbf{Overhead introduced by yk passes} \\
 \label{table:c} shows performance overhead of individual yk passes.  
-
-The objective of the following experiment is to understand what portion of total slowdown
-in yklua is contributed by yk-based passes (either individual pass or a
+\iti{why -O2 and not -O0?}
+The objective of the following experiment is to understand what portion of total
+slowdown in yklua is contributed by yk-based passes (either individual pass or a
 combination of them). I start to turn off yk specific passes individually and
-then in combinations, and record the execution times. The speedup of the interpreter when the passes are turned
-off indicates that the flag (or combination of them) is contributing a slowdown by
-the ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
-(performance of row n)}}$$ 
+then in combinations, and record the execution times. The speedup of the
+interpreter when the passes are turned off indicates that the pass (or
+combination of them) is contributing a slowdown by the ratio of:
+$$\frac{\text{\small (performance of baseline)}}{\text{\small (performance of
+row n)}}$$ 
 
 \begin{table}[H]
 \begin{tabular}{@{}cllr@{}}
 \toprule
 \# & \multicolumn{1}{c}{Flags turned off (-O2 passes are set)} & \multicolumn{1}{c}{Execution Time} & \multicolumn{1}{c}{95\% CI} \\ 
 \midrule
-1 & baseline (all flags are turned on) & 89.9ms & 0.002 \\
+1 & baseline (yklua compiled with -O2) & 89.9ms & 0.002 \\
 2 & —yk-no-fallthrough & 76.1ms & 0.002 \\
 3 & —yk-block-disambiguate & 78.7ms & 0.00189 \\
 4 & —yk-patch-control-point & 84.4ms & 0.002 \\
@@ -1195,20 +1200,22 @@ the ratio of: $$\frac{\text{\small (performance of baseline)}}{\text{\small
 14 & \begin{tabular}[c]{@{}l@{}}—yk-no-fallthrough + —yk-block-disambiguate +\\ —yk-patch-control-point + —yk-insert-stackmaps +\\ —yk-split-blocks-after-calls\end{tabular} & 54.5ms & 0.003 \\
 \bottomrule
 \end{tabular}
-\caption{Shows performance we can win back when flags (i.e~passes) or combinations of
-them are turned off. Row 1 is performance of baseline lua binary, when no flag
-is turned off. Row 14 shows maximum retrieval of performance when the particular
-combination of flags in the row are turned off.}
+\caption{Shows performance we can win back when flags (i.e~passes) or
+combinations of them are turned off. Row 1 is performance of baseline yklua
+binary compiled with -O2, . Row 14 shows maximum retrieval of performance when
+the particular combination of flags in the row are turned off.}
 \label{table:c}
 \end{table}
 
-From Table \ref{table:c}  yk-based flags contribute upto 1.5 times slowdown in
-yklua. As I aim to figure out how much performance can be retrieved back by
-optimising some (and possibly all of the expensive passes) in the table shown
-above, I'll  be elaborating on how to achieve this in the following text. 
+From Table \ref{table:c} we can see that yklua after applying -O2 optimisations
+is 3x slower than Baseline 2. It is clear that yk-based flags contribute upto
+50\% of total slowdown in yklua. Some passes cannot be further optimised as they
+change the AOT IR making them compatible for meta-tracing system (e.g adding
+patch points and block-disambiguate pass). In the next subsection I'll elaborate
+on how much performance can be retrieved back by optimising some of the most
+expensive yk passes shown in table above. 
 
 \textbf{Optimising yk-based Passes} \\
-\iti{in the next 4 points, you discuss 'possible' solutions. Pitch your ideas with more force?}
 
 \iti{Do you want to make the topic textbfs subsection? Like 7.3.1 so that you can use textbf for these point headers?}
 1) yk-insert-stackmaps
