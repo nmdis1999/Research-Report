@@ -720,10 +720,8 @@ all of the backend optimisations and whether it is possible to enable them
 back in both `-O0` and `-O2` optimisation level.
 
 \section{Evaluation}
-\laurie{this should be the section name}
 
-\section{Experimental Setup}
-\laurie{this should be a subsection and should probably be `methodology'.}
+\subsection{Methodology}
 \label{section:4}
 The experiments were conducted on a dual-socket Intel Xeon Platinum 8452Y
 system, featuring an x86\_64 architecture with 72 total cores distributed across
@@ -732,29 +730,28 @@ hope they didn't vary across that, or the numbers will be bonkers :p you want
 to do the benchmarking on whichever bencher you have exclusive access to. you
 will need to stick it in `performance' mode so that (as far as possible) its
 clock speed doesn't vary}.
-
+\iti{mention experiments which ran on b9 (for performance gathering) and  the GA in b16 along with section
+names.}
 \laurie{list all versions of software, llvm, operating system, etc etc}
 
-\section{Experiments}
+\subsection{Experiments}
 \label{section:5}
 
 \laurie{linking to prs isn't really the right thing to do here: you want a more abstract description, in general}
 
-To verify H1, I wrote a divide-and-conquer algorithm\footnote{\laurie{why is this a footnote?} Pull request with my
-divide-and-conquer \laurie{is this actually a divide-and-conquer algorithm? i think it's a GA, which i don't think is DaC, but maybe i'm wrong!} algorithm: https://github.com/ykjit/yk/pull/829, tested it
-against yk's test suite and compared performance of yklua compiled with pass
-sequence retrieved from the algorithm against the default yklua binary (i.e~ one
-compiled without any optimisations enabled). The result showed that the
-algorithm couldn't find a pass sequence which satisfied both constraints i.e~ passing yk's
-test suite and improving the yklua's interpreter's performance. Next, I wrote a 
-genetic-algorithm: https://github.com/ykjit/yk/pull/900}. The genetic algorithm
+To verify H1, I wrote a divide-and-conquer
+algorithm, tested it against yk's
+test suite and compared performance of yklua compiled with pass sequence
+retrieved from the algorithm against the default yklua binary (i.e~ one compiled
+without any optimisations enabled). The result showed that the algorithm
+couldn't find a pass sequence which satisfied both constraints i.e~ passing yk's
+test suite and improving the yklua's interpreter's performance. Next, I wrote a
+genetic\-algorithm\footnote{https://github.com/ykjit/yk/pull/900}. The genetic algorithm
 successfully found multiple pass sequence which satisfied both constraint and
 emitted the most performant one at the end. 
 
 In all of the experiments done below, we use yk as the meta-tracing system and yklua as
 the C interpreter being optimised.
-
-\subsection{Methodology}
 
 \iti{add a section defining the oracle}
 \subsubsection{Divide-and-conquer algorithm for phase ordering problem}
@@ -793,7 +790,9 @@ the C interpreter being optimised.
         \State Perform combined testing of passes (\textbf{attempt2})
     \EndFunction
     \end{algorithmic} 
-\textbf{Algorithm 1:} this algorithm has two functions, attempt1 tries each pass
+\end{tcolorbox}}
+
+This algorithm has two functions, attempt1 tries each pass
 individually to see which passes succeeds and which ones fail in isolation. It
 takes a total of 36 hours to run attempt1. In attempt2, the algorithm starts with
 an empty list of ok passes, recursively tests combinations of passes starting with
@@ -807,8 +806,7 @@ sequence which was compatible with yk, but failed to provide performance
 improvement to yklua. This is because some LLVM optimisations depend on others
 to give them information. So if the order of pass sequence is not right some 
 optimisation might not work because their dependencies are not present before
-they are processed.
-\end{tcolorbox}}
+they are processed.\footnote{https://github.com/ykjit/yk/pull/829}
 
 \subsubsection{Genetic Algorithm for phase-ordering problem}
 A genetic algorithm is a stochastic search algorithm which borrows the concept of
