@@ -1340,14 +1340,13 @@ pm.lua & 0.050 & 0.050 & 0.047 & 0.036 & 0.022 & 0.009 \\
     different optimisations as well as expand macros different during IR
     generation. Which means even though the passes we add/remove although have
     same name they don't necessarily perform the same optimisations.}
+\iti{rewrite the caption.}
 \end{table}
 
 Although we have verified that compiling with -O2 and removing passes gives us
 better performance for the interpreter we still need to make sure that our
 oracle passes with -O2(i.e~ all yk and yklua test suite are successful) before making
 it the default compilation level. 
-
-But before we proceed to investigate 
 
 \subsection{Understanding yk's test suite}
 
@@ -1369,7 +1368,7 @@ in a way that is not compatible with yk-based passes. Which essentially means
 that when we are adjusting the IR at codegen stage (e.g adding Stackmap passes,
 splitting blocks after calls etc) we might be changing the IR in a way that is
 not expected by LLVM at code generation stage. Some backend optimisation passes
-may be optimising awayi/re-arranging the instructions that are needed either by
+may be optimising away/re-arranging the instructions that are needed either by
 Stackmap or are expected to be presented in the IR. Thus, although we are able to
 compile the test cases, we still see the wrong run-time behaviour of the
 yk-retrofitted test cases. 
