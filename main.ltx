@@ -6,19 +6,19 @@
 
 \begin{abstract}
     \noindent
-    JIT compilation gives dynamically typed languages speed of compiled code along
-    with the flexibility of interpretation. One of the variants of JIT is tracing
-    just-in-time compiler, which observes the program at the runtime and collects
-    the most frequently executed parts in a linear execution trace.  and optimises it
-    into machine code. However, building a tracing JIT for a language can take up
-    significant engineering hours. Meta-tracing systems such as yk can easily turn
-    existing C interpreters into tracing JIT compilers. At the current stage,
-    however, yk pessimistically turns off all of the optimisations. 
-    The result is a significant slowdown of the
-    interpreter even when JIT is not enabled. My work aims to regain the lost
-    performance. In this report, I show that by enabling performance critical
-    passes at all levels of LLVM's optimisation pipeline, we can bridge the gap
-    between current performance and the target performance of the interpreter.
+    Meta-tracing systems such as yk turns existing C interpreters into tracing
+    just-in-time(JIT) compilers, making it easier for developers to use the JIT
+    without implementing one themselves for their languages. However, yk at the
+    current stage does not support higher optimisation levels and
+    pessimistically disables all of the compiler optimisations. The cost of retrofitting
+    yk onto the interpreter without any of optimisation is 5x slowdown when
+    compared to non-yk interpreter. My work reduces this overhead to 3x by:
+    using genetic-algorithm to find yk compatible compiler optimisation passes
+    and performing macro-optimisations on
+    both yk's compiler and the interpreter using yk. Additionally, I propose
+    solutions to adjust yk and non-compatible optimisation passes which could
+    further reduce this overhead of retrofitting yk onto the interpreter,
+    starting with lua interpreter. 
 \end{abstract}
 \section{Introduction}
 \subsection{Overview}
