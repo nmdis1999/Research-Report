@@ -1351,27 +1351,26 @@ it the default compilation level.
 \subsection{Understanding yk's test suite}
 
 In previous sections I had enabled optimisations at all levels and compiled
-yklua but with JIT turned off. This meant that we could analyse the cost of
+yklua but with the JIT turned off. This meant that we could analyse the cost of
 embedding yk onto the interpreter but were not checking the results of turning
-on JIT. 
+on the JIT. 
 
-However, in our second oracle we are running yk's test case when we
-enable optimisation passes at different levels when the JIT is turned on. Thus,
-revealing wrong run-time behaviour caused due to turning on the passes and using
+However, in our second oracle we are running yk's test cases when we
+enable optimisation passes at different levels when the JIT is turned on. This
+reveals wrong run-time behaviour caused due to turning on the passes and using
 the optimised IR for performing JIT optimisations.\iti{chat to lukas about this.} 
 
-My earlier work assumed that only backend optimisation passes interferes with
-the IR in a manner which results in wrong mapping from JIT IR back to the AOT IR
-as we switched to JIT compilation back to AOT compiled interpreter. However, it
-turns out that some postlink optimisations also results in changing the AOT IR
+My earlier work assumed that only backend optimisation passes interfere with
+the IR in a manner which results in wrong mapping from JIT IR back to the AOT IR,
+as we switched from JIT compilation back to AOT compiled interpreter. However, it
+turns out that some postlink optimisations also result in changing the AOT IR
 in a way that is not compatible with yk-based passes. Which essentially means
-that when we are adjusting the IR at codegen stage (e.g adding Stackmap passes,
+that when we are adjusting the IR at code generation stage (e.g adding Stackmap passes,
 splitting blocks after calls etc) we might be changing the IR in a way that is
-not expected by LLVM at code generation stage. Some backend optimisation passes
+not expected by LLVM at that stage. Some backend optimisation passes
 may be optimising away/re-arranging the instructions that are needed either by
 Stackmap or are expected to be presented in the IR. Thus, although we are able to
-compile the test cases, we still see the wrong run-time behaviour of the
-yk-retrofitted test cases. 
+compile the test cases, they fail with the wrong run-time behaviuor.
 
 The next set of experiments will include me studying the failing test cases when
 we enable prelink, postlink and backend optimisation, first individually and
@@ -1380,14 +1379,14 @@ even after inserting yk-specific opcodes and running yk-specifc passes, so
 that LLVM optimisations at backend generate IR which results in correct run-time
 behaviour.
 
-The second experiment, which I believe will need being conducted in parallel is
-to figure out problematic passes which results in these test cases to fail. This
+The second experiment, which I believe will need to be conducted in parallel is
+to figure out problematic passes which result in these test cases to fail. This
 can be done by fixing LLVM to overwrite backend optimisations. I can adjust
 TargetPassConfig in LLVM Codgen to do this with the help of llc. llc has a
 option to over-write backend passes with run-passes. After adjusting the
-TargetPassConfig, I'll need to make adjustments to yk-config so that we
+TargetPassConfig, I will need to make adjustments to yk-config so that we
 overwrite the backend optimisations at the right stage. Once it is possible to
-overwrite backend optimisations we can use the genetic algorithm described in
+overwrite backend optimisations, we can use the genetic algorithm described in
 Section\iti{add label} to find the problematic passes and study their fixes (or
 if we need to completely disable them).
 
