@@ -6,89 +6,86 @@
 
 \begin{abstract}
     \noindent
-    Meta-tracing systems such as yk turns existing C interpreters into tracing
+    Meta-tracing systems such as yk turn existing C interpreters into tracing
     just-in-time(JIT) compilers, making it easier for developers to use the JIT
-    without implementing one themselves for their languages. However, yk at the
+    without implementing one from scratch for their languages. However, yk at the
     current stage does not support higher optimisation levels and
-    pessimistically disables all of the compiler optimisations. The cost of retrofitting
-    yk onto the interpreter without any of optimisation is 5x slowdown when
+    pessimistically disables all compiler optimisations. The cost of retrofitting
+    yk onto the interpreter without any optimisation is a 5x slowdown as
     compared to non-yk interpreter. My work reduces this overhead to 3x by:
-    using genetic-algorithm to find yk compatible compiler optimisation passes
+    using a genetic-algorithm to find yk-compatible compiler optimisation passes,
     and performing macro-optimisations on
     both yk's compiler and the interpreter using yk. Additionally, I propose
-    solutions to adjust yk and non-compatible optimisation passes which could
-    further reduce this overhead of retrofitting yk onto the interpreter,
-    starting with lua interpreter. 
+    solutions to adjust\iti{some other word?} yk and non-compatible optimisation passes which could
+    further reduce this overhead of retrofitting yk onto interpreters,
+    starting with the lua interpreter.
 \end{abstract}
 \section{Introduction}
 \subsection{Overview}
 
 The popularity of dynamically typed languages stems from their ability to ease
-writing software and rich library framework they provide. In recent years,
-dynamically typed languages such as Python and JavaScript are not just popular
-for writing scripts but also complex server side applications\cite{dyn-server}.
-The most commonly used implementation of these languages are interpreters, as
-they are quite flexible to use and the developer don't need to incur cost of
-compilation\footnote{example: }. However, the same flexibility that makes these
-languages popular among software developers also bring challenges to
-optimisations and code generations. As these languages have become one of the
-key tools in software development kit they demand improvement to their execution
-speed\iti{rewrite this line}. An argument can be made that developers can pick
-compiler for these languages instead of using interpreter. But there is a catch,
+writing software, and the rich library framework they provide. In recent years,
+dynamically typed languages such as Python and JavaScript have gained popularity not only
+for writing scripts, but also complex server side applications\cite{dyn-server}.
+The most commonly used implementation of these languages are interpreters as
+they are quite flexible to use, and the developer does not need to incur the cost of
+compilation\iti{cite something}. However, the same flexibility that makes these
+languages popular among software developers also brings challenges to
+optimisations and code generations. As these languages see an increasing adoption, they demand
+improvement to their execution speed. An argument can be made that developers can pick
+a compiler for these languages instead of using an interpreter. But there is a catch:
 dynamic languages tend to be quite slow to run when compiled~\cite{pypy}. In
-statically typed languages compilers rely on the type information for generating
-machine code. However, for dynamic languages such as that of Python, the type
-information may vary at the runtime. This means that compiler will have to emit
-generalised machine code to deal with all the possible type combinations every
-time we run the program, which can be very expensive in terms of space and time
-complexity.
+statically typed languages, compilers rely on the type information for generating
+machine code. However, for dynamic languages such as Python, the type
+information may vary at runtime. This means that the compiler has to emit
+generalised machine code to deal with all possible type combinations during runtime,
+which can be very expensive in terms of space and time complexity.
 
 It has been stated that implementations of dynamically typed languages are often
 slower than the implementation of statically typed languages\cite{ltratt
-dynamically typed}. {why?} There has been continuous research on making
-interpreters faster which dates back to Self project\cite{add here} but they
-aren't used as frequently as one would want. Most dynamically typed languages
-uses bytecode interpreter without any advance optimisations such as just-in-time
-compilations. The reason for limited use of JIT compilers is difficulty of their
-implementations\cite{bolz thesis}. A JIT compiler for the dynamically typed
+dynamically typed}. There has been continuous research on making
+interpreters faster which dates back to the Self project\iti{cite here} but they
+are not used as frequently as one would want. Most dynamically typed languages
+use a bytecode interpreter without any advanced optimisations such as just-in-time
+compilations. The reason for limited use of JIT compilers is the difficulty in their
+implementations\cite{bolz thesis}. A JIT compiler for a dynamically typed
 language would need to handle all the complex interactions of the language while
 simultaneously generating efficient code for the common cases. 
 
-One solution to this problem is using meta-tracing system. With meta-tracing
+One solution to this problem is using a meta-tracing system. With meta-tracing
 systems such as yk, language implementers do not need to implement their own
-tracing JITs; instead, they can use yk meta-tracing system and the tracing JIT
+tracing JITs; instead, they can use yk meta-tracing system, and the tracing JIT
 compilation will automatically be embedded in the language implementation(s). 
 
 One of the newer approaches of implementing just-in-time compilers is tracing
 JIT. In tracing JIT compilation, the Virtual Machine\iti{introduce} identifies
-frequently executed, ``hot'' program paths at runtime. Once a hot path is
+the frequently executed ``hot'' program paths at runtime. Once a hot path is
 detected, the VM records all instructions in this path into a trace until
 execution loops back to the first instruction of this path. The trace is then
-compiled and the subsequent iterations of this path are executed using the
+compiled, and the subsequent iterations of this path are executed using the
 compiled trace instead of the original code. But developing custom tracing
 JITs is a hard undertaking. The concept of tracing optimisations was initially
-explored by Dynamo Project~\cite{dynamo}, which was successful in using tracing
+explored by the Dynamo Project~\cite{dynamo}, which was successful in using tracing
 information at runtime to optimise most executed paths. This technique is also
-used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}and in Chrome's V8
+used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}, and in Chrome's V8
 through their tracing V8 system~\cite{v8jit}.
- 
 
 YK is a meta-tracing system which traces the execution of the interpreter instead of tracing
-the user program executed by the interpreter. At current stage, yk does not
+the user program executed by the interpreter. At the current stage, yk does not
 support interpreter compilation using any other level than -O0, and even at that
-level it disables all of the backend optimisations. When we enable optimisation
-passes at different level of optimisation passes they either interfere or undo
+level, it disables all backend optimisations. When we enable optimisation
+passes at different levels, they either interfere or undo the 
 work done by some of the yk's passes by changing the intermediate
-representation. In yk, when the \iti{add word} switches from JIT compilation to
-interpretation the yk system tries to map back machine basic blocks to LLVM IR
-basic block. The yk passes makes sure that the mapping is accurate else
+representation. In yk, when the yk interpreter switches from JIT compilation to
+interpretation, the yk system tries to map back machine basic blocks to LLVM IR
+basic blocks. The yk passes makes sure that the mapping is accurate else the
 correctness and efficiency of the meta-tracing system will be compromised. We
 discuss this further in \label{blah}.
 
 The result of yk pessimistically turning off all of the optimisation passes is
 that the performance of yk compiled interpreter is significantly slow even when
 JIT is turned off. What this means is simply embedding yk onto the interpreter
-has \iti{add word} cost.
+has \iti{add word}\iti{substantial? conspicuous?} cost.
 
 \begin{figure}[ht!]
     \label{figure:example}
@@ -101,48 +98,48 @@ has \iti{add word} cost.
     use the same JIT without having to write their own tracing JITs}
 \end{figure}
 
-In this report, I show improvements I made which reduced the performance overhead
-when retrofitting yk onto existing C interpreter. The aim of the report is to lessen the
+In this report, I discuss improvements I made which reduced the performance overhead
+when retrofitting yk onto existing C interpreter. The aim of the report is to reduce the
 gap between performance of interpreter which is compiled via yk's modified
 implementation of llvm called ykllvm and the interpreter which is compiled with
 gcc or llvm's clang.
 
 The main contributions of this report are:
 \begin{itemize}
-    \item{A parallel genetic algorithm to find llvm optimisation passes that do not
+    \item{A parallel genetic algorithm to find LLVM optimisation passes that do not
         break yk's tests and improve the performance of yklua, a C interpreter.}
-    \item{}
-        {Identfying and fixing some of the causes of overhead when using yk to build
-        yklua}
+    \item{Reduced overhead of retrofitting yk on lua interpreter from 5x to 3x when compared to non-yk lua interpreter.}
+    \item{Optimised yk-based pass for inserting stackmaps.}
+    \item{Idenfied macro-optimisation opportunities in yk's compiler passes to guide future work.}
 \end{itemize}
 
 \subsection{Defining the problem}
 The first hypothesis I test in this report is:
 
-\textbf{H1} \hspace*{0.5cm} There exists a subset of existing compiler
+\textbf{H1} \hspace*{0.5cm} There exists a subset of compiler
 optimization passes (drawn from the current list of optimizations available in
 LLVM) that is compatible with the meta-tracing system and meaningfully improves
 the interpreter's performance.
 \\
-To validate this hypothesis, I started out with a divide-and-conquer algorithm
+To validate this hypothesis, I start out with a divide-and-conquer algorithm
 to find a pass sequence compatible with the meta-tracing system. Compatibility
 is defined as the successful passing of the meta-tracer system's test cases and
 the pass sequence's ability to build and run the C interpreter. However, while
-this method found a compatible pass sequence (which didn't break yk's test
+this method found a compatible pass sequence (which did not break yk's test
 cases), it did not find a pass sequence which improved the interpreter's
-performance and, in some cases, even made it worse. Later, I will present a
+performance, and in some cases, even made it worse. Later, I present a
 better approach using a stochastic genetic algorithm, which not only found
 multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 
-There are total of 3 hypothesis in this report, the second and third hypothesis
+There are a total of 3 hypothesis in this report, the second and third hypothesis
 are discussed in Section x.
 
 \iti{write structure in better way}
 The report is structured as follows: Section \ref{sec:background} is the background,
-the next section i.e~Section \ref{section:3} addresses interpreter's performance in
+the next section i.e~Section \ref{section:3} addresses interpreter performance in a
 meta-tracing system. This is followed by Section \ref{section:4} and
-\ref{section:5} describing the experimental setup and what methodology is used to
+\ref{section:5} describing the experimental setup and the methodology used to
 conduct the experiments. Section \ref{section:6} discusses results, and finally I
 present Section \ref{section:7} for addressing related works and wrapping the
 report with Section \ref{section:8} i.e~conclusions and future Work.
@@ -788,8 +785,6 @@ names.}
 \subsection{Experiments}
 \label{section:5}
 
-\laurie{linking to prs isn't really the right thing to do here: you want a more abstract description, in general}
-
 To verify H1, I implemented a divide-and-conquer algorithm and tested it against yk's test suite.
 I compared the performance of yklua compiled with the pass sequence
 retrieved from the algorithm against the default yklua binary (i.e~ one compiled
@@ -973,8 +968,9 @@ two variants to 2x or lesser.
 Results at a glance:
 \begin{itemize}
     \item{the genetic algorithm is able to find pass sequences which satisfies our
-        oracle's constraints as well as improves yklua interpreter's performance by 1.75x.}
-    \item{50\% of the total overhead caused by retrofitting yk onto the lua
+        oracle's constraints as well as improves yklua interpreter's performance
+    by ~1.70x.}
+    \item{After optimisation performed above, 50\% of the total overhead caused by retrofitting yk onto the lua
         interpreter is contributed by yk-based passes.}
     \item{Optimised stackmap insert pass resulting in about 7\% performance
         improvement.}
@@ -1012,28 +1008,22 @@ files.lua       & ±                    & 0.201 ± \\
 \label{tab:yk_lua_benchmarks}
 \end{table}
 
-\iti{add this either in the introduction of future work}
-The bigger goal is to be able to make a custom optimisation with selected passes
-from the middle and backend optimisation pipeline, thus decreasing the overhead
-induced by retrofitting yk onto the interpreter (starting with the Lua
-interpreter). Working on this goal also means that along the way, I'll have to
-make macro-optimisation to yk and sometimes to the interpreter itself (i.e.~ the
-way we introduce hints for JIT in the interpreter).
-
 \subsection{Defining the Baselines}
 There are two binaries which can be considered as potential baseline. We shall
 refer to them as baseline 1 and baseline 2.
 
-\textbf{Baseline 1:} yklua compiled with `-O0` (i.e~ all optimisations are turned off).
+\textbf{Baseline 1:} yklua compiled with `-O0` (i.e~ all optimisations are
+turned off).
 
-\textbf{Baseline 2:} non-yk lua compiled with `-O2` \laurie{find out what the right ticks are in latex -- you can't use ` for start and end ticks}.
+\textbf{Baseline 2:} non-yk lua compiled with `-O2` \laurie{find out what the
+right ticks are in latex -- you can't use ` for start and end ticks}.
 
 \iti{make sure to put baseline 1/2 in further tables and references}
 
 My initial goal is to reduce the overhead of retrofitting yk onto the
 interpreter. To achieve this, I apply yk-compatible optimisation passes onto the
--O0 compiled yklua interpreter. The  optimisation passes that satisfy
-the oracle are considered to be yk-compatible. Once I reduce the performance overhead when
+-O0 compiled yklua interpreter. The  optimisation passes that satisfy the oracle
+are considered to be yk-compatible. Once I reduce the performance overhead when
 compared to Baseline 1, I shift my aim to bring the performance of the already
 optimised yklua closer to that of the -O2 compiled non-yk lua interpreter (i.e~
 Baseline 2).
@@ -1052,23 +1042,41 @@ As discussed in Section \iti{add lto section}, there are three levels of llvm
 optimisation pipeline: prelink, postlink, and backend optimisation. I modified
 yk-config to accept prelink and postlink optimisation passes, however
 overwriting backend optimisation is rather challenging and will be discussed
-later in this section. For the first set of performance numbers, I added a pass sequence (both
+later in this section. 
+
+For the first set of performance numbers, I added a pass sequence (both
 prelink and postlink) to the -O0 optimisation in yklua binary (i.e~ turning on the
 passes found via genetic algorithm) with the help of yk-config.
-\iti{APPENDIX}yk-config is a tool to apply yk-specific compiler and linker flags on the interpreter and other
-systems which use yk's meta-tracing system. yk-config makes
-configuring/compiling C interpreters easy by having the support to add `cflags`
-(compiler) and `ldflags` (linker), this can be used to add the prelink and
-postlink pass sequences found via the genetic algorithm by appending them to
-cflags and ldflags.
 
 Finally, I use ykllvm's clang to compile yklua binary, as
 described in Section \iti{add about ykllvm}.
-\iti{APPENDIX}ykllvm is a modified version of llvm
-which applied yk specific flags to the final binary.
 
-Table \ref{table:preandpostlink} shows performance numbers 
-of adding prelink, postlink or both to yklua -O0 optimisation level. \iti{Row 1 and row 4 function as our reference points/baseline}.
+Table \ref{table:preandpostlink} shows performance numbers of adding prelink,
+postlink or both to yklua -O0 optimisation level.
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}p{4.0cm}lllcc@{}}
+\toprule
+\textbf{binary} & \textbf{prelink passes} & \textbf{postlink passes} & \textbf{optimisation level} & \textbf{Mean} & \textbf{95\% CI} \\ 
+\midrule
+yklua (Baseline 1) & no & no & `-O0` & 0.140 & 0.002 \\
+yklua & yes & no & `-O0` & 0.097 & 0.003 \\
+yklua & no & yes & `-O0` & 0.104 & 0.001 \\
+yklua & yes & yes & `-O0` & 0.096 & 0.003 \\
+yklua & no & no & `-O2` & 0.093 & 0.003 \\
+lua (Baseline 2) & no & no & `-O2` & 0.034 & 0.004 \\
+\bottomrule
+\end{tabular}
+\caption{The table shows the performance of the yklua interpreter built with and
+without a pass sequence obtained from a genetic algorithm with 95\% confidence
+intervals. The performance numbers are for 30 runs of `db.lua` when the JIT is
+turned off. All of the performance numbers represent the cost of retrofitting yk
+onto the interpreter. The first row is yklua built without any pass sequence,
+and consecutive rows with adding prelink, postlink, or both pass sequences to
+`-O0`. The last two rows are yklua and non-yk lua compiled lua with `-O2`
+optimisation level.}
+\label{table:preandpostlink}
+\end{table}
 
 \subsubsection{Compiling yklua with -O2}
 yklua blocked all backend optimisation to run by adding a pass in ykllvm called
@@ -1104,31 +1112,6 @@ runtime behaviour caused by interaction between yk-bases passes and the backend
 optimisations. The goal is to make a single optimisation level which works for
 all of our oracles (in this case they are the yk test suite and yklua's
 compilation and test suite).
-
-\begin{table}[H]
-\centering
-\begin{tabular}{@{}p{4.0cm}lllcc@{}}
-\toprule
-\textbf{binary} & \textbf{prelink passes} & \textbf{postlink passes} & \textbf{optimisation level} & \textbf{Mean} & \textbf{95\% CI} \\ 
-\midrule
-yklua & no & no & `-O0` & 0.140 & 0.002 \\
-yklua & yes & no & `-O0` & 0.097 & 0.003 \\
-yklua & no & yes & `-O0` & 0.104 & 0.001 \\
-yklua & yes & yes & `-O0` & 0.096 & 0.003 \\
-yklua & no & no & `-O2` & 0.093 & 0.003 \\
-lua & no & no & `-O2` & 0.034 & 0.004 \\
-\bottomrule
-\end{tabular}
-\caption{The table shows the performance of the yklua interpreter built with and
-without a pass sequence obtained from a genetic algorithm with 95\% confidence
-intervals. The performance numbers are for 30 runs of `db.lua` when the JIT is
-turned off. All of the performance numbers represent the cost of retrofitting yk
-onto the interpreter. The first row is yklua built without any pass sequence,
-and consecutive rows with adding prelink, postlink, or both pass sequences to
-`-O0`. The last two rows are yklua and non-yk lua compiled lua with `-O2`
-optimisation level.}
-\label{table:preandpostlink}
-\end{table}
 
 \subsubsection{Improvements with -O2}
 The prelink and postlink passes obtained from the genetic algorithm are a subset
@@ -1172,7 +1155,6 @@ of the backend optimisations.
 \subsubsection{Performance impact of yk-based flags when compiling yklua with -O2} 
 \textbf{a) Overhead introduced by yk passes} \\
 \label{table:c} shows performance overhead of individual yk passes.  
-\iti{why -O2 and not -O0?}
 The objective of the following experiment is to understand what portion of total
 slowdown in yklua is contributed by yk-based passes (either individual pass or a
 combination of them). I start to turn off yk specific passes individually and
@@ -1209,6 +1191,8 @@ binary compiled with -O2, . Row 14 shows maximum retrieval of performance when
 the particular combination of flags in the row are turned off.}
 \label{table:c}
 \end{table}
+\iti{add two more rows in table? 15 -flto turned off (show the performace)?
+and 16. Baseline 2? }
 
 From Table \ref{table:c} we can see that yklua after applying -O2 optimisations
 is 3x slower than Baseline 2. It is clear that yk-based flags contribute upto
@@ -1220,12 +1204,13 @@ expensive yk passes shown in table above.
 
 \textbf{b) Optimising yk-based Passes} \\
 \textbf{ yk-insert-stackmaps}
-
+\iti{rewrite this on Monday?}
 Stackmaps describe how the stack looks like i.e~ where the variables are stored
-either in the register or the stack slot. During JIT compilation when the gaurd
-fails very often (i.e~ when the failure hits threshold set by yk) the
+i.e~ either in the register or the stack slot. During JIT compilation when the
+guard fails very often (i.e~ when the failure hits threshold set by yk) the
 meta-tracer starts de-optimising the trace. De-optimisation is process of
-getting back to the control point \iti{a little unclear} to rebuild the trace with new gaurds. During
+getting back to the control point \iti{a little unclear} to rebuild the trace
+with new guards. During
 JIT compilation, the trace builder inlines functions into a trace which results
 in the changed structure of stack. With the help of Stackmaps, yk is able to get
 back the exact trace that it saw at the beginning of loop.
@@ -1235,8 +1220,7 @@ IR.
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it is intrinsic. However, stackmaps are not needed before calls to
-unmappable functions expect from the control point and yk\_promote,\iti{add what
-is control point and yk\_promote in the background section} as these are not traced and thus
+unmappable functions expect from the control point and yk\_promote, as these are not traced and thus
 never need de-optimisation. Example of unmappable functions are external calls
 and functions with no condition(s) inside them. This might claw back a few `ms`
 for this pass. 
@@ -1244,8 +1228,7 @@ for this pass.
 After adding a fix to make sure that stackmap is not inserted
 after unmappable functions, except for control point and
 yk\_promote calls, we can see \iti{add performance number} \% improvement over the
-baseline (yklua compiled with `-O0`). \footnote{link to the PR
-containing the change for --yk-insert-stackmaps and the test case:
+baseline (yklua compiled with `-O0`). \footnote{
 https://github.com/ykjit/ykllvm/pull/98}PR, \iti{old performance: of yklua
 binary from ${89.9ms}$ to ${86.3ms}$}.
 
@@ -1350,15 +1333,29 @@ it the default compilation level.
 
 \subsection{Understanding yk's test suite}
 
-In previous sections I had enabled optimisations at all levels and compiled
-yklua but with the JIT turned off. This meant that we could analyse the cost of
-embedding yk onto the interpreter but were not checking the results of turning
-on the JIT. 
+The first part of the oracle checked whether we are able to find compiler
+optimisation passes which resulted in successful compilation and run-time
+behaviour of yklua's test suite when the JIT was turned off. This helped us
+analyse the cost of embedding yk onto the interpreter. My work reduced the
+overhead of retrofitting yk onto lua from 5x to 3x. However, to further 
+reduce this overhead I'll need to figure out what is blocking optimisation
+passes to produce right run-time behaviour for the second part of the oracle.
 
-However, in our second oracle we are running yk's test cases when we
-enable optimisation passes at different levels when the JIT is turned on. This
-reveals wrong run-time behaviour caused due to turning on the passes and using
-the optimised IR for performing JIT optimisations.\iti{chat to lukas about this.} 
+The second part of the oracle expected yk's test suite to be successful when we
+enable optimisation passes at different levels with JIT turned on.
+However, for some optimisations (particularly that uses LTO's backend), this
+reveals wrong run-time for a good portion of the test cases.
+
+While some test-cases fail because they expect the IR to look in certain way,
+which we can discard as it is expected that some optimisations will re-arrange
+the parts of the IR without resulting in wrong runtime behaviour, other
+test-case fail with much more complicated problems. One example is that with
+some optimisations the loop is optimised in a way that control point is moved
+outside of the loop, this however is not expected by yk and thus results in test
+cases failing. Others result in wrong behaviour such as re-entering the loop
+after de-optimisation, this will require an in-depth investigation to figure out
+which optimisation is responsible for changing the IR in a way that yk (or
+particularly ykllvm) does not expects.
 
 My earlier work assumed that only backend optimisation passes interfere with
 the IR in a manner which results in wrong mapping from JIT IR back to the AOT IR,
@@ -1370,7 +1367,7 @@ splitting blocks after calls etc) we might be changing the IR in a way that is
 not expected by LLVM at that stage. Some backend optimisation passes
 may be optimising away/re-arranging the instructions that are needed either by
 Stackmap or are expected to be presented in the IR. Thus, although we are able to
-compile the test cases, they fail with the wrong run-time behaviuor.
+compile the test cases, they fail with the wrong run-time behaviour.
 
 The next set of experiments will include me studying the failing test cases when
 we enable prelink, postlink and backend optimisation, first individually and
@@ -1406,7 +1403,7 @@ bypasses the need for mapping \iti{incomplete?}
 \section{Conclusion and Future Work}
 \label{section:8}
 In this report, I have shown that with the help of a genetic algorithm, we can
-use middle \iti{middle-end?} and possibly backend optimisation passes with the C interpreter,
+use middle and possibly backend optimisation passes with the C interpreter,
 which not only maintain the correctness of the meta-tracer but simultaneously
 improves the interpreter's performance when compiled with meta-tracer
 retrofitted into it. As shown in the \label{section:6} I can win back around 1.75x
@@ -1430,6 +1427,7 @@ only blocks non-compatible optimisation but can use as much of the higher
 optimisation level passes as possible. The result will be 50\%, if not more, a
 reduction in the overhead of embedding yk onto the C interpreters.
 
+\iti{ask bhavye to proof read this section}
 \section{Timeline}
 \noindent
 \resizebox{1.1\textwidth}{!}{  % Increase scaling to 1.5
@@ -1447,5 +1445,21 @@ reduction in the overhead of embedding yk onto the C interpreters.
 \nocite{*}
 \bibliographystyle{plain}
 \bibliography{local.bib}
+
+\section{Appendix}
+\iti{APPENDIX}yk-config is a tool to apply yk-specific compiler and linker flags on the interpreter and other
+systems which use yk's meta-tracing system. yk-config makes
+configuring/compiling C interpreters easy by having the support to add `cflags`
+(compiler) and `ldflags` (linker), this can be used to add the prelink and
+postlink pass sequences found via the genetic algorithm by appending them to
+cflags and ldflags.
+
+\iti{APPENDIX}ykllvm is a modified version of llvm
+which applied yk specific flags to the final binary.
+
+\iti{add what
+is control point and yk\_promote in the background section}
+
+\iti{add about LLC}
 
 \end{document}
