@@ -406,8 +406,7 @@ through a sequence of LLVM passes. Passes are an operational unit of the IR whic
 can:
     \begin{itemize}
         \item{mutate the IR}
-        \item{perform some computation about the IR}
-        \item{or just print something}
+        \item{perform some computation about the IR} 
     \end{itemize}
 
 The scope of each pass is a unit of an IR; it is what the pass is going to operate on. This
@@ -441,13 +440,9 @@ parsing, type checking and so on. The target-independent optimisations are
 performed in the middle-end. And finally, the backend applies the target-specific
 optimisations and emits the machine code.
 
-Although languages such as C, C++, and Rust etc. have their own frontends,
-but they rely on LLVM for middle and backend optimisations.
-
-% Todo: add caption and citation to the diagram
 \begin{tcolorbox}[
     enhanced,
-    title=LLVM Compilation Process, % Caption
+    title=LLVM Compilation Process, 
     fonttitle=\bfseries,
     boxrule=2pt, 
     sharp corners,
@@ -467,20 +462,15 @@ Frontend                   LLVM
 \end{Verbatim}
 \end{tcolorbox}
 
-\subsubsection{Type of optimisation pipelines}
-For H1, we are mostly concerned with LLVM's middle-end optimisation
-pipeline. LLVM has three kinds of optimisation pipelines: the default (non-LTO)
-pipeline, ThinLTO pipeline, and FatLTO pipeline.
 
-\subsubsection{Default Pipeline}
-The default pipeline optimises each module separately, without any special
-knowledge about other modules. ``Module'' here refers to ``single source file''
-in C/C++ and a single ``codegen unit'''in Rust language.
+\subsubsection{LTO Pipeline}
 
-% Todo: add caption and citation to the diagram
+The LTO pipelines are split into a pre-link,  post-link optimisation
+and backend optimisation pipeline\cite{lto-prepost}.
+
 \begin{tcolorbox}[
     enhanced,
-    title=LLVM Compilation Process, % Caption
+    title=LLVM Compilation Process, 
     fonttitle=\bfseries,
     boxrule=2pt, 
     sharp corners,
@@ -491,90 +481,6 @@ in C/C++ and a single ``codegen unit'''in Rust language.
     before upper={\parindent15pt}
 ]
 \begin{Verbatim}[fontsize=\scriptsize, formatcom=\bfseries]
-Module 1 --(Optimise)--> Module 1'
-Module 2 --(Optimise)--> Module 2'
-Module 3 --(Optimise)--> Module 3'
-\end{Verbatim}
-\end{tcolorbox}
-
-\subsubsection{ThinLTO Pipeline}
-
-The LTO pipelines are split into a pre-link and a post-link optimisation
-pipeline\cite{lto-prepost}. After the pre-link pipeline, ThinLTO performs some
-lightweight cross-module analysis, such as importing certain functions from
-other modules to make them ready for inlining. The post-link optimisation
-however, works only on individual modules. Pre-link optimisations simplify the
-modules for optimisations, while contrary to the name, post-link optimisations
-happen during the link-time stage and perform both module simplification and
-optimisations through passes.
-
-\begin{tcolorbox}[
-    enhanced,
-    title=LLVM Compilation Process, % Caption
-    fonttitle=\bfseries,
-    boxrule=2pt, 
-    sharp corners,
-    colback=white,
-    colframe=gray,
-    coltitle=black,
-    attach title to upper,
-    before upper={\parindent15pt}
-]
-\begin{Verbatim}[fontsize=\scriptsize, formatcom=\bfseries]
-                              cross-import
-Module 1 --(ThinLTO pre-link)------\-/-----(ThinLTO post-link)--> Module 1'
-Module 2 --(ThinLTO pre-link)-------X------(ThinLTO post-link)--> Module 2'
-Module 3 --(ThinLTO pre-link)------/-\-----(ThinLTO post-link)--> Module 3'
-\end{Verbatim}
-\end{tcolorbox}
-
-\subsubsection{FatLTO Pipeline}
-Finally, after the pre-link step, FatLTO merges all modules together
-and then runs the post-link optimisations on a single large module:
-
-% Todo: add caption and citation to the diagram
-\begin{tcolorbox}[
-    enhanced,
-    title=LLVM Compilation Process, % Caption
-    fonttitle=\bfseries,
-    boxrule=2pt, % Thickness of the box border
-    sharp corners,
-    colback=white,
-    colframe=gray,
-    coltitle=black,
-    attach title to upper,
-    before upper={\parindent15pt}
-]
-\begin{Verbatim}[fontsize=\scriptsize, formatcom=\bfseries]
-             begin{Verbatim}[fontsize=\scriptsize,formatcom=\bfseries]
-                                 merge
-Module 1 --(FatLTO pre-link)-------\
-Module 2 --(FatLTO pre-link)---------------(FatLTO post-link)--> Module'
-Module 3 --(FatLTO pre-link)-------/
-\end{Verbatim}
-\end{tcolorbox}
-
-While LTO stands for ``link-time optimisation'', it is not necessarily performed
-by the linker. For example, rustc performs LTO as part of its
-compilation process. 
-LLVM’s optimisation pipeline looks like:
-
-% Todo: add caption and citation to the diagram
-\begin{tcolorbox}[
-    enhanced,
-    title=LLVM Compilation Process, % Caption
-    fonttitle=\bfseries,
-    boxrule=2pt, % Thickness of the box border
-    sharp corners,
-    colback=white,
-    colframe=gray,
-    coltitle=black,
-    attach title to upper,
-    before upper={\parindent15pt}
-]
-\begin{Verbatim}[fontsize=\scriptsize, formatcom=\bfseries]
-
-|-------------------------- default ----------------------------|
 
 |------------- pre-link --------------|
 |------------------------- post-link ---------------------------|
@@ -583,17 +489,17 @@ LLVM’s optimisation pipeline looks like:
 |       module simplification         |
 |-------------------------------------|   /---------------------\
 |                                     |   | module optimisation |
-|                    cgscc            |   |---------------------|   /---------\
+|                                     |   |---------------------|   /---------\
 | /-------\ /-----------------------\ |   |                     |   | backend |
-| | early | |       inlining        | |   | vectorization       |   \---------/
-| |cleanup| |function simplification| |   | runtime unrolling   |
-| \-------/ \-----------------------/ |   \---------------------/
+| | early | |       inlining        | |   \---------------------/   \---------/
+| |cleanup| |function simplification| |                                        
+| \-------/ \-----------------------/ |   
 |                                     |
 \-------------------------------------/
 \end{Verbatim}
 \end{tcolorbox}
 
-
+\iti{rewrite with stephen's comments}
 In the LLVM LTO pipeline, module simplification includes pre-link optimizations
 such as initial cleanup, inlining of functions, and call graph optimisation to
 refine the modules for additional optimization processes. Following
@@ -602,10 +508,6 @@ like vectorization and dynamic loop unrolling to improve the program's overall
 performance. Finally, the backend phase compiles the machine code,
 integrating register allocation and optimizations tailored to the specific
 architecture, resulting in a faster executable code.
-
-For the yk meta-tracer, we work with FatLTO because it merges multiple modules into
-one giving us full IR. yk can potentially work with ThinLTO and the choice of
-going with FatLTO is just for the sake of convenience.
 
 \subsection{Genetic Algorithms}
 A genetic algorithm is a stochastic search algorithm which borrows the concept of
