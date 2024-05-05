@@ -1130,7 +1130,7 @@ on how much performance can be retrieved back by optimising some of the most
 expensive yk passes shown in table above. 
 
 \textbf{b) Optimising yk-based Passes} \\
-\textbf{ yk-insert-stackmaps}
+\textbf{yk-insert-stackmaps}
 \iti{rewrite this on Monday?}
 Stackmaps describe how the stack looks like i.e~ where the variables are stored
 i.e~ either in the register or the stack slot. During JIT compilation when the
@@ -1152,20 +1152,17 @@ never need de-optimisation. Example of unmappable functions are external calls
 and functions with no condition(s) inside them. This might claw back a few `ms`
 for this pass. 
 
-After adding a fix to make sure that stackmap is not inserted
-after unmappable functions, except for control point and
-yk\_promote calls, we can see \iti{add performance number} \% improvement over the
-baseline (yklua compiled with `-O0`). \footnote{
-https://github.com/ykjit/ykllvm/pull/98}PR, \iti{old performance: of yklua
-binary from ${89.9ms}$ to ${86.3ms}$}.
+After adding a fix to make sure that stackmap is not inserted after unmappable
+functions, except for control point and yk\_promote calls, we can see around
+10\% speedup when compared to yklua binary without this fix\footnote{
+https://github.com/ykjit/ykllvm/pull/98}. Similarly, another opportunity for
+macro optimisation is to not add stackmaps for the functions which do not have
+conditions in them (i.e~ no guards) as they have no need for de-optimisations.
+This however is more complex to fix as currently there is no direct way to
+figure whether a function has a condition in it or not. For now I'll leave this
+fix as a part of future work.
 
-Similarly, another opportunity of macro optimisation is to not add stackmaps for
-the functions which do not have conditions in them (i.e~ no gaurds) as they have
-no need for de-optimisations. This however is more complex to fix as currently
-there is no direct way to figure whether a function has a condition in it or
-not. For now I'll leave this fix as a part of future work.
-
-\textbf{ yk-split-blocks-after-calls pass}
+\textbf{yk-split-blocks-after-calls pass}
 
 SplitBlocksAfterCalls pass in yk makes sure that function calls terminate by
 splitting blocks after every call. This pass is needed so that outlining is
@@ -1209,7 +1206,7 @@ the loop starts and is then sent to the control point \textit{confirm this}.
 However, this was done for every instruction instead of performing reallocation
 only for those instructions whose bytecode size was larger than the current
 location array size. This turned out to be quite performance-intensive and made
-some programs (such as `verybig.lua` in lua benchmark) almost 10x slower. The
+some programs exponentially slower as they grew in size. The
 fix for this was checking and reallocating the location array only when the
 resize was necessary.\footnote{https://github.com/ykjit/yklua/pull/84}
 
