@@ -70,17 +70,19 @@ information at runtime to optimise most executed paths. This technique is also
 used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}, and in Chrome's V8
 through their tracing V8 system~\cite{v8jit}.
 
-YK is a meta-tracing system which traces the execution of the interpreter instead of tracing
-the user program executed by the interpreter. At the current stage, yk does not
-support interpreter compilation using any other level than -O0, and even at that
-level, it disables all backend optimisations. When we enable optimisation
-passes at different levels, they either interfere or undo the 
-work done by some of the yk's passes by changing the intermediate
-representation. In yk, when the yk interpreter switches from JIT compilation to
-interpretation, the yk system tries to map back machine basic blocks to LLVM IR
-basic blocks. The yk passes makes sure that the mapping is accurate else the
-correctness and efficiency of the meta-tracing system will be compromised. We
-discuss this further in \label{blah}.
+\iti{rewrite?}
+YK is a meta-tracing system which traces the execution of the interpreter
+instead of tracing the user program executed by the interpreter. At the current
+stage, yk uses modified LLVM for interpreter compilation and does not support
+any other level than -O0, and even at that level, it disables all backend
+optimisations. When JIT is turned on and we use optimisation passes at different
+levels, some of optimisation passes interfere or undo the work done by some of
+the yk's passes by changing the intermediate representation. In yk, when the yk
+interpreter switches from JIT compilation to interpretation, the yk system tries
+to map back machine basic blocks to LLVM IR basic blocks. The yk passes makes
+sure that the mapping is accurate else the correctness and efficiency of the
+meta-tracing system will be compromised. We discuss this further in
+\label{blah}.
 
 The result of yk pessimistically turning off all of the optimisation passes is
 that the performance of yk compiled interpreter is significantly slow even when
@@ -147,6 +149,8 @@ report with Section \ref{section:8} i.e~conclusions and future Work.
 \section{Background}
 \label{sec:background}
 
+IMPORTANT: https://github.com/softdevteam/softdev/blob/5c7ef8c3fc4149e0c7547879ed96df1d4f64a7e3/talks/hwmetatracer/hwmetatracer.ltx
+
 This section provides background on dynamically typed languages, just-in-time
 (JIT) compilation, the tracing JIT compilation technique, and meta-tracing. The
 highlight of this section is meta-tracing systems, as they are an important
@@ -157,64 +161,26 @@ out.
 
 \subsection{Dynamic typed languages and their implementation}
 
-Dynamic typed languages have seen a rapid increase in their use for developing
-software not just for the web but also for domains that previously only used
-statically typed languages\iti{https://dl.acm.org/doi/pdf/10.1145/1543135.1542528}. The appeal
-often lies in their ease of development and the flexibility they offer. Dynamic
-languages defer type-safety to runtime, unlike statically typed languages which
-handle it at compile-time, which affects their performance negatively.
-
-Although dynamically typed languages can be compiled ahead-of-time (AOT), they
-often run slower when compiled. This is partly because, in statically typed
-languages, compilers can utilize type information to create optimized machine
-code. However, in dynamically typed languages, like JavaScript, types can
-change, leading to optimization challenges for compilers. Consequently, they
-must generate more general, slower code to accommodate various types. Attempts
-to get interesting static information for languages like Python have produced
-limited results [Can05] or are quite complex and don’t scale well [Sal04]
-because of the nature of dynamically typed languages.
-
-Techniques like static type inference can improve performance by predicting
-types, but these approaches are complex and not suited for environments that
-require rapid updates, such as web pages in real time. For example, optimizing a
-web app for quick loading and interaction becomes more challenging with dynamic
-typing due to the additional analysis required.
-
-Implementation of dynamically typed languages is not an easy task as they are
-not usually designed for speed. Some of the challenges when implementing
-dynamically typed languages are:
-\begin{itemize}
-    \item{Late Binding}
-    \item{Dispatching}
-    \item{Boxing}
-\end{itemize}
-
-However, the categorisation of dynamic and statically typed languages are not
-always very clear. A statically typed language can have dynamic feature, one
-such example is Jave which often use dynamic method dispatch, dynamic code
-execution, type inference etc. All the dynamic feature results in limited
-performance gain from ahead-of-time (AOT) compilation. This is because to generate efficient
-and type-specialised code the compiler knowledge of variable type.
-
 Interpreters are often preferred method for implementing dynamically typed
-languages such as Python, Ruby, and JavaScript. This preference stems from their
-ability to evaluate code line-by-line, which aligns better with the dynamic
-nature of these languages. This method is easier to manage with runtime
-type changes, making interpreters more suitable for dynamically typed languages
-than AOT compilationi\iti{[Can05]}.
+languages such as Python, Ruby, and JavaScript. Their appeal often lies in
+ease of development and flexibility they offer. However, interpreters 
+inherently suffer from slower execution speeds.
 
-However, while interpreters provide convenience and simplicity, they inherently
-suffer from slower execution speeds.
+While dynamically typed languages can be compiled, they are often slower to
+run when compiled as compilers will have to generate more general and slower
+code to accommodate various type.
 
-These challenges has resulted in years of research to bring performance of
-dynamically typed languages to an acceptable performance levels.Early results
-for Lisp [SJG93] and Smalltalk [DS84] involved extensive research around the
-Self language [CUE89, HU94, Hö94], which was later applied to the Hotspot VM
-[PVC01]. The common theme in all of these research was they used a JIT compiler
-[Ayc03] to compile and recompile parts of the program at runtime, this was done
-for most executed part of the program. JIT compilation gives advantages of 
-interpretation with the performance benefits of compiled code, optimizing
-execution speed without compromising the flexibility dynamic languages require.
+The challenges that lies in optimising implementation for dynamic languages is
+not as easy task as they are not usually designed for speed. Which has resulted
+in years of research to bring performance of dynamically typed languages to an
+acceptable performance levels. Early results for Lisp [SJG93] and Smalltalk
+[DS84] involved extensive research around the Self language [CUE89, HU94, Hö94],
+which was later applied to the Hotspot VM [PVC01]. The common theme in all of
+these research was they used a JIT compiler [Ayc03] to compile and recompile
+parts of the program at runtime, this was done for most executed part of the
+program. JIT compilation gives advantages of interpretation with the performance
+benefits of compiled code, optimizing execution speed without compromising the
+flexibility dynamic languages require.
 
 However, the challenge with Just-in-time compilation is that it is not an easy
 implementation technique, especially when the language it is targeting is 
@@ -222,22 +188,7 @@ itself a complex one. The challenge is to maintain the development of such
 JIT compilers with the pace of the language development, this requires hundreds
 of engineers effort spanning over multiple years.
 
-Executing a dynamic programming language on interpreter has large overhead when
-compared to running same program using statically typed language like C. In next
-subsection we will be looking at how JIT techniques such as tracing JIT can help
-us to overcome some of these overheads.
-
 Figure shows typical working on JIT. 
-\subsection{PyPy and RPython}
-
-PyPy is a framework to write efficient implementation for dynamic languages such
-as Python. The necessary condition to use pypy is that the interpreter's implementation
-has to be written in RPython (``Restricted Python'')[AACM07]. RPython is a
-subset of python. First the language interpreter is written in RPython and then
-later translated into target environment (usually C/Posix). One of the low-level
-detail that is added while translation is MetaJIT, which is language independent
-tracing just-in-time compiler. In label{meta-tracing} I explain more in detail
-about what it is and how it works.
 
 Many dynamic languages use bytecode interpreters without advanced technique like
 JIT compilation. The reason for the limited use of JIT compiler is complexities
@@ -276,17 +227,35 @@ Tracing JIT makes assumptions such as:
         execution path}
 \end{itemize}
 
-\iti{add figure about tracing jit from ipad}
+
+Meta-tracing (also often called MetaJIT) is a form of meta-compilation which
+can be used to build JIT virtual machines for dynamic languages by feeding some
+hints in the existing interpreter for the language. This makes it much easier
+for developers to use tracing JIT for their languages without writing one
+themselves.
+
+The main difference between a tracing JIT and meta-tracing JIT is that, the
+former is used to record and compile traces of a user program as it is being
+executed, while the later works one level down and is used to record and compile
+traces of interpreter as it executes the user program\cite{meta-tracing}.
 
 \subsection{Retrofitting tracing JIT to an interpreter}
 \label{meta-tracing}
-The tracing JIT in yk is applied to the interpreter running the user program
-instead of it being applied directly to the user program. A tracing JIT
-finds the hot loops in the program to compile. Since in yk's case that program is
-an interpreter the meta-tracing system care about interpreter's loop which is
-bytecode dispatch loop(i.e~if we consider bytecode interpreter) as well as
-the hot loop in the user program.
 
+\iti{add figure about ykjit from ipad}
+YK is a meta-tracing system in which the tracing JIT is applied directly to the
+interpreter which runs the user program instead of it being applied directly to the user
+program. A tracing JIT finds the hot loops in the program to compile. At
+current stage YK is only compatible with bytecode interpreter. \iti{why?} Since
+in yk's case that program is an interpreter the meta-tracing system care about
+interpreter's loop which is bytecode dispatch loo, as well as the hot loop in
+the user program.
+
+\iti{rewrite this explaining what is loop unrolling and why we do it? :
+https://dl.acm.org/doi/pdf/10.1145/1565824.1565827 -> 3.1}
+
+\iti{maybe use hwtracer slides to explain how yk is retrofitted, control point,
+storing location etc}
 In a simple bytecode interpreter the dispatch loop is sometimes the only hot
 loop present in the whole program. This loop is responsible for executing a
 opcode with each iteration. As it is unlikely that same opcode will run multiple
@@ -306,7 +275,7 @@ later(at runtime) replaced by original control-point. The loop is considered
 closed only when all the variables that make up the program counter are same in
 second iteration. This is how the interpreter traces a single user loop.
 \iti{draw a diagram}
-\iti{add example for adding hints}
+\iti{add example for adding hints} -> maybe not necessary 
 \iti{Figure 4 from Bolz example of trace in tracing and meta-tracing jit from Bolz paper}
 
 \begin{figure}[ht!]
@@ -330,24 +299,6 @@ second iteration. This is how the interpreter traces a single user loop.
     is used by the interpreter.}
     \label{traces}
 \end{figure}
-
-The main difference between a tracing JIT and meta-tracing JIT is that, the
-former is used to record and compile traces of a user program as it is being
-executed, while the later works one level down and is used to record and compile
-traces of interpreter as it executes the user program\cite{meta-tracing}.
-
-Meta-tracing (also often called MetaJIT) is a form of meta-compilation which
-can be used to build JIT virtual machines for dynamic languages by feeding some
-hints in the existing interpreter for the language. This makes it much easier
-for developers to use tracing JIT for their languages without writing one
-themselves.
-
-As MetaJIT is used to trace the operation of the interpreter, the tracing needs
-to record a full loop in the user program. Tracing the behaviour of the
-interpreter helps in reusing the MetaJIT for different language interpreters, as
-it would work independent of the language semantics.
-
-\iti{add diagram normal tracing JIT and Meta-JIT}
 
 \begin{figure}[htbp]
     \centering
@@ -947,12 +898,12 @@ example}
 
 The first version of the genetic-algorithm was not parallelised and it took 4-5
 hours to run 10 generations. Computation of the fitness function for each entity
-is independent of other entities in the population, and is the most expensive operation in the algorithm.
-Therefore, I optimised the algorithm to compute the fitness of a generation in parallel which reduced the run-time for 10
-generations from 4-5 hours to 15 minutes \laurie{does that mean this is an ``embarrassingly parallel'' problem?}. This improved my efficiency in running
+is independent of other entities in the population, and is the most expensive
+operation in the algorithm. Therefore, I optimised the algorithm to compute
+the fitness of a generation in parallel which reduced the run-time for 10
+generations from 4-5 hours to 15 minutes. This improved my efficiency in running
 experiments and finding patterns in successful and non-successful pass sequence.
-\footnote{commit with this change:
-https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
+\footnote{https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
 \label{section:6}
@@ -983,30 +934,6 @@ backend optimisations work with the oracle. As a prerequisite to designing and
 executing experiments for hypotheses related to backend optimisation, I needed
 to fix the compilation errors that occurred when enabling backend optimisation
 with both -O0 and -O2 flags.
-
-\iti{move the table to appropriate section}
-\begin{table}[h]
-\centering
-\begin{tabular}{lcc}
-\toprule
-Benchmark       & Non-optimized yklua & Optimized yklua \\
-                & (compiled in -O0)    & (compiled in -O0) \\
-\midrule
-db.lua          & 0.140 ±              & 0.130 ± \\
-verybig.lua     & ±                    & 0.628 ± \\
-constructs.lua  & ±                    & 4.576 ± \\
-gc.lua          & ±                    & 0.471 ± \\
-sort.lua        & ±                    & 1.288 ± \\
-tpack.lua       & ±                    & 0.018 ± \\
-varg.lua        & ±                    & ± \\
-calls.lua       & ±                    & 0.198 ± \\
-erros.lua       & ±                    & ± \\
-files.lua       & ±                    & 0.201 ± \\
-\bottomrule
-\end{tabular}
-\caption{Comparison of yklua benchmarks}
-\label{tab:yk_lua_benchmarks}
-\end{table}
 
 \subsection{Defining the Baselines}
 There are two binaries which can be considered as potential baseline. We shall
@@ -1399,6 +1326,17 @@ the interpreter compiled in its own format: it actually interprets an
 interpreter. With software tracing you can inject code into the AOT-compiled
 binary that directly records the IR blocks that were executed, and this entirely
 bypasses the need for mapping \iti{incomplete?}
+
+\subsection{PyPy and RPython}
+
+PyPy is a framework to write efficient implementation for dynamic languages such
+as Python. The necessary condition to use pypy is that the interpreter's implementation
+has to be written in RPython (``Restricted Python'')[AACM07]. RPython is a
+subset of python. First the language interpreter is written in RPython and then
+later translated into target environment (usually C/Posix). One of the low-level
+detail that is added while translation is MetaJIT, which is language independent
+tracing just-in-time compiler. In label{meta-tracing} I explain more in detail
+about what it is and how it works.
 
 \section{Conclusion and Future Work}
 \label{section:8}
