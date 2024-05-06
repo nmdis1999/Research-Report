@@ -151,63 +151,63 @@ out.
 
 \subsection{Dynamic typed languages and their implementation}
 
-Interpreters are often preferred method for implementing dynamically typed
-languages such as Python, Ruby, and JavaScript. Their appeal often lies in
+Interpreters are often the preferred method for implementing dynamically typed
+languages such as Python, Ruby, and JavaScript. Their appeal often lies in the
 ease of development and flexibility they offer. However, interpreters 
 inherently suffer from slower execution speeds.
 
 While dynamically typed languages can be compiled, they are often slower to
 run when compiled as compilers will have to generate more general and slower
-code to accommodate various type.
+code to accommodate various type. \iti{rephrase}
 
-The challenges that lies in optimising implementation for dynamic languages is
-not as easy task as they are not usually designed for speed. Which has resulted
-in years of research to bring performance of dynamically typed languages to an
-acceptable performance levels. Early results for Lisp [SJG93] and Smalltalk
+Optimising implementation for dynamic languages is not as easy task as they are
+not usually designed for speed. This has resulted in years of research to
+bring the performance of dynamically typed languages to an
+acceptable performance level. Early results for Lisp [SJG93] and Smalltalk
 [DS84] involved extensive research around the Self language [CUE89, HU94, Hö94],
 which was later applied to the Hotspot VM [PVC01]. The common theme in all of
-these research was they used a JIT compiler [Ayc03] to compile and recompile
-parts of the program at runtime, this was done for most executed part of the
+this research was they used a JIT compiler [Ayc03] to compile and recompile
+parts of the program at runtime; this was done for the most executed parts of the
 program. JIT compilation gives advantages of interpretation with the performance
 benefits of compiled code, optimizing execution speed without compromising the
-flexibility dynamic languages require.
+flexibility that dynamic languages require.
 
 However, the challenge with Just-in-time compilation is that it is not an easy
-implementation technique, especially when the language it is targeting is 
+implementation technique, especially when the language it targets is
 itself a complex one. The challenge is to maintain the development of such
 JIT compilers with the pace of the language development, this requires hundreds
 of engineers effort spanning over multiple years.
 
 Figure shows typical working on JIT. 
 
-Many dynamic languages use bytecode interpreters without advanced technique like
-JIT compilation. The reason for the limited use of JIT compiler is complexities
+Many dynamic languages use bytecode interpreters without advanced techniques like
+JIT compilation. The reason for the limited use of JIT compilers is the complexity
 of their implementation.  Languages such as JavaScript and Python have very
-complex core semantics with many corner case.  So how does these languages use
-JIT to improve their performance without dealing with writing their own JITs?
+complex core semantics, with many corner cases.  So how can these languages use
+JIT to improve their performance without having to writing their own JITs?
 One solution is meta-tracing. Meta-tracing is a technique to efficiently execute
 dynamic languages without having to rewrite a dedicated JIT for each of them,
 
 \subsection{JIT and Meta-compilation}
 
-There are different ways to implement just-in-time compilers, one way is by
-using tracing JIT. A tracing JIT records and compiles traces of program being
-interpreted. One of the important topic to be discussed in this report is
-insertion of MetaJIT in the interpreter. MetaJIT is a kind of tracing JIT
-compiler, in this section we will cover what tracing JIT is and how they relate
+There are different methods to implement just-in-time compilers, one of them
+being tracing JIT. A tracing JIT records and compiles traces of the program being
+interpreted. One of the important topics to be discussed in this report is
+insertion of a MetaJIT in the interpreter. MetaJIT is a kind of tracing JIT
+compiler. In this section we will cover what tracing JIT is and how they relate
 to MetaJIT.
 
 The first project to explore tracing JIT was Dynamo, in which tracing
-optimisation were used to dynamically optimise machine code at runtime. Later
-the optimisation technique were used by Java Virtual Machines [GPF06, GF06, BCW+10, IHWN11].
-Due to ease of their implementation tracing JIT became popular and were later
+optimisations were used to dynamically optimise machine code at runtime. Later,
+the optimisation techniques were used by Java Virtual Machines [GPF06, GF06, BCW+10, IHWN11].
+Due to the ease of their implementation, tracing JITs became popular and were later
 used in projects like Mozilla's TraceMonkey and LuaJIT. 
 
-A trace is a sequential instructions which can be executed consecutively during
+A trace is a sequence of instructions which are executed during a 
 program's execution. Tracing refers to the process of capturing the information
 about the execution of a program i.e~traces of the program. Tracing JITs use the
 technique where they collect/record information about most executed (or ``hot'')
-paths via traces of the program and later at runtime, uses the information to
+paths via traces of the program, and later at runtime, use the information to
 perform optimisations and make inlining decisions\cite{tracing-jit}. 
 
 \begin{figure}[ht!]
@@ -221,10 +221,10 @@ perform optimisations and make inlining decisions\cite{tracing-jit}.
     of the program's trace}
 \end{figure}
 
-Tracing JIT makes assumptions such as:
+A tracing JIT makes assumptions such as:
 \begin{itemize}
     \item{Programs spend most of their time inside the loops}
-    \item{Several iteration of the same loop are likely to take the same
+    \item{Several iterations of the same loop are likely to take the same
         execution path}
 \end{itemize}
 
@@ -241,13 +241,13 @@ Tracing JIT makes assumptions such as:
 
 Meta-tracing (also often called MetaJIT) is a form of meta-compilation which
 can be used to build JIT virtual machines for dynamic languages by feeding some
-hints in the existing interpreter for the language. This makes it much easier
-for developers to use tracing JIT for their languages without writing one
+hints into the existing interpreter for the language. This makes it much easier
+for developers to use a tracing JIT for their languages without writing one
 themselves.
 
-The main difference between a tracing JIT and meta-tracing JIT is that, the
+The main difference between a tracing JIT and meta-tracing JIT is that the
 former is used to record and compile traces of a user program as it is being
-executed, while the later works one level down and is used to record and compile
+executed, while the latter works one level down and is used to record and compile
 traces of interpreter as it executes the user program\cite{meta-tracing}.
 
 \subsection{Retrofitting tracing JIT to an interpreter}
@@ -257,8 +257,8 @@ traces of interpreter as it executes the user program\cite{meta-tracing}.
 YK is a meta-tracing system in which the tracing JIT is applied to the bytecode
 interpreter instead of it being applied to directly to the user program.
 
-There are two mechanism for collecting traces:
-software tracing and hardware tracing. YK uses Intel-PT to collect trace of the
+There are two mechanisms for collecting traces:
+software tracing and hardware tracing. YK uses Intel-PT to collect the trace of the
 interpreter running the user program. Intel Processor Trace (Intel PT) is a feature
 available in some Intel processors that provides a hardware-based tracing
 mechanism, enabling low overhead collection of program execution traces.
@@ -269,13 +269,13 @@ on a C interpreter:
 \begin{itemize}
     \item<1> Add hints to the interpreter written in C to make it compatible
         with yk.
-    \item<2> User programs start running in the interpreter written in C
+    \item<2> User programs starts running in the interpreter written in C
         , which is compiled with YKLLVM (currently with -O0).
     \item<3> When a hot loop is detected, run the user program with unoptimised
         interpreter, start Intel PT, execute the loop and collect the trace. %This will remove the 150x overhead of software meta-tracing!
     \item<4> Map the jump locations from PT trace back to C IR, giving us a
         usable trace for the interpreter.
-    \item<5> After collecting the trace IR optimise it into machine code.
+    \item<5> After collecting the trace IR, optimise it into machine code.
     \item<6> The next iteration of the loop will now use the (fast) optimised machine code rather than the (slow) interpreter.
 \end{itemize}
 
@@ -287,25 +287,25 @@ on a C interpreter:
 % ------------------------- 
 \textbf{Adding hints to the interpreter written in C}
 
-In a simple bytecode interpreter the dispatch loop is sometimes the only hot
+In a simple bytecode interpreter, the dispatch loop is sometimes the only hot
 loop present in the whole program. This loop is responsible for executing a
 opcode with each iteration. As it is unlikely that same opcode will run multiple
-times in a row the guards fails very often resulting in no performance
-difference\iti{add bolz paper}, failing the tracing JIT's assumptions fails. So,
-to optimise interpreter's performance yk uses loop unrolling. With loop
-unrolling we trace the execution of multiple opcodes effectively unrolling so
+times in a row the guards fail very often resulting in no performance
+difference\iti{add bolz paper}, contradicting the tracing JIT's assumptions. So,
+to optimise the interpreter's performance, yk uses loop unrolling. With loop
+unrolling, we trace the execution of multiple opcodes, effectively unrolling so
 much so that we end up with one user program loop. A user program loop is a hot
-loop in the user program, a loop is called hot when the interpreter's program
-counter reaches the same value multiple times indicating multiple iteration of
+loop in the user program; a loop is called hot when the interpreter's program
+counter reaches the same value multiple times indicating multiple iterations of
 the same loop.
 
-The program counter is stored in one of several variables in the interpreter. To
+The program counter is stored in one of the several variables in the interpreter. To
 figure out which variable holds value for the program counter, the MetaJIT needs
-hints (via a dummy control point). Since LLVM is Static-Single-Assignment (SSA)
+hints (via a dummy control point). Since LLVM is Static-Single-Assignment (SSA),
 it also adds temporary variables while generating the Intermediate
-Representation(IR). The dummy control point is later(at runtime) replaced by
+Representation(IR). The dummy control point is later(at runtime) replaced by the
 original control-point. The loop is considered closed only when all the
-variables that make up the program counter are same in second iteration. This is
+variables that make up the program counter \iti{all the variables?} are same in the second iteration. This is
 how the interpreter traces a single user loop.
 \iti{draw a diagram}
 \iti{add example for adding hints} -> maybe not necessary 
@@ -329,19 +329,19 @@ how the interpreter traces a single user loop.
 \begin{samepage}
 \textbf{Mapping jump locations from PT trace to LLVM IR}
 
-yk uses Intel PT as it's hardware tracer. However, Intel PT can only store a
+yk uses Intel PT as its hardware tracer. However, Intel PT can only store a
 stream of basic blocks and give their virtual addresses~\cite{intel-pt}. So,
 block mapping is used in hardware tracing to get from a traced virtual address
 to a file offset in the binary, to the LLVM IR block. The trace IR we get can
-also be called JIT IR. The yk meta-tracing system depends on loader API and a
+also be called the JIT IR. The yk meta-tracing system depends on loader API and a
 special LLVM section to do this. This section is emitted just before backend
 optimisation.
 \end{samepage}
 
-As trace represents one of many possible paths a program can take. To ensure
-correctness of the trace, guards are inserted at every point where trace could
+As trace represents one of many possible paths a program can take, to ensure
+correctness of the trace, guards are inserted at every point where the trace could
 have diverged to different route. At machine code level these guards are
-converted into checks, if a check in fails very often we quit executing the
+converted into checks. If a check in fails very often we quit executing the
 machine code and goes back to the interpretation. 
 
 At JIT compilation time, the tracing interpreter records the basic blocks
@@ -380,10 +380,10 @@ affecting the program's correctness and performance.
 \end{figure}
 
 However, some LLVM optimisation passes mess with the basic-block mapping (that
-is the JIT IR). One such example is when basic blocks are merged, some blocks
+is the JIT IR). One such example is when the basic blocks are merged, some blocks
 may be left unaccounted for in the trace. Additionally, LLVM applies some passes
 at different stages of the pipeline, even after the final IR has been generated
-(target specific optimisations). This again interferes with mapping and creates
+(target specific optimisations). This again interferes with the mapping and creates
 problems for the meta-tracer. To avoid this problem, the yk meta-tracing system
 turns off all the optimisations by default, which slows down the interpreter
 significantly even without the JIT being enabled.
@@ -402,8 +402,8 @@ significantly even without the JIT being enabled.
 
 Modern compilers have a huge number of optimisation passes available. These
 optimisation passes target unique segments of a program, such as transforming a
-function, basic block(s) or whole program\cite{llvm-pass}. Further, these optimisations can be
-applied at different stages of compilation pipelines. The sequence of passes tries
+function, basic block(s) or the whole program\cite{llvm-pass}. Further, these optimisations can be
+applied at different stages of the compilation pipelines. The sequence of passes tries
 to retain the semantics of the program while potentially improving the program's
 performance. There are two types of passes: Analysis and Transformation. Both
 of these passes work together: the analysis passes collect information about the
@@ -415,12 +415,12 @@ called an optimisation sequence. By default, without an optimisation level, all 
 the passes are turned off and an expert can choose to turn on and off passes
 accordingly~\cite{kulkarni}. 
 
-Choosing a right optimisation level for meta-tracing system such as yk is not
-an easy task. As mentioned earlier some optimisation passes changes JIT IR resulting in
-wrong run-time behaviour of program. Identifying the problematic pass either to
+Choosing a right optimisation level for meta-tracing systems such as yk is not
+an easy task. As mentioned earlier some optimisation passes change the JIT IR resulting in
+wrong run-time behaviour of a program. Identifying the problematic passes either to
 disable them or fix the problem is an important step in making yk faster. LLVM
-has number of compiler optimisation level, and each level has optimisation
-pipeline. In the next section I'll shed some light on it and how we can find the
+has a number of compiler optimisation levels, and each level has an optimisation
+pipeline. In the next section I'll shed some light on this and how we can find the
 right optimisation passes for our meta-tracing system.
 
 \subsection{LLVM Project}
@@ -489,7 +489,7 @@ Frontend                   LLVM
 
 
 \subsubsection{LTO Pipeline}
-The middle end constitutes of the LTO pipelines, which are split into a
+The middle-end comprises LTO pipelines, which are split into a
 pre-link,  post-link optimisation and backend optimisation
 pipeline\cite{lto-prepost}.
 
@@ -534,13 +534,11 @@ performance. Finally, the backend phase compiles the machine code,
 integrating register allocation and optimisations tailored to the specific
 architecture, resulting in a faster executable code.
 
-Now that we know the optimisation pipelines, the question rises: what can we do
-to figure out which pass to keep and which to disable for yk? Further, it is worth 
-exploring whether the order in which these optimisation passes are applied (at
-all the levels described above) important for our purpose? In this report
+Now that we know about the optimisation pipelines, the question rises: what can we do
+to figure out which pass to keep and which to disable for yk? In this report
 I have used two algorithms to explore the search space for yk-compatible pass
 sequence: a divide-and-conquer algorithm and a genetic-algorithm. I will be 
-explaining both of the algorithm in Section: \iti{add}. However, I'll still
+explaining both of the algorithm in Section: \iti{add}. However, I would still
 like to introduce some terminologies for genetic-algorithm in the next
 subsection.
 
@@ -745,7 +743,12 @@ optimisations might not work since their dependencies are not satisfied before
 they are processed.\footnote{https://github.com/ykjit/yk/pull/829}
 
 \subsubsection{Genetic Algorithm for phase-ordering problem}
-\iti{previous did not work because some points in search space unexplored? Basically need reason for going to GA.}
+The divide-and-conquer algorithm gives incompatible passes with reshuffle on, and if turned off,
+it does not explore the search space well enough to give a pass sequence that improves performace.
+The algorithm does not introduce any randomisation in the choise of passes, and therefore, the
+combinations created and tested. Thus comes the requirement of a stochastic algorithm that can
+explore more pass sequences in the search space, while keeping the order of passes fixed.
+
 The pseudocode below \iti{add a reference? I donno how!} details the genetic algorithm used
 to find an optimisation pass sequence compatible with yk and yklua. Initially, it randomly
 generates a population where each entity is a binary array indicating
@@ -756,11 +759,12 @@ every entity, indicating how ``optimal'' a pass sequence is.
 
 Optimal means a pass sequence which succeeds all yk's tests while also minimising
 execution time of the interpreter. Each entity's performance is tested
-in parallel, speeding up the process significantly. The algorithm uses
-tournament selection (reproduction operator) \iti{how many entities did we have in our tournament?} to pick parents, which are
-then recombined and mutated to form new entities. The process iterates through
-generations to improve pass sequence combinations. This evolutionary
-process continues until the optimal set of passes, leading to the best
+in parallel, speeding up the process significantly. To pick each new parent, the algorithm uses
+tournament selection (reproduction operator) between two randomly picked entities from the
+population, which selects the entity with a better fitness score of the two.
+The selected parents are then recombined and mutated to form new entities, resulting in the
+next generation of population. The process iterates through generations to improve pass
+sequence combinations (evolve) until the optimal set of passes, leading to the best
 interpreter performance is identified.
 
 \laurie{this is a fairly weird way to define an algorithm: why not use more
