@@ -673,15 +673,21 @@ names.}
 \subsection{Experiments}
 \label{section:5}
 
-To verify H1, I implemented a divide-and-conquer algorithm and tested it against yk's test suite.
-I compared the performance of yklua compiled with the pass sequence
-retrieved from the algorithm against the default yklua binary (i.e~ one compiled
-without any optimisations enabled). The result showed that the algorithm
-could not find a pass sequence which satisfied both constraints i.e~ passing yk's
-test suite and improving the yklua's interpreter's performance. Next, I wrote a
-genetic\-algorithm\footnote{https://github.com/ykjit/yk/pull/900} for the same. The genetic algorithm
-successfully found multiple pass sequences which satisfied both the constraints, and
-emitted the most performant sequence at the end. 
+The initial goal was to find 'some' subset of passes that satisfies the oracle. 
+As it would be very expensive to try all the combinations linearly, it is easier
+to reduce the search space every time our search in the bigger space fails. The
+simplest metric is to divide the search space into half.
+
+Therefore, to verify H1, I implemented a divide-and-conquer algorithm and tested
+it against yk's test suite. I compared the performance of yklua compiled with
+the pass sequence retrieved from the algorithm against the default yklua binary
+(i.e~ one compiled without any optimisations enabled). The result showed that
+the algorithm could not find a pass sequence which satisfied both constraints
+i.e~ passing yk's test suite and improving the yklua's interpreter's
+performance. Next, I wrote a
+genetic\-algorithm\footnote{https://github.com/ykjit/yk/pull/900} for the same.
+The genetic algorithm successfully found multiple pass sequences which satisfied
+both the constraints, and emitted the most performant sequence at the end. 
 
 In all of the experiments done below, we use yk as the meta-tracing system and yklua as
 the C interpreter being optimised.
@@ -743,11 +749,13 @@ optimisations might not work since their dependencies are not satisfied before
 they are processed.\footnote{https://github.com/ykjit/yk/pull/829}
 
 \subsubsection{Genetic Algorithm for phase-ordering problem}
-The divide-and-conquer algorithm gives incompatible passes with reshuffle on, and if turned off,
-it does not explore the search space well enough to give a pass sequence that improves performace.
-The algorithm does not introduce any randomisation in the choise of passes, and therefore, the
-combinations created and tested. Thus comes the requirement of a stochastic algorithm that can
-explore more pass sequences in the search space, while keeping the order of passes fixed.
+The divide-and-conquer algorithm gives incompatible passes with reshuffle on,
+and if turned off, it does not explore the search space well enough to give a
+pass sequence that improves performance. The algorithm does not introduce any
+randomisation in the choice of passes, and therefore, limits the number of
+combinations created and tested. Thus comes the requirement of a stochastic
+algorithm that can explore more pass sequences in the search space, while
+keeping the order of passes fixed.
 
 The pseudocode below \iti{add a reference? I donno how!} details the genetic algorithm used
 to find an optimisation pass sequence compatible with yk and yklua. Initially, it randomly
@@ -842,12 +850,13 @@ example}
 \subsection{Algorithm's speed up after parallelisation}
 
 The first version of the genetic-algorithm was not parallelised and it took 4-5
-hours to run 10 generations. Computation of the fitness function for each entity
-is independent of other entities in the population, and is the most expensive
-operation in the algorithm. Therefore, I optimised the algorithm to compute
-the fitness of a generation in parallel which reduced the run-time for 10
-generations from 4-5 hours to 15 minutes. This improved my efficiency in running
-experiments and finding patterns in successful and non-successful pass sequence.
+hours to run just 10 generations. Computation of the fitness function for each
+entity is independent of other entities in the population, and is the most
+expensive operation in the algorithm. Therefore, I optimised the algorithm to
+compute the fitness of a generation in parallel which reduced the run-time for
+10 generations from 4-5 hours to 15 minutes. This improved my efficiency in
+running experiments and finding patterns in successful and non-successful pass
+sequence.
 \footnote{https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
