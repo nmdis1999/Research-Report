@@ -885,9 +885,9 @@ Results at a glance:
 
 In addition to the above, I explore the possibility of making some, if not all,
 backend optimisations work with the oracle. As a prerequisite to designing and
-executing experiments for hypotheses related to backend optimisation, I needed
-to fix the compilation errors that occurred when enabling backend optimisation
-with both -O0 and -O2 flags.
+executing experiments for hypotheses related to backend optimisations, I needed
+to fix the compilation errors that occurred when enabling backend optimisations
+with both -O0's and -O2's optimisation passes.
 
 \subsection{Defining the Baselines}
 There are two binaries which can be considered as potential baseline. We shall
@@ -898,8 +898,6 @@ turned off).
 
 \textbf{Baseline 2:} non-yk lua compiled with `-O2` \laurie{find out what the
 right ticks are in latex -- you can't use ` for start and end ticks}.
-
-\iti{make sure to put baseline 1/2 in further tables and references}
 
 My initial goal is to reduce the overhead of retrofitting yk onto the
 interpreter. To achieve this, I apply yk-compatible optimisation passes onto the
@@ -1016,34 +1014,39 @@ compiled with subset of -O2 passes. Let's dig further why this might have
 happened.
 
 The reason -O2 is not optimising yklua interpreter to it's full potential is
-that some middle-end optimisation passes are getting blocked by yk-based pass.
-Postlink and backend optimisation share same LTO backend code (in
-LTOBackend.cpp), since YkAfterIRPasses (a ykllvm pass) applies optnone attribute
+that some of the middle-end optimisation passes are getting blocked by yk-based pass.
+Postlink and backend optimisation share same the LTO backend code (in
+LTOBackend.cpp). Since YkAfterIRPasses (a ykllvm pass) applies optnone attribute
 via LTO backend, it ends up blocking some of the postlink optimisations along
-with intended backend optimisations. This results in the interpreter loosing
-significant performance opportunities. However, we cannot remove the `optnone`
-and `noinline` attributes from the lto backend as they produce wrong runtime
-behaviour. The easiest way to remove these attributes from lto backend while
-still maintaining the soundness of the meta-tracing system is disabling only
-problematic backend optimisation passses. \iti{edit this line to show the
-intension behind these macro-optimisations} However, before designing
-experiments to find problematic backend optimisation passes I'll focus on
-another macro-optimisation opportunity. In next subsection I'll show the
-performance overhead of yk specific passes, this will help us to figure out
-which pass and then proceed to investigate whether it is necessary to block all
-of the backend optimisations.
+with intended backend optimisations. 
+
+This prevents us from exploring the performance gains we could have gotten from
+the blocked passes. However, we cannot remove the `optnone`
+and `noinline` attributes from the lto backend, as removing them allows all
+backend optimisations to run which change the JIT IR such that compiling the IR
+results in a wrong runtime behaviour.
+
+The easiest way to remove these attributes from lto backend while still
+maintaining the soundness of the meta-tracing system is disabling only
+problematic backend optimisation passes. However, before designing experiments
+to find problematic backend optimisation passes I'll focus on one other
+macro-optimisation opportunity.
+
+In next subsection I will show the performance overhead of yk specific passes,
+this will help us to figure out which pass is problematic and then proceed to
+investigate whether it is necessary to block all of the backend optimisations.
 
 \subsubsection{Performance impact of yk-based flags when compiling yklua with -O2} 
-\textbf{a) Overhead introduced by yk passes} \\
-\label{table:c} shows performance overhead of individual yk passes.  
-The objective of the following experiment is to understand what portion of total
-slowdown in yklua is contributed by yk-based passes (either individual pass or a
-combination of them). I start to turn off yk specific passes individually and
-then in combinations, and record the execution times. The speedup of the
-interpreter when the passes are turned off indicates that the pass (or
-combination of them) is contributing a slowdown by the ratio of:
-$$\frac{\text{\small (performance of baseline)}}{\text{\small (performance of
-row n)}}$$ 
+\textbf{a) Overhead introduced by yk passes} \\ 
+\ref{table:c} shows performance
+overhead of individual yk passes.  The objective of the following experiment is
+to understand what portion of total slowdown in yklua is contributed by yk-based
+passes (either individual pass or a combination of them). I started by turning
+off yk specific passes individually and then in combinations, and recorded the
+execution time for each case. The speed-up of the interpreter when the passes
+are turned off indicates that the pass (or combination of them) is contributing
+a slowdown by the ratio of: $$\frac{\text{\small (performance of
+baseline)}}{\text{\small (performance of row n)}}$$ 
 
 \begin{table}[H]
 \begin{tabular}{@{}cllr@{}}
@@ -1066,17 +1069,16 @@ row n)}}$$
 14 & \begin{tabular}[c]{@{}l@{}}—yk-no-fallthrough + —yk-block-disambiguate +\\ —yk-patch-control-point + —yk-insert-stackmaps +\\ —yk-split-blocks-after-calls\end{tabular} & 54.5ms & 0.003 \\
 \bottomrule
 \end{tabular}
-\caption{Shows performance we can win back when flags (i.e~passes) or
-combinations of them are turned off. Row 1 is performance of baseline yklua
-binary compiled with -O2, . Row 14 shows maximum retrieval of performance when
-the particular combination of flags in the row are turned off.}
+\caption{Shows performance we can win back when individual passes or
+    combinations of them are turned off with 95\% confidence interval (CI). Row
+    1 is the performance of baseline yklua binary compiled with -O2. Row 14 shows
+    maximum retrieval of performance when the passes in
+    the row are turned off.}
 \label{table:c}
 \end{table}
-\iti{add two more rows in table? 15 -flto turned off (show the performace)?
-and 16. Baseline 2? }
 
 From Table \ref{table:c} we can see that yklua after applying -O2 optimisations
-is 3x slower than Baseline 2. It is clear that yk-based flags contribute upto
+is 3x slower than Baseline 2. It is clear that yk-based passes contribute upto
 50\% of total slowdown in yklua. Some passes cannot be further optimised as they
 change the AOT IR making them compatible for meta-tracing system (e.g adding
 patch points and block-disambiguate pass). In the next subsection I'll elaborate
@@ -1084,24 +1086,25 @@ on how much performance can be retrieved back by optimising some of the most
 expensive yk passes shown in table above. 
 
 \textbf{b) Optimising yk-based Passes} \\
-\textbf{yk-insert-stackmaps}
-\iti{rewrite this on Monday?}
+
+\textbf{yk-insert-stackmaps} \\
+
 Stackmaps describe how the stack looks like i.e~ where the variables are stored
 i.e~ either in the register or the stack slot. During JIT compilation when the
 guard fails very often (i.e~ when the failure hits threshold set by yk) the
-meta-tracer starts de-optimising the trace. De-optimisation is process of
-getting back to the control point \iti{a little unclear} to rebuild the trace
-with new guards. During
+meta-tracer starts de-optimising the trace. De-optimisation is process of going
+back to the start of the loop and rebuilding the trace with new guards. During
 JIT compilation, the trace builder inlines functions into a trace which results
-in the changed structure of stack. With the help of Stackmaps, yk is able to get
-back the exact trace that it saw at the beginning of loop.
+in the changed structure of stack. With the help of Stackmaps, yk is able to
+get back the exact trace that it saw at the beginning of loop.
 
 The `yk-insert-stackmaps` pass is responsible for adding stackmaps to the JIT
 IR.
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it is intrinsic. However, stackmaps are not needed before calls to
-unmappable functions expect from the control point and yk\_promote, as these are not traced and thus
+unmappable functions expect from the control point\iti{reference to appendix}
+and yk\_promote\iti{reference to appendix}, as these are not traced and thus
 never need de-optimisation. Example of unmappable functions are external calls
 and functions with no condition(s) inside them. This might claw back a few `ms`
 for this pass. 
@@ -1156,7 +1159,7 @@ basic blocks and which have been merged when mapping back from JIT IR to AOT IR.
 One of the macro optimisations I made while benchmarking yklua was directly to
 yklua's source code. Earlier yklua would perform reallocation of yk's location
 array for every instruction. Yk's location array indicates the point from which
-the loop starts and is then sent to the control point \textit{confirm this}.
+the loop starts and is then sent to the control point.
 However, this was done for every instruction instead of performing reallocation
 only for those instructions whose bytecode size was larger than the current
 location array size. This turned out to be quite performance-intensive and made
