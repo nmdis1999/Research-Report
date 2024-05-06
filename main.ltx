@@ -489,8 +489,9 @@ Frontend                   LLVM
 
 
 \subsubsection{LTO Pipeline}
-The LTO pipelines are split into a pre-link,  post-link optimisation
-and backend optimisation pipeline\cite{lto-prepost}.
+The middle end constitutes of the LTO pipelines, which are split into a
+pre-link,  post-link optimisation and backend optimisation
+pipeline\cite{lto-prepost}.
 
 \begin{tcolorbox}[
     enhanced,
@@ -533,14 +534,24 @@ performance. Finally, the backend phase compiles the machine code,
 integrating register allocation and optimisations tailored to the specific
 architecture, resulting in a faster executable code.
 
+Now that we know the optimisation pipelines, the question rises: what can we do
+to figure out which pass to keep and which to disable for yk? Further, it is worth 
+exploring whether the order in which these optimisation passes are applied (at
+all the levels described above) important for our purpose? In this report
+I have used two algorithms to explore the search space for yk-compatible pass
+sequence: a divide-and-conquer algorithm and a genetic-algorithm. I will be 
+explaining both of the algorithm in Section: \iti{add}. However, I'll still
+like to introduce some terminologies for genetic-algorithm in the next
+subsection.
+
 \subsection{Genetic Algorithms}
-A genetic algorithm is a stochastic search algorithm which borrows the concept of
-evolution from nature. This algorithm starts with an initial list of entities (which are often
-represented in a bitwise form) and explores different combinations of such entities.
-This is done by combining elements from two entities by the way of
-crossover and mutation into a third entity, which may represent a new point in
-the vast search space, that otherwise would have been left unexplored by search
-methods like divide-and-conquer.
+A genetic algorithm is a stochastic search algorithm which borrows the concept
+of evolution from nature. This algorithm starts with an initial list of entities
+(which are often represented in a bitwise form) and explores different
+combinations of such entities. This is done by combining elements from two
+entities by the way of crossover and mutation into a third entity, which may
+represent a new point in the vast search space, that otherwise would have been
+left unexplored by search methods like divide-and-conquer.
 
 Terminology for a genetic algorithm:
 
@@ -593,30 +604,31 @@ just confuse yourself!}
 
 yk cannot enable all the optimisation passes currently, as they
 reorganise the basic-blocks and thus mess the mapping when switching from JIT
-mode to AOT compiled interpreter mode. Therefore, we need to carefully choose an
+compilation back to AOT compiled interpreter. Therefore, we need to carefully choose an
 optimisation pass sequence which does not interfere with basic block mapping,
 while also improving the interpreter's performance.
 
-This problem is an instance of an optimising phase ordering problem, where the order is fixed.
-Optimising phase ordering is a long-standing problem with substantial work done on
-it~\cite{guidedGA, kulkarni, genetic-algo}. However, the optimisation pass
-sequence which might work for one system may not perform well or even work at
-all for another. Finding the right optimisation pass sequence depends on the
-algorithm and the oracle used. The algorithm can be either recursive or stochastic, 
-while an oracle is a test set which establishes an invariant constraint.
-Unless the pass sequence satisfies all the constraints, it will not be selected
-in the algorithm. The oracle can contain constraints such as tests as well as
-the execution time of a user program. I have considered both yk's test case and
-execution of a user program with yklua as the oracle.
+This problem is an instance of an optimising phase ordering problem, where the
+order is fixed. Optimising phase ordering is a long-standing problem with
+substantial work done on it~\cite{guidedGA, kulkarni, genetic-algo}. However,
+the optimisation pass sequence which might work for one system may not perform
+well or even work at all for another. Finding the right optimisation pass
+sequence depends on the algorithm and the oracle used. The algorithm can be
+either recursive or stochastic, while an oracle is a test set which establishes
+an invariant constraint. Unless the pass sequence satisfies all the constraints,
+it will not be selected in the algorithm. The oracle can contain constraints
+such as tests as well as the execution time of a user program. I have considered
+both yk's test case and execution of a user program with yklua as the oracle.
 
 Since some optimisation passes depend on others to enable a program's
-transformation, the relative order of passes is known and fixed. Now choosing the right subset of passes 
-is important for a program's performance either with respect to execution time, code size or both.
-A pass sequence is a subset of passes from the larger set, in a certain order,
-which means the position in which the passes are placed with respect to
-one another. However, with such a high number of passes (around 90) the search
-space becomes large: considering all possible subsets with a fixed ordering,
-the search space has $2^{90} - 1$ points.
+transformation, the relative order of passes is known and fixed. Now choosing
+the right subset of passes is important for a program's performance either with
+respect to execution time, code size or both. A pass sequence is a subset of
+passes from the larger set, in a certain order, which means the position in
+which the passes are placed with respect to one another. However, with such a
+high number of passes (around 90) the search space becomes large: considering
+all possible subsets with a fixed ordering, the search space has $2^{90} - 1$
+points.
 
 In this report, I start with a divide-and-conquer algorithm to find a
 meta-tracing compatible pass sequence and later move on to a genetic algorithm
@@ -632,16 +644,16 @@ the genetic algorithm is not only able to find a pass sequence that is
 compatible with the meta-tracing system, but the pass sequence also ends up
 improving the C interpreter's performance.
 
-However, there is scope for further improvement of the yk retrofitted interpreter.
-First, the genetic algorithm currently only finds a pass sequence for pre and postlink
-optimisation pipeline, and by default, all backend optimisations are disabled both
-in `-O0` and `-O2`. Second, some of yk's passes incur significant overhead.
-After finding the pass sequence which satisfies the oracle as well as improves
-the yklua interpreter, I proceed to investigate other blockers which inhibit
-yklua's efficiency. The following experiments start from understanding the
-slowdown incurred by yk's passes and later, I proceed to find the impact of disabling
-all of the backend optimisations and whether it is possible to enable them
-back in both `-O0` and `-O2` optimisation levels.
+However, there is scope for further improvement of the yk retrofitted
+interpreter. First, the genetic algorithm currently only finds a pass sequence
+for pre and postlink optimisation pipeline, and by default, all backend
+optimisations are disabled both in `-O0` and `-O2`. Second, some of yk's passes
+incur significant overhead. After finding the pass sequence which satisfies the
+oracle as well as improves the yklua interpreter, I proceed to investigate other
+blockers which inhibit yklua's efficiency. The following experiments start from
+understanding the slowdown incurred by yk's passes and later, I proceed to find
+the impact of disabling all of the backend optimisations and whether it is
+possible to enable them back in both `-O0` and `-O2` optimisation levels.
 
 \section{Evaluation}
 
