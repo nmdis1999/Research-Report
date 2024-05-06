@@ -1256,17 +1256,28 @@ if we need to completely disable them).
 \label{section:7}
 The optimisation phase ordering problem for compiler optimisations has been solved
 before~\cite{guidedGA}. However, the solution for the phase-ordering problem for one
-system may not work for another system. This is because the oracle (the
+system may not work for another. This is because the oracle (the
 testing conditions and target goal) may vary for different systems.
-There exist other meta-tracing systems, such as RPython~\cite{rpython} that
-do not face the same problem as yk does. This is because Rpython uses software
-tracing mechanism and traces a version of
-the interpreter compiled in its own format: it actually interprets an
-interpreter. YK on the other hand uses hardware tracing mechanism to record the
-traces  with the first iteration of the interpreter and then for the consecutive
-iterations uses the compiled trace instead. With software tracing you can inject code into the AOT-compiled
-binary that directly records the IR blocks that were executed, and this entirely
-bypasses the need for mapping \iti{incomplete?}
+
+There exist other meta-tracing systems, such as RPython~\cite{rpython}, that do
+not face the same problem as yk does. RPython requires the language
+implementation to be written in its own format and interprets the interpreter.
+Further, in RPython the trace is collected only when the software tracer is sure it is a hot loop. This
+means the performance overhead of collecting traces in RPython is expected to be
+much more than that of a hardware-based tracer. However, it also means that
+RPython does not need to map back JIT IR back to the interpreter's IR and thus
+can use compiler optimisation passes much more freely. 
+
+With software tracing, you can inject code into the AOT-compiled binary that directly
+records the IR blocks that were executed, and this entirely bypasses the needa
+for mapping. On the other hand, yk uses a hardware tracing mechanism to record the
+traces with the interpreter's first iteration. Then, for the consecutive
+iterations, the compiled trace is used instead. 
+
+Since yk requires to select optimisation passes which would not
+re-arrange/change the machine basic block incorrectly, solving the mentioned
+an instance of the phase ordering problem becomes much more helpful in yk's
+context.
 
 \subsection{PyPy and RPython}
 
