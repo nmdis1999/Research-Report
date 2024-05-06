@@ -659,21 +659,28 @@ possible to enable them back in both `-O0` and `-O2` optimisation levels.
 \subsection{Methodology}
 \label{section:4}
 
-I had to use two separate machines in this report, one for finding optimisation
-passes via genetic algorithm and the other to run the yk and non-yk lua test
-suites for benchmarking. The first machine is an x86\_64 architecture with 72
-physical core while the second machine is an x86\_64 architecture with 8
+I had to use two separate machines for the work done, one for finding optimisation
+passes and the other to run the yk and non-yk lua's test
+suites for benchmarking. The first machine has an x86\_64 architecture with 72
+physical cores while the second machine has an x86\_64 architecture with 8
 physical cores.  
 
-As the search space of compiler optimisation passes are huge running the genetic
-algorithm on 8 core processor was quite slow. Using two machines made it faster
-for me to conduct the experiments and verify my hypothesis.
+As the search space of compiler optimisation passes is huge, running the genetic
+algorithm on an 8 core processor was quite slow. Using two machines made it faster
+to conduct the experiments and verify my hypothesis.
 
-\textbf{Machine II}: Intel Xeon, X86\_64 architecture, 72 physical core,
+\textbf{Machine I}: Intel Xeon, X86\_64 architecture, 72 physical cores,
                       Debian 5.10 \\
-\textbf{Machine I}: Intel Xeon Platinum, X86\_64 architecture, 8 physical core,
-                        Debian 6.1 
-For both collecting pass sequence and benchmarking yklua's test suite I used
+
+\textbf{Machine II}: Intel Xeon Platinum, X86\_64 architecture, 8 physical cores,
+                        Debian 6.1 \\ 
+
+Machine I is used to run the algorithms discussed below and search for yk-compatible optimisation pass
+sequences.
+Machine II is used to compile yklua with the pass sequences obtained from the said
+algorithms and gather the benchmark data.
+
+To both collect pass sequences, and benchmark yklua's test suite I used
 ykllvm (version 18).
 
 \subsection{Experiments}
