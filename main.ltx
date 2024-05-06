@@ -16,7 +16,7 @@
     using a genetic-algorithm to find yk-compatible compiler optimisation passes,
     and performing macro-optimisations on
     both yk's compiler and the interpreter using yk. Additionally, I propose
-    solutions to adjust\iti{some other word?} yk and non-compatible optimisation passes which could
+    solutions to modify yk and non-compatible optimisation passes which could
     further reduce this overhead of retrofitting yk onto interpreters,
     starting with the lua interpreter.
 \end{abstract}
@@ -58,7 +58,7 @@ tracing JITs; instead, they can use yk meta-tracing system, and the tracing JIT
 compilation will automatically be embedded in the language implementation(s). 
 
 One of the newer approaches of implementing just-in-time compilers is tracing
-JIT. In tracing JIT compilation, the Virtual Machine\iti{introduce} identifies
+JIT. In tracing JIT compilation, the Virtual Machine(VM) identifies
 the frequently executed ``hot'' program paths at runtime. Once a hot path is
 detected, the VM records all instructions in this path into a trace until
 execution loops back to the first instruction of this path. The trace is then
@@ -666,10 +666,10 @@ As the search space of compiler optimisation passes is huge, running the genetic
 algorithm on an 8 core processor was quite slow. Using two machines made it faster
 to conduct the experiments and verify my hypothesis.
 
-\textbf{Machine I}: Intel Xeon, X86\_64 architecture, 72 physical cores,
+\textbf{Machine I}: Intel Xeon, x86\_64 architecture, 72 physical cores,
                       Debian 5.10 \\
 
-\textbf{Machine II}: Intel Xeon Platinum, X86\_64 architecture, 8 physical cores,
+\textbf{Machine II}: Intel Xeon Platinum, x86\_64 architecture, 8 physical cores,
                         Debian 6.1 \\ 
 
 Machine I is used to run the algorithms discussed below and search for yk-compatible optimisation pass
