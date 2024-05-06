@@ -1283,17 +1283,6 @@ re-arrange/change the machine basic block incorrectly, solving the mentioned
 an instance of the phase ordering problem becomes much more helpful in yk's
 context.
 
-\subsection{PyPy and RPython}
-
-PyPy is a framework to write efficient implementation for dynamic languages such
-as Python. The necessary condition to use pypy is that the interpreter's implementation
-has to be written in RPython (``Restricted Python'')[AACM07]. RPython is a
-subset of python. First the language interpreter is written in RPython and then
-later translated into target environment (usually C/Posix). One of the low-level
-detail that is added while translation is MetaJIT, which is language independent
-tracing just-in-time compiler. In label{meta-tracing} I explain more in detail
-about what it is and how it works.
-
 \section{Conclusion and Future Work}
 \label{section:8}
 In this report, I have shown that with the help of a genetic algorithm, we can
