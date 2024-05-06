@@ -70,9 +70,8 @@ information at runtime to optimise most executed paths. This technique is also
 used in Mozilla's TraceMonkey JavaScript VM~\cite{tracemonkey}, and in Chrome's V8
 through their tracing V8 system~\cite{v8jit}.
 
-\iti{rewrite? I think this is okay (bhavye)}
-YK is a meta-tracing system which traces the execution of the interpreter, instead of tracing
-the user program being executed by the interpreter. At the current stage, yk yk uses modified LLVM
+yk is a meta-tracing system which traces the execution of the interpreter, instead of tracing
+the user program being executed by the interpreter. At the current stage, yk uses modified LLVM
 and does not support compilation of the interpreter using any other level than -O0. Even at that
 level, it disables all backend optimisations. When JIT is turned on, and we use compiler optimisation
 passes at different levels, some passes either interfere with or undo the 
@@ -81,12 +80,12 @@ representation. In yk, when the yk interpreter switches from JIT compilation to
 interpretation, the yk system tries to map back machine basic blocks to LLVM IR
 basic blocks. The yk passes makes sure that the mapping is accurate else the
 correctness and efficiency of the meta-tracing system will be compromised. We
-discuss this further in \label{blah}.
+discuss this further in \ref{background}.
 
 The result of yk pessimistically turning off all of the optimisation passes is
 that the performance of yk compiled interpreter is significantly slow even when
 JIT is turned off. What this means is simply embedding yk onto the interpreter
-has a \iti{add word}\iti{substantial? conspicuous?} cost.
+has a conspicuous cost.
 
 \begin{figure}[ht!]
     \label{figure:example}
@@ -134,10 +133,10 @@ multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 
 There are a total of 3 hypothesis in this report, the second and third hypothesis
-are discussed in Section x. \iti{add section}
+are discussed in Section \ref{results}.
 
 \section{Background}
-\label{sec:background}
+\label{background}
 
 IMPORTANT: https://github.com/softdevteam/softdev/blob/5c7ef8c3fc4149e0c7547879ed96df1d4f64a7e3/talks/hwmetatracer/hwmetatracer.ltx
 
@@ -253,12 +252,11 @@ traces of interpreter as it executes the user program\cite{meta-tracing}.
 \subsection{Retrofitting tracing JIT to an interpreter}
 \label{meta-tracing}
 
-\iti{add figure about ykjit from ipad}
-YK is a meta-tracing system in which the tracing JIT is applied to the bytecode
+yk is a meta-tracing system in which the tracing JIT is applied to the bytecode
 interpreter instead of it being applied to directly to the user program.
 
 There are two mechanisms for collecting traces:
-software tracing and hardware tracing. YK uses Intel-PT to collect the trace of the
+software tracing and hardware tracing. yk uses Intel-PT to collect the trace of the
 interpreter running the user program. Intel Processor Trace (Intel PT) is a feature
 available in some Intel processors that provides a hardware-based tracing
 mechanism, enabling low overhead collection of program execution traces.
@@ -267,16 +265,17 @@ The high-level view of how hardware tracing in used in yk when it is retrofitted
 on a C interpreter:
 
 \begin{itemize}
-    \item<1> Add hints to the interpreter written in C to make it compatible
-        with yk.
-    \item<2> User programs starts running in the interpreter written in C
-        , which is compiled with ykllvm (currently with -O0).
-    \item<3> When a hot loop is detected, run the user program with unoptimised
-        interpreter, start Intel PT, execute the loop and collect the trace. %This will remove the 150x overhead of software meta-tracing!
-    \item<4> Map the jump locations from PT trace back to C IR, giving us a
-        usable trace for the interpreter.
-    \item<5> After collecting the trace IR, optimise it into machine code.
-    \item<6> The next iteration of the loop will now use the (fast) optimised machine code rather than the (slow) interpreter.
+        \item{Add hints to the interpreter written in C to make it compatible
+            with yk.}
+        \item{User programs starts running in the interpreter written in C
+            , which is compiled with ykllvm (currently with -O0).}
+        \item{When a hot loop is detected, run the user program with unoptimised
+            interpreter, start Intel PT, execute the loop and collect the trace.} %This will remove the 150x overhead of software meta-tracing!
+    \item{Map the jump locations from PT trace back to C IR, giving us a
+        usable trace for the interpreter.}
+    \item{After collecting the trace IR, optimise it into machine code.}
+    \item{The next iteration of the loop will now use the (fast) optimised
+        machine code rather than the (slow) interpreter.}
 \end{itemize}
 
 
@@ -291,7 +290,7 @@ In a simple bytecode interpreter, the dispatch loop is sometimes the only hot
 loop present in the whole program. This loop is responsible for executing a
 opcode with each iteration. As it is unlikely that same opcode will run multiple
 times in a row the guards fail very often resulting in no performance
-difference\iti{add bolz paper}, contradicting the tracing JIT's assumptions. So,
+difference\ref{pypy}, contradicting the tracing JIT's assumptions. So,
 to optimise the interpreter's performance, yk uses loop unrolling. With loop
 unrolling, we trace the execution of multiple opcodes, effectively unrolling so
 much so that we end up with one user program loop. A user program loop is a hot
@@ -299,6 +298,7 @@ loop in the user program; a loop is called hot when the interpreter's program
 counter reaches the same value multiple times indicating multiple iterations of
 the same loop.
 
+\iti{rewrite?}
 The program counter is stored in one of the several variables in the interpreter. To
 figure out which variable holds value for the program counter, the MetaJIT needs
 hints (via a dummy control point). Since LLVM is Static-Single-Assignment (SSA),
@@ -307,9 +307,6 @@ Representation(IR). The dummy control point is later(at runtime) replaced by the
 original control-point. The loop is considered closed only when all the
 variables that make up the program counter \iti{all the variables?} are same in the second iteration. This is
 how the interpreter traces a single user loop.
-\iti{draw a diagram}
-\iti{add example for adding hints} -> maybe not necessary 
-\iti{Figure 4 from Bolz example of trace in tracing and meta-tracing jit from Bolz paper}
 
 \begin{figure}[htbp]
     \centering
@@ -539,7 +536,7 @@ Now that we know about the optimisation pipelines, the question rises: what can 
 to figure out which pass to keep and which to disable for yk? In this report
 I have used two algorithms to explore the search space for yk-compatible pass
 sequence: a divide-and-conquer algorithm and a genetic-algorithm. I will be 
-explaining both of the algorithm in Section: \iti{add}. However, I would still
+explaining both of the algorithm in Section:\ref{experiments}. However, I would still
 like to introduce some terminologies for genetic-algorithm in the next
 subsection.
 
@@ -657,7 +654,7 @@ possible to enable them back in both `-O0` and `-O2` optimisation levels.
 \section{Evaluation}
 
 \subsection{Methodology}
-\label{section:4}
+\label{methodology}
 
 I had to use two separate machines for the work done, one for finding optimisation
 passes and the other to run the yk and non-yk lua's test
@@ -684,7 +681,7 @@ To both collect pass sequences, and benchmark yklua's test suite I used
 ykllvm (version 18).
 
 \subsection{Experiments}
-\label{section:5}
+\label{experiments}
 
 The initial goal was to find 'some' subset of passes that satisfies the oracle. 
 As it would be very expensive to try all the combinations linearly, it is easier
@@ -770,7 +767,7 @@ combinations created and tested. Thus comes the requirement of a stochastic
 algorithm that can explore more pass sequences in the search space, while
 keeping the order of passes fixed.
 
-The pseudocode below \iti{add a reference? I donno how!} details the genetic algorithm used
+The pseudocode in Figure \ref{genetic-algorithm} details the genetic algorithm used
 to find an optimisation pass sequence compatible with yk and yklua. Initially, it randomly
 generates a population where each entity is a binary array indicating
 whether a specific pass is active (1) or inactive (0). The binary array maps
@@ -873,7 +870,7 @@ sequence.
 \footnote{https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
 
 \section{Results}
-\label{section:6}
+\label{results}
 \subsection{Overview}
 
 When I started the experiments, yklua without JIT turned on performed ~5x worse
@@ -1051,7 +1048,7 @@ investigate whether it is necessary to block all of the backend optimisations.
 
 \subsubsection{Performance impact of yk-based flags when compiling yklua with -O2} 
 \textbf{a) Overhead introduced by yk passes} \\ 
-\ref{table:c} shows performance
+Table \ref{table:c} shows performance
 overhead of individual yk passes.  The objective of the following experiment is
 to understand what portion of total slowdown in yklua is contributed by yk-based
 passes (either individual pass or a combination of them). I started by turning
@@ -1278,7 +1275,7 @@ option to over-write backend passes with run-passes. After adjusting the
 TargetPassConfig, I will need to make adjustments to yk-config so that we
 overwrite the backend optimisations at the right stage. Once it is possible to
 overwrite backend optimisations, we can use the genetic algorithm described in
-Section\iti{add label} to find the problematic passes and study their fixes (or
+Section\ref{experiments} to find the problematic passes and study their fixes (or
 if we need to completely disable them).
 
 \section{Related Work}
