@@ -1392,10 +1392,10 @@ reduction in the overhead of embedding yk onto the C interpreters.
 \section{Appendix}
 \label{appendix:terms}
 \textbf{yk-config:}yk-config is a tool to apply yk-specific compiler and linker
-flags on the interpreter and other systems which use yk's meta-tracing system.
+flags on the interpreter and other systems which uses yk's meta-tracing system.
 yk-config makes configuring/compiling C interpreters easy by having the support
-to add `cflags' (compiler) and `ldflags' (linker), this can be used to add the
-prelink and postlink pass sequences found via the genetic algorithm by appending
+to add `cflags' (compiler) and `ldflags' (linker). This can be used to add the
+prelink and postlink pass sequences found via the search algorithms by appending
 them to cflags and ldflags.
 
 \textbf{ykllvm:} It is a modified version of LLVM which applies yk specific
@@ -1407,15 +1407,15 @@ the program's execution where the meta-tracer can potentially start or stop
 tracing. Control points are used to define the boundaries of traced regions and
 to determine when to switch between interpreted mode and compiled mode.
 `ykrt\_control\_point' introduces a dummy control point that later gets replaced
-with a call to a new control point by ykllvm implementing the logic to drive the
+with a call to a new control point by ykllvm, implementing the logic to drive the
 yk JIT.
 
 \textbf{yk\_promote:} Used to promote a value to a constant, further adds a
 guard that ensures de-optimisation if the promoted value deviated from the
 ``baked-in'' constant. 
-promotion means
+Promotion means
 that 
-When a program is being traced, the meta-tracer records the operations and
+when a program is being traced, the meta-tracer records the operations and
 branches taken during the execution of a particular code path. However, some
 values used in the traced code may be boxed or stored in a generic format, which
 can lead to slower execution.
@@ -1433,7 +1433,7 @@ the compiler to generate native machine code that directly operates on the
 integer values, resulting in faster execution.
 
 \textbf{llc}: llc stands for ``LLVM static compiler''. It
-is a command-line tool that is part of the LLVM toolchain and is used to compile
+is a command-line tool that is a part of the LLVM toolchain and is used to compile
 LLVM Intermediate Representation (LLVM IR) into machine code for a specific
 target architecture.
 
