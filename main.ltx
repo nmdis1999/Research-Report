@@ -26,7 +26,7 @@
 The popularity of dynamically typed languages stems from their ability to ease
 writing software, and the rich library framework they provide. In recent years,
 dynamically typed languages such as Python and JavaScript have gained popularity not only
-for writing scripts, but also complex server side applications\cite{dyn-server}.
+for writing scripts, but also complex server side applications.
 The most commonly used implementation of these languages are interpreters as
 they are quite flexible to use, and the developer does not need to incur the cost of
 compilation\iti{cite something}. However, the same flexibility that makes these
@@ -42,13 +42,13 @@ generalised machine code to deal with all possible type combinations during runt
 which can be very expensive in terms of space and time complexity.
 
 It has been stated that implementations of dynamically typed languages are often
-slower than the implementation of statically typed languages\cite{ltratt
-dynamically typed}. There has been continuous research on making
-interpreters faster which dates back to the Self project\iti{cite here} but they
+slower than the implementation of statically typed languages\cite{ltratt09}. 
+There has been continuous research on making
+interpreters faster which dates back to the Self project\cite{HU94} but they
 are not used as frequently as one would want. Most dynamically typed languages
 use a bytecode interpreter without any advanced optimisations such as just-in-time
 compilations. The reason for limited use of JIT compilers is the difficulty in their
-implementations\cite{bolz thesis}. A JIT compiler for a dynamically typed
+implementations\cite{bolz2014meta}. A JIT compiler for a dynamically typed
 language would need to handle all the complex interactions of the language while
 simultaneously generating efficient code for the common cases. 
 
@@ -88,7 +88,7 @@ JIT is turned off. What this means is simply embedding yk onto the interpreter
 has a conspicuous cost.
 
 \begin{figure}[ht!]
-    \label{figure:example}
+    \label{figure:multilang-jit}
     \centering
     \scalebox{0.8}{
     \includegraphics[scale=0.5, width=\linewidth]{images/multilang.pdf} 
@@ -160,10 +160,10 @@ code to accommodate various type. \iti{rephrase}
 Optimising implementation for dynamic languages is not as easy task as they are
 not usually designed for speed. This has resulted in years of research to
 bring the performance of dynamically typed languages to an
-acceptable performance level, JIT compiler[Ayc03] being a common theme in them.
-The early results varying from Lisp [SJG93] to Smalltalk [DS84] revolved around 
-the SELF language [CUE89, HU94, Hö94] and were applied to the Hotspot VM
-[PVCO1]. These results showed that JIT compilation can give the advantages of
+acceptable performance level, JIT compiler\cite{Ayc03} being a common theme in them.
+The early results varying from Lisp \cite{SJG93} to Smalltalk \cite{DS84} revolved around 
+the SELF language \cite{HUrs, HU94, CUE89} and were applied to the Hotspot VM
+\cite{PVCO1}. These results showed that JIT compilation can give the advantages of
 interpretation with the performance benefits of compiled code without
 compromising the flexibility that dynamic languages require.
 
@@ -172,8 +172,6 @@ implementation technique, especially when the language it targets is
 itself a complex one. The challenge is to maintain the development of such
 JIT compilers with the pace of the language development, this requires hundreds
 of engineers effort spanning over multiple years.
-
-Figure shows typical working on JIT. 
 
 Many dynamic languages use bytecode interpreters without advanced techniques like
 JIT compilation. The reason for the limited use of JIT compilers is the complexity
@@ -194,7 +192,8 @@ to MetaJIT.
 
 The first project to explore tracing JIT was Dynamo, in which tracing
 optimisations were used to dynamically optimise machine code at runtime. Later,
-the optimisation techniques were used by Java Virtual Machines [GPF06, GF06, BCW+10, IHWN11].
+the optimisation techniques were used by Java Virtual Machines \cite{GPF06,
+GF06, BCW+10, IHWN11}.
 Due to the ease of their implementation, tracing JITs became popular and were later
 used in projects like Mozilla's TraceMonkey and LuaJIT. 
 
@@ -206,7 +205,7 @@ paths via traces of the program, and later at runtime, use the information to
 perform optimisations and make inlining decisions\cite{tracing-jit}. 
 
 \begin{figure}[ht!]
-    \label{figure:example}
+    \label{figure:program_and_trace}
     \centering
     \scalebox{0.8}{
     \includegraphics[scale=0.5, width=\linewidth]{images/program_and_trace.pdf} 
@@ -231,7 +230,7 @@ A tracing JIT makes assumptions such as:
     being met (i.e~they are true) or not. If the conditions are true, and a trace of it is
     already compiled then instead of interpreting the condition again, the compiled trace
     is used by the interpreter.}
-    \label{traces}
+    \label{tracing-jit}
 \end{figure}
 
 Meta-tracing (also often called MetaJIT) is a form of meta-compilation which
@@ -243,7 +242,7 @@ themselves.
 The main difference between a tracing JIT and meta-tracing JIT is that the
 former is used to record and compile traces of a user program as it is being
 executed, while the latter works one level down and is used to record and compile
-traces of interpreter as it executes the user program\cite{meta-tracing}.
+traces of interpreter as it executes the user program\cite{bolz2014meta}.
 
 \subsection{Retrofitting tracing JIT to an interpreter}
 \label{meta-tracing}
@@ -286,7 +285,7 @@ In a simple bytecode interpreter, the dispatch loop is sometimes the only hot
 loop present in the whole program. This loop is responsible for executing a
 opcode with each iteration. As it is unlikely that same opcode will run multiple
 times in a row the guards fail very often resulting in no performance
-difference\ref{pypy}, contradicting the tracing JIT's assumptions. So,
+difference\cite{pypy}, contradicting the tracing JIT's assumptions. So,
 to optimise the interpreter's performance, yk uses loop unrolling. With loop
 unrolling, we trace the execution of multiple opcodes, effectively unrolling so
 much so that we end up with one user program loop. A user program loop is a hot
@@ -316,7 +315,7 @@ how the interpreter traces a single user loop.
         the yklua binary as they are required to collect trace and map the
         collected trace to LLVM IR. The yk-interpreter binary then makes calls to yk when
         it performs JIT compilations -> change the diagram.}
-    \label{traces}
+    \label{meta-tracer}
 \end{figure}
 
 \begin{samepage}
@@ -369,7 +368,7 @@ affecting the program's correctness and performance.
     instead of recording and compiling the trace again, the already compiled trace
     is used for execution.
     }
-\label{traces}
+\label{yk-flow}
 \end{figure}
 
 However, some LLVM optimisation passes mess with the basic-block mapping (that
@@ -388,7 +387,7 @@ significantly even without the JIT being enabled.
         enabling backend optimisations some basic blocks may get merged into
         one. And the previous basic block which contained operations are either
         empty or deleted. This results in wrong run-time behaviour of the
-        yk-optimised interpreter.} \label{traces}
+        yk-optimised interpreter.} \label{bb-merge}
 \end{figure}
 
 \subsection{Compiler Optimisation Passes}
@@ -763,7 +762,7 @@ combinations created and tested. Thus comes the requirement of a stochastic
 algorithm that can explore more pass sequences in the search space, while
 keeping the order of passes fixed.
 
-The pseudocode in Figure \ref{genetic} details the genetic algorithm used
+The pseudocode in Figure \ref{pseudocode-genetic} details the genetic algorithm used
 to find an optimisation pass sequence compatible with yk and yklua. Initially, it randomly
 generates a population where each entity is a binary array indicating
 whether a specific pass is active (1) or inactive (0). The binary array maps
@@ -786,7 +785,7 @@ conventional pseudocode? see e.g. Fig 6 in the ``don't panic!'' paper as an
 example}
 
 \scalebox{0.65}{
-\label{genetic}
+\label{pseudocode-genetic}
 \begin{tcolorbox}
     \begin{algorithm}[H]
         \begin{algorithmic}[1] % The [1] argument enables line numbering
