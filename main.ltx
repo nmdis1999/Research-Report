@@ -333,7 +333,7 @@ emitted just before backend optimisation.
 As trace represents one of many possible paths a program can take, to ensure
 correctness of the trace, guards are inserted at every point where the trace could
 have diverged to different route. At machine code level these guards are
-converted into checks. If a check in fails very often we quit executing the
+converted into checks. If a check in fails  we quit executing the
 machine code and goes back to the interpretation. 
 
 At JIT compilation time, the tracing interpreter records the basic blocks
@@ -380,7 +380,8 @@ different stages of the pipeline, even after the final IR has been generated
 creates problems for the meta-tracer. To avoid this problem, the yk meta-tracing
 system turns off all the optimisations by default, which slows down the
 interpreter significantly even without the JIT being enabled.
-
+%at what stage does the trace is mapped to LLVM IR? Before backedn optimisation?
+%see code.
 
 \begin{figure}[htbp] \centering
     \includegraphics[scale=0.2]{images/block-merge.pdf} \caption{\small High
