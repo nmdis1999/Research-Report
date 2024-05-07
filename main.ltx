@@ -767,7 +767,7 @@ combinations created and tested. Thus comes the requirement of a stochastic
 algorithm that can explore more pass sequences in the search space, while
 keeping the order of passes fixed.
 
-The pseudocode in Figure \ref{genetic-algorithm} details the genetic algorithm used
+The pseudocode in Figure \ref{genetic} details the genetic algorithm used
 to find an optimisation pass sequence compatible with yk and yklua. Initially, it randomly
 generates a population where each entity is a binary array indicating
 whether a specific pass is active (1) or inactive (0). The binary array maps
@@ -790,7 +790,7 @@ conventional pseudocode? see e.g. Fig 6 in the ``don't panic!'' paper as an
 example}
 
 \scalebox{0.65}{
-\label{genetic-algorithm}
+\label{genetic}
 \begin{tcolorbox}
     \begin{algorithm}[H]
         \begin{algorithmic}[1] % The [1] argument enables line numbering
@@ -1175,7 +1175,7 @@ only for those instructions whose bytecode size was larger than the current
 location array size. This turned out to be quite performance-intensive and made
 some programs exponentially slower as they grew in size. The
 fix for this was checking and reallocating the location array only when the
-resize was necessary.\footnote{https://github.com/ykjit/yklua/pull/84}
+resize was necessary\footnote{https://github.com/ykjit/yklua/pull/84}.
 
 \subsection{Where to begin: -O0 or -O2?}
 
@@ -1185,7 +1185,7 @@ with `-O0` and add passes to it or start from `-O2` and remove passes from it.
 One would expect both should result in same performance when benchmarking with
 lua tests. 
 
-\textbf{H3} \hspace*{0.5cm} The performance for lua binary should be the same when adding a list of
+\textbf{H3} \hspace*{0.5cm} The performance for yklua binary should be the same when adding a list of
 passes to -O0 to that of removing passes from -O2. \\
 
 \iti{note to self: update the benchmark similar to that of overview and format
@@ -1209,18 +1209,21 @@ pm.lua & 0.050 & 0.050 & 0.047 & 0.036 & 0.022 & 0.009 \\
 \end{tabular}
 }
 \caption{The table shows that performance of yklua binary varies when we start
-    compilation from -O0 versus that of -O2 and add/remove the same pass sequence.
-    Depending upon the optimisation level we start with, clang perform
-    different optimisations as well as expand macros different during IR
-    generation. Which means even though the passes we add/remove have the
-    same name they don't necessarily perform the same optimisations.}
+    compilation from -O0 versus that of -O2 and add/remove the same pass sequence.}
 \iti{rewrite the caption.}
 \end{table}
 
+Depending upon the optimisation level we start with, clang perform different
+optimisations as well as expand preprocessor macros differently during IR
+generation. Which means even though the passes we add/remove have the same name
+they may perform the optimisations differently. This explains why we see
+different performance even when we apply same passes to overwrite these two
+optimisation levels.
+
 Although we have verified that compiling with -O2 and removing passes gives us
 better performance for the interpreter we still need to make sure that our
-oracle passes with -O2(i.e~ all yk and yklua test suite are successful) before making
-it the default compilation level. 
+oracle passes with -O2(i.e~ all yk and yklua test suite are successful) before
+making it the default compilation level. 
 
 \subsection{Backend optimisations and runtime behaviour}
 
@@ -1311,18 +1314,24 @@ In this report, I have shown that with the help of a genetic algorithm, we can
 use middle and possibly backend optimisation passes with the C interpreter,
 which not only maintain the correctness of the meta-tracer but simultaneously
 improves the interpreter's performance when compiled with meta-tracer
-retrofitted into it. As shown in the \label{section:6} I can win back around 1.75x
-performance by applying middle-end passes and macro-optimisations to
+retrofitted into it. 
+
+As shown in the \ref{table:preandpostlink} I can win back around 1.75x
+performance after applying middle-end passes and macro-optimisations to
 meta-tracer's passes. Although I am yet to catch problematic backend
 optimisation passes, it is not a very far-fetched goal. The next immediate
 experiment would be to change LLVM's legacy pass manager so that we can easily
-overwrite the backend optimisation pipeline at any optimisation level. After
-this change, we can use the genetic algorithm to find a combination of
-pass sequences which does not change the AOT IR in non-compatible way.
-Alternatively, turn off the part of the optimisation which interferes with the AOT
-IR in an unwanted way for the meta-tracer. One way could be to tweak the passes
+overwrite the backend optimisation pipeline at any optimisation level. 
+
+After the change mentioned above, we can use the genetic algorithm to find a combination of
+pass sequences which does not change the modify the JIT IR in non-compatible
+way. Meaning, that AOT IR when compiled results in correct run-time behaviour of
+the code.
+Alternatively, we can turn off the part of the optimisation which interferes with the 
+IR in an unwanted way for the meta-tracer. Example, one way could be to tweak the passes
 so that only optimisations within the basic blocks are allowed (and those which
-work across the basic blocks are not allowed).
+work across the basic blocks are not allowed as they change the structure of the
+IR).
 
 Other future work includes enabling back fallthrough optimisation (i.e.~
 retiring yk-no-fallthrough). Currently, yk is disabling some backend
