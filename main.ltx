@@ -1289,59 +1289,58 @@ system may not work for another. This is because the oracle (the
 testing conditions and target goal) may vary for different systems.
 
 There exist other meta-tracing systems, such as RPython~\cite{rpython}, that do
-not face the same problem as yk does. RPython requires the language
+not face the same problems as yk does. RPython requires the language
 implementation to be written in its own format and interprets the interpreter.
 Further, in RPython the trace is collected only when the software tracer is sure it is a hot loop. This
 means the performance overhead of collecting traces in RPython is expected to be
 much more than that of a hardware-based tracer. However, it also means that
-RPython does not need to map back JIT IR back to the interpreter's IR and thus
-can use compiler optimisation passes much more freely. 
+RPython does not need to map back JIT IR back to the interpreter's IR, and thus,
+can use the compiler optimisation passes much more freely.
 
-With software tracing, you can inject code into the AOT-compiled binary that directly
-records the IR blocks that were executed, and this entirely bypasses the needa
+With software tracing, we can inject code into the AOT-compiled binary that directly
+records the IR blocks that are executed, and this entirely bypasses the need
 for mapping. On the other hand, yk uses a hardware tracing mechanism to record the
 traces with the interpreter's first iteration. Then, for the consecutive
 iterations, the compiled trace is used instead. 
 
 Since yk requires to select optimisation passes which would not
-re-arrange/change the machine basic block incorrectly, solving the mentioned
-an instance of the phase ordering problem becomes much more helpful in yk's
-context.
+re-arrange/change the machine basic block incorrectly, solving the problem of
+optimisation pass selection as an instance of the phase ordering problem
+becomes much more helpful in yk's context.
 
 \section{Conclusion and Future Work}
 \label{section:8}
 In this report, I have shown that with the help of a genetic algorithm, we can
-use middle and possibly backend optimisation passes with the C interpreter,
-which not only maintain the correctness of the meta-tracer but simultaneously
-improves the interpreter's performance when compiled with meta-tracer
-retrofitted into it. 
+use middle-end and possibly backend optimisation passes with the C interpreter,
+which not only maintains the correctness of the meta-tracer, but simultaneously
+improves the interpreter's performance when compiled with the meta-tracer
+retrofitted into it.
 
-As shown in the \ref{table:preandpostlink} I can win back around 1.75x
-performance after applying middle-end passes and macro-optimisations to
+As shown in the Section \ref{table:preandpostlink}, I can win back around 1.75x
+performance after applying middle-end passes and macro-optimisations to the
 meta-tracer's passes. Although I am yet to catch problematic backend
 optimisation passes, it is not a very far-fetched goal. The next immediate
 experiment would be to change LLVM's legacy pass manager so that we can easily
 overwrite the backend optimisation pipeline at any optimisation level. 
 
 After the change mentioned above, we can use the genetic algorithm to find a combination of
-pass sequences which does not change the modify the JIT IR in non-compatible
-way. Meaning, that AOT IR when compiled results in correct run-time behaviour of
-the code.
-Alternatively, we can turn off the part of the optimisation which interferes with the 
-IR in an unwanted way for the meta-tracer. Example, one way could be to tweak the passes
+pass sequences which does not modify the JIT IR in a non-compatible
+way. Meaning when we are mapping back the JIT IR to the AOT IR, the compiled IR results
+in the correct run-time behaviour of the code.
+Alternatively, we can turn off the parts of the optimisations which interfere with the
+IR in an unwanted way for the meta-tracer. For example, one way could be to tweak the passes
 so that only optimisations within the basic blocks are allowed (and those which
 work across the basic blocks are not allowed as they change the structure of the
 IR).
 
 Other future work includes enabling back fallthrough optimisation (i.e.~
-retiring yk-no-fallthrough). Currently, yk is disabling some backend
-optimisation and compiling without any optimisations. With my changes, we can
-move in a direction to make a custom optimisation pass in LLVM for yk, which not
-only blocks non-compatible optimisation but can use as much of the higher
-optimisation level passes as possible. The result will be 50\%, if not more, a
+retiring yk-no-fallthrough). Currently, yk uses -O0 without backend optimisations
+enabled to compile the lua interpreter. With my changes, we can
+move in the direction of making a custom optimisation pass in LLVM for yk, which not
+only blocks non-compatible optimisation, but can also use as much of the higher
+optimisation level passes as possible. The result will be a 50\%, if not more,
 reduction in the overhead of embedding yk onto the C interpreters.
 
-\iti{If time remains, bulletize the right column points.}
 \section{Timeline}
 \noindent
 \resizebox{1.1\textwidth}{!}{  % Increase scaling to 1.5
@@ -1349,9 +1348,9 @@ reduction in the overhead of embedding yk onto the C interpreters.
         \toprule
         \textbf{Year} & \textbf{Goals} \\
         \midrule
-        \textbf{2024 June - August} & Adjust LLVM's Legacy Pass Manager to overwrite the backend optimisation pipeline. Design a custom pipeline with yk-compatible optimisations. Perform macro-optimisation on yk-based passes in ykllvm, reducing their overhead. \\
-        \textbf{2024 September - November} & Profile and benchmark yk-retrofitted C interpreters when compiled with a yk-compatible custom optimisation level. This may introduce opportunities for further optimisations. \\
-        \textbf{2024 December - 2025 February} & Conduct a literature review on meta-tracing systems. Current design uses yk-based passes to embed additional data into the interpreter binary, ensuring the meta-tracer works correctly. Design experiments to explore introducing a new optimisation pass for the yk meta-tracing system, performing optimisations at JIT compilation time. \\
+        \textbf{2024 June - August} & \begin{itemize} \item{Adjust LLVM's Legacy Pass Manager to overwrite the backend optimisation pipeline.} \item{Design a custom pipeline with yk-compatible optimisations.} \item{Perform macro-optimisation on yk-based passes in ykllvm, reducing their overhead.} \end{itemize} \\
+        \textbf{2024 September - November} & \begin{itemize} \item{Profile and benchmark yk-retrofitted C interpreters when compiled with a yk-compatible custom optimisation level. This may introduce opportunities for further optimisations.} \end{itemize} \\
+        \textbf{2024 December - 2025 February} & \begin{itemize} \item{Conduct an in-depth literature review on optimization passes constructed for meta-tracing systems.} \item{Design experiments to explore introducing a new optimisation pass for the yk meta-tracing system, performing optimisations at JIT compilation time.} \end{itemize} \\
         \bottomrule
     \end{tabular}
 }
