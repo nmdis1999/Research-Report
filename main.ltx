@@ -936,8 +936,11 @@ described in Figure \ref{yk-flow}.
 
 Table \ref{table:preandpostlink} shows performance numbers of adding prelink,
 postlink or both to yklua -O0 optimisation level.
+
 \begin{table}[H]
 \centering
+\scalebox{1.0}{
+\begin{minipage}{1.0\textwidth} 
 \begin{tabular}{@{}p{4.0cm}lllcc@{}}
 \toprule
 \textbf{binary} & \textbf{prelink passes} & \textbf{postlink passes} & \textbf{optimisation level} & \textbf{Mean} & \textbf{95\% CI} \\ 
@@ -960,6 +963,8 @@ and consecutive rows with adding prelink, postlink, or both pass sequences to
 -O0. The last two rows are yklua and non-yk lua compiled lua with -O2
 optimisation level.}
 \label{table:preandpostlink}
+\end{minipage}
+}
 \end{table}
 
 \subsubsection{Compiling yklua with -O2}
@@ -1054,6 +1059,8 @@ a slowdown by the ratio of: $$\frac{\text{\small (performance of
 baseline)}}{\text{\small (performance of row n)}}$$ 
 
 \begin{table}[H]
+\centering
+\scalebox{0.9}{
 \begin{tabular}{@{}cllr@{}}
 \toprule
 \# & \multicolumn{1}{c}{Flags turned off (-O2 passes are set)} & \multicolumn{1}{c}{Execution Time} & \multicolumn{1}{c}{95\% CI} \\ 
@@ -1074,6 +1081,7 @@ baseline)}}{\text{\small (performance of row n)}}$$
 14 & \begin{tabular}[c]{@{}l@{}}—yk-no-fallthrough + —yk-block-disambiguate +\\ —yk-patch-control-point + —yk-insert-stackmaps +\\ —yk-split-blocks-after-calls\end{tabular} & 54.5ms & 0.003 \\
 \bottomrule
 \end{tabular}
+}
 \caption{Shows the performance we can win back when individual passes or
     combinations of them are turned off with a 95\% confidence interval (CI). Row
     1 is the performance of the baseline yklua binary compiled with -O2. Row 14 shows
