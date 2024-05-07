@@ -1354,11 +1354,12 @@ testing conditions and target goal) may vary for different systems.
 There exist other meta-tracing systems, such as RPython~\cite{rpython}, that do
 not face the same problems as yk does. RPython requires the language
 implementation to be written in its own format and interprets the interpreter.
-Further, in RPython the trace is collected only when the software tracer is sure it is a hot loop. This
-means the performance overhead of collecting traces in RPython is expected to be
-much more than that of a hardware-based tracer. However, it also means that
-RPython does not need to map back JIT IR back to the interpreter's IR, and thus,
-can use the compiler optimisation passes much more freely.
+Further, in RPython the trace is collected only when the software tracer is sure
+it is a hot loop. This means the performance overhead of collecting traces in
+RPython is expected to be much more than that of a hardware-based tracer.
+However, it also means that RPython does not need to map back hardware tracer
+collected virtual addresses back to LLVM IR, and thus, can use the compiler
+optimisation passes much more freely.
 
 With software tracing, we can inject code into the AOT-compiled binary that directly
 records the IR blocks that are executed, and this entirely bypasses the need
