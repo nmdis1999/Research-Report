@@ -564,7 +564,7 @@ offspring entities. The process involves swapping sections of the parents'
 encoding to produce one or more children. The rationale behind crossover is to
 take the good characteristics of each parent and combine them to produce better
 offsprings, potentially leading to better solutions in subsequent generations.
-The general way of doing a crossover is to 'swap' sections of the genome of 2 parents.
+The general way of doing a crossover is to `swap' sections of the genome of 2 parents.
 The section being swapped may comprise from a single property, to all properties.
 The choice of properties being exchanged may be randomised or guided by a predefined heuristic.
 The simplest heuristic is a single-point crossover wherein a property in the genome sequence
@@ -588,12 +588,7 @@ and prevents the algorithm from getting stuck in local optima.}
 \end{figure}
 
 \section{Addressing interpreter performance in a meta-tracing system}
-\label{section:3}
-\laurie{don't give labels numbers, as that misses the point: you want textual
-labels, so that if you move sections around the numbers shown in the PDF
-automatically change. but if you use labels in the latex file itself, you'll
-just confuse yourself!}
-
+\label{interpret-perf}
 yk cannot enable all the optimisation passes currently, as they
 reorganise the basic-blocks and thus mess the mapping when switching from JIT
 compilation back to AOT compiled interpreter. Therefore, we need to carefully choose an
@@ -679,7 +674,7 @@ ykllvm (version 18).
 \subsection{Experiments}
 \label{experiments}
 
-The initial goal was to find 'some' subset of passes that satisfies the oracle. 
+The initial goal was to find `some' subset of passes that satisfies the oracle. 
 As it would be very expensive to try all the combinations linearly, it is easier
 to reduce the search space every time our search in the bigger space fails. The
 simplest metric is to divide the search space into half.
@@ -932,7 +927,7 @@ prelink and postlink) to the -O0 optimisation in yklua binary (i.e~ turning on t
 passes found via genetic algorithm) with the help of yk-config.
 
 Finally, I use ykllvm's clang to compile yklua binary, as
-described in Section \iti{add about ykllvm}.
+described in Figure \ref{yk-flow}.
 
 Table \ref{table:preandpostlink} shows performance numbers of adding prelink,
 postlink or both to yklua -O0 optimisation level.
@@ -1276,7 +1271,7 @@ Section\ref{experiments} to find the problematic passes and study their fixes (o
 if we need to completely disable them).
 
 \section{Related Work}
-\label{section:7}
+\label{related-work}
 The optimisation phase ordering problem for compiler optimisations has been solved
 before~\cite{guidedGA}. However, the solution for the phase-ordering problem for one
 system may not work for another. This is because the oracle (the
@@ -1303,7 +1298,7 @@ optimisation pass selection as an instance of the phase ordering problem
 becomes much more helpful in yk's context.
 
 \section{Conclusion and Future Work}
-\label{section:8}
+\label{CaF}
 In this report, I have shown that with the help of a genetic algorithm, we can
 use middle-end and possibly backend optimisation passes with the C interpreter,
 which not only maintains the correctness of the meta-tracer, but simultaneously
