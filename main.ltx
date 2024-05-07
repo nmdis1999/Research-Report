@@ -29,7 +29,7 @@ dynamically typed languages such as Python and JavaScript have gained popularity
 for writing scripts, but also complex server side applications.
 The most commonly used implementation of these languages are interpreters as
 they are quite flexible to use, and the developer does not need to incur the cost of
-compilation\iti{cite something}. However, the same flexibility that makes these
+compilation. However, the same flexibility that makes these
 languages popular among software developers also brings challenges to
 optimisations and code generations. As these languages see an increasing adoption, they demand
 improvement to their execution speed. An argument can be made that developers can pick
@@ -91,7 +91,7 @@ has a conspicuous cost.
     \label{figure:multilang-jit}
     \centering
     \scalebox{0.8}{
-    \includegraphics[scale=0.5, width=\linewidth]{images/multilang.pdf} 
+    \includegraphics[scale=0.5, width=\linewidth]{images/multilang-jit.pdf} 
     }
     \caption{An example of how dynamic languages, without a
     meta-tracing system need individual JITs, while with a meta-tracing system, multiple languages can
@@ -315,7 +315,7 @@ how the interpreter traces a single user loop.
         also adds some additional data such as builtin tracer and LLVM IR into
         the yklua binary, as they are required to collect the trace and map the
         collected trace to LLVM IR. The yk-interpreter binary then makes calls to yk when
-        it performs JIT compilations.\iti{change the diagram?}}
+        it performs JIT compilations.}
     \label{meta-tracer}
 \end{figure}
 
@@ -479,6 +479,8 @@ Frontend                   LLVM
 |   ...    |              |                                   |
 \---------/               \-----------------------------------/
 \end{Verbatim}
+\captionof{figure}{Figure shows the optimisations done at different level of
+compilation. Image credit: \cite{lto-prepost}}
 \end{tcolorbox}
 
 
@@ -516,6 +518,9 @@ pipeline\cite{lto-prepost}.
 |                                     |
 \-------------------------------------/
 \end{Verbatim}
+\captionof{figure}{Figure shows optimisation pipeline in middle-end optimisation
+(i.e~ LTO). Prelink and Postlink optimisation pipeline share some of the
+optimisation passes. Image credit: \cite{lto-prepost}}
 \end{tcolorbox}
 
 \iti{rewrite with stephen's comments}
@@ -1178,14 +1183,13 @@ lua tests.
 \textbf{H3} \hspace*{0.5cm} The performance for yklua binary should be the same when adding a list of
 passes to -O0 to that of removing passes from -O2. \\
 
-\iti{note to self: update the benchmark similar to that of overview and format
-it to look similar to other tables}
 \begin{table}[h]
 \resizebox{\textwidth}{!}{
 \begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
 Benchmarks & Compiled yklua & Compiled yklua & Compiled yklua & Compiled yklua & Non-yk lua & Non-yk lua \\
-& with -O0 & with -O2 & with -O0 and adding passes & with -O2 and removing passes & (compiled with -O0) & (compiled with -O2) \\
+& with -O0 (Baseline 1) & with -O2 & with -O0 and adding passes & with -O2 and
+removing passes & with -O0) &  with -O2 (Baseline 2) \\
 \hline
 db.lua & 0.120 & 0.068 & 0.125 & 0.069 & 0.061 & 0.028 \\
 verybig.lua & 0.597 & 0.335 & 0.666 & 0.342 & 0.261 & 0.141 \\
@@ -1199,7 +1203,11 @@ pm.lua & 0.050 & 0.050 & 0.047 & 0.036 & 0.022 & 0.009 \\
 \end{tabular}
 }
 \caption{The table shows that the performance of yklua binary varies when we start
-    compilation from -O0 versus when we start from -O2, and add/remove the same pass sequence.}
+    compilation from -O0 versus when we start from -O2, and add/remove the same
+    pass sequence. The last two columns are lua (non yk retrofitted) binary
+    compiled in -O0 and -O2 respectively, latter being the Baseline 2.
+    `N/A' means that program did not run with the said version of the
+    interpreter.}
 \end{table}
 
 Depending upon the optimisation level we start with, clang perform different
