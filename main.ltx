@@ -536,7 +536,7 @@ Now that we know about the optimisation pipelines, the question rises: what can 
 to figure out which pass to keep and which to disable for yk? In this report
 I have used two algorithms to explore the search space for yk-compatible pass
 sequence: a divide-and-conquer algorithm and a genetic-algorithm. I will be 
-explaining both of the algorithm in Section:\ref{experiments}. However, I would still
+explaining both of the algorithm in Section\ref{experiments}. However, I would still
 like to introduce some terminologies for genetic-algorithm in the next
 subsection.
 
@@ -643,13 +643,13 @@ improving the C interpreter's performance.
 However, there is scope for further improvement of the yk retrofitted
 interpreter. First, the genetic algorithm currently only finds a pass sequence
 for pre and postlink optimisation pipeline, and by default, all backend
-optimisations are disabled both in `-O0` and `-O2`. Second, some of yk's passes
+optimisations are disabled both in -O0 and -O2. Second, some of yk's passes
 incur significant overhead. After finding the pass sequence which satisfies the
 oracle as well as improves the yklua interpreter, I proceed to investigate other
 blockers which inhibit yklua's efficiency. The following experiments start from
 understanding the slowdown incurred by yk's passes and later, I proceed to find
 the impact of disabling all of the backend optimisations and whether it is
-possible to enable them back in both `-O0` and `-O2` optimisation levels.
+possible to enable them back in both -O0 and -O2 optimisation levels.
 
 \section{Evaluation}
 
@@ -805,14 +805,14 @@ example}
         \EndFunction
 
         \Function{encode\_passes\_randomly}{Pass $root\_passes$}
-            \State Recursively set `on` flag of each pass to 0 or 1 randomly
+            \State Recursively set `on' flag of each pass to 0 or 1 randomly
             \State Ensure at least one subpass is enabled if parent is enabled
             \State Return modified $root\_passes$
         \EndFunction
 
         \Function{decode\_passes\_to\_string}{Pass $passes$}
             \State Generate string representation of enabled passes and hierarchy
-            \State Exclude passes with `on` set to 0
+            \State Exclude passes with `on' set to 0
             \State Return the string representation
         \EndFunction
 
@@ -833,7 +833,7 @@ example}
         \EndFunction
 
         \Function{mutate}{Pass $entity$, float $mutation\_rate$}
-            \State Recursively flip `on` flag of each pass with probability $mutation\_rate$
+            \State Recursively flip `on' flag of each pass with probability $mutation\_rate$
             \State Return mutated pass
         \EndFunction
 
@@ -849,7 +849,7 @@ example}
 
         \Function{main}{}
             \State Set up temporary directories
-            \State Get available passes using `get\_all\_passes`
+            \State Get available passes using `get\_all\_passes'
             \State Run genetic algorithm to find best passes
             \State Decode best entity and print final passes
         \EndFunction
@@ -866,8 +866,7 @@ expensive operation in the algorithm. Therefore, I optimised the algorithm to
 compute the fitness of a generation in parallel which reduced the run-time for
 10 generations from 4-5 hours to 15 minutes. This improved my efficiency in
 running experiments and finding patterns in successful and non-successful pass
-sequence.
-\footnote{https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}
+sequence\footnote{https://github.com/ykjit/yk/pull/900/commits/e597774190c2856cd19328c94401f44ea8bf3a8b}.
 
 \section{Results}
 \label{results}
@@ -903,11 +902,10 @@ with both -O0's and -O2's optimisation passes.
 There are two binaries which can be considered as potential baseline. We shall
 refer to them as baseline 1 and baseline 2.
 
-\textbf{Baseline 1:} yklua compiled with `-O0` (i.e~ all optimisations are
+\textbf{Baseline 1:} yklua compiled with -O0 (i.e~ all optimisations are
 turned off).
 
-\textbf{Baseline 2:} non-yk lua compiled with `-O2` \laurie{find out what the
-right ticks are in latex -- you can't use ` for start and end ticks}.
+\textbf{Baseline 2:} non-yk lua compiled with -O2.
 
 My initial goal is to reduce the overhead of retrofitting yk onto the
 interpreter. To achieve this, I apply yk-compatible optimisation passes onto the
@@ -948,36 +946,37 @@ postlink or both to yklua -O0 optimisation level.
 \toprule
 \textbf{binary} & \textbf{prelink passes} & \textbf{postlink passes} & \textbf{optimisation level} & \textbf{Mean} & \textbf{95\% CI} \\ 
 \midrule
-yklua (Baseline 1) & no & no & `-O0` & 0.140 & 0.002 \\
-yklua & yes & no & `-O0` & 0.097 & 0.003 \\
-yklua & no & yes & `-O0` & 0.104 & 0.001 \\
-yklua & yes & yes & `-O0` & 0.096 & 0.003 \\
-yklua & no & no & `-O2` & 0.093 & 0.003 \\
-lua (Baseline 2) & no & no & `-O2` & 0.034 & 0.004 \\
+yklua (Baseline 1) & no & no & -O0 & 0.140 & 0.002 \\
+yklua & yes & no & -O0 & 0.097 & 0.003 \\
+yklua & no & yes & -O0 & 0.104 & 0.001 \\
+yklua & yes & yes & -O0 & 0.096 & 0.003 \\
+yklua & no & no & -O2 & 0.093 & 0.003 \\
+lua (Baseline 2) & no & no & -O2 & 0.034 & 0.004 \\
 \bottomrule
 \end{tabular}
 \caption{The table shows the performance of the yklua interpreter built with and
 without a pass sequence obtained from a genetic algorithm with 95\% confidence
-intervals. The performance numbers are for 30 runs of `db.lua` when the JIT is
-turned off. All of the performance numbers represent the cost of retrofitting yk
+intervals. The performance numbers are for 30 runs of \textit{db.lua} when the JIT is
+turned off. \textit{db.lua} is a lua program which tests lua's debug library.
+All of the performance numbers represent the cost of retrofitting yk
 onto the interpreter. The first row is yklua built without any pass sequence,
 and consecutive rows with adding prelink, postlink, or both pass sequences to
-`-O0`. The last two rows are yklua and non-yk lua compiled lua with `-O2`
+-O0. The last two rows are yklua and non-yk lua compiled lua with -O2
 optimisation level.}
 \label{table:preandpostlink}
 \end{table}
 
 \subsubsection{Compiling yklua with -O2}
 yklua blocked all backend optimisation to run by adding a pass in ykllvm called
-YkAfterIRPasses, which would patch the `optnone` attribute on all of the
+YkAfterIRPasses, which would patch the `optnone' attribute on all of the
 functions in the backend optimisations. However, this pass assumed that this
 would be enough to block backend optimisation for all the optimisation levels
 while still not causing problems when compiling with the optimisation level.
 Contradictory to the assumption made by the pass, this resulted in a compilation
 error in yklua when using the -O2 optimisation level. The obvious question is,
-why does compiling yklua only fails with `-O2`  and not with `-O0`? The answer
-turned out to be quite simple; unlike `-O0`, to block backend optimisation
-functions in `-O2`, we have to apply both `optnone` and `noinline` attribute. 
+why does compiling yklua only fails with -O2 and not with -O0? The answer
+turned out to be quite simple; unlike -O0, to block backend optimisation
+functions in -O2, we have to apply both `optnone'  and `noinline' attribute. 
 
 The reason for using both noinline and optnone attributes together when blocking
 optimisations at higher optimisation levels like -O2 is related to how the LLVM
@@ -994,7 +993,7 @@ for that function. However, if the function is called from other functions that
 are being optimised, the optimiser may still decide to inline the optnone
 function into the calling function.
 
-After adding the fix, yklua can be compiled using both `-O0` and `-O2`. However,
+After adding the fix, yklua can be compiled using both -O0 and -O2. However,
 the problem remains that we cannot use the full set of passes for yklua's
 compilation as they are incompatible with yk's test suite. This is due to wrong
 runtime behaviour caused by interaction between yk-bases passes and the backend
@@ -1031,8 +1030,8 @@ via LTO backend, it ends up blocking some of the postlink optimisations along
 with intended backend optimisations. 
 
 This prevents us from exploring the performance gains we could have gotten from
-the blocked passes. However, we cannot remove the `optnone`
-and `noinline` attributes from the lto backend, as removing them allows all
+the blocked passes. However, we cannot remove the `optnone'
+and `noinline' attributes from the lto backend, as removing them allows all
 backend optimisations to run which change the JIT IR such that compiling the IR
 results in a wrong runtime behaviour.
 
@@ -1108,7 +1107,7 @@ JIT compilation, the trace builder inlines functions into a trace which results
 in the changed structure of stack. With the help of Stackmaps, yk is able to
 get back the exact trace that it saw at the beginning of loop.
 
-The `yk-insert-stackmaps` pass is responsible for adding stackmaps to the JIT
+The `yk-insert-stackmaps' pass is responsible for adding stackmaps to the JIT
 IR.
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
@@ -1116,7 +1115,7 @@ unless it is intrinsic. However, stackmaps are not needed before calls to
 unmappable functions expect from the control point\iti{reference to appendix}
 and yk\_promote\iti{reference to appendix}, as these are not traced and thus
 never need de-optimisation. Example of unmappable functions are external calls
-and functions with no condition(s) inside them. This might claw back a few `ms`
+and functions with no condition(s) inside them. This might claw back a few `ms'
 for this pass. 
 
 After adding a fix to make sure that stackmap is not inserted after unmappable
@@ -1160,7 +1159,7 @@ This becomes problem for the JIT as it distorts the basic block mapping as we
 don't have information about which blocks were merged. One solution which
 doesn't need us to disable fallthrough optimisation is by encoding extra
 information about merged basic blocks. LLVM has a special code which provides
-information about how blocks are merged (such as ''merged\_bb\!``). If we can
+information about how blocks are merged (such as ``merged\_bb\!''). If we can
 store the information about how many blocks are merged and transfer this
 information to the hardware tracer, then we can tell which blocks were single
 basic blocks and which have been merged when mapping back from JIT IR to AOT IR.
@@ -1179,9 +1178,9 @@ resize was necessary\footnote{https://github.com/ykjit/yklua/pull/84}.
 
 \subsection{Where to begin: -O0 or -O2?}
 
-After adding `noinline` attribute to lto backend we can now easily use `-O2` to
+After adding `noinline' attribute to lto backend we can now easily use -O2 to
 compile yklua. This gives us an opportunity to consider whether we want to start
-with `-O0` and add passes to it or start from `-O2` and remove passes from it.
+with -O0 and add passes to it or start from -O2 and remove passes from it.
 One would expect both should result in same performance when benchmarking with
 lua tests. 
 
@@ -1316,7 +1315,7 @@ which not only maintains the correctness of the meta-tracer, but simultaneously
 improves the interpreter's performance when compiled with the meta-tracer
 retrofitted into it.
 
-As shown in the Section \ref{table:preandpostlink}, I can win back around 1.75x
+As shown in the Table \ref{table:preandpostlink}, I can win back around 1.75x
 performance after applying middle-end passes and macro-optimisations to the
 meta-tracer's passes. Although I am yet to catch problematic backend
 optimisation passes, it is not a very far-fetched goal. The next immediate
@@ -1362,8 +1361,8 @@ reduction in the overhead of embedding yk onto the C interpreters.
 \section{Appendix}
 \iti{APPENDIX}yk-config is a tool to apply yk-specific compiler and linker flags on the interpreter and other
 systems which use yk's meta-tracing system. yk-config makes
-configuring/compiling C interpreters easy by having the support to add `cflags`
-(compiler) and `ldflags` (linker), this can be used to add the prelink and
+configuring/compiling C interpreters easy by having the support to add `cflags'
+(compiler) and `ldflags' (linker), this can be used to add the prelink and
 postlink pass sequences found via the genetic algorithm by appending them to
 cflags and ldflags.
 
