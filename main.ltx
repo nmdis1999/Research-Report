@@ -93,9 +93,9 @@ has a conspicuous cost.
     \scalebox{0.8}{
     \includegraphics[scale=0.5, width=\linewidth]{images/multilang.pdf} 
     }
-    \caption{Example of how dynamic languages need individual JITs without
-    meta-tracing system, while with meta-tracing system multiple languages can
-    use the same JIT without having to write their own tracing JITs}
+    \caption{An example of how dynamic languages, without a
+    meta-tracing system need individual JITs, while with a meta-tracing system, multiple languages can
+    use the same JIT.}
 \end{figure}
 
 In this report, I discuss improvements I made which reduced the performance overhead
@@ -210,9 +210,9 @@ perform optimisations and make inlining decisions\cite{tracing-jit}.
     \scalebox{0.8}{
     \includegraphics[scale=0.5, width=\linewidth]{images/program_and_trace.pdf} 
     }
-    \caption{Example of how trace of a program looks like(inspired from
-    Wikipedia). Left hand side is a python program and right hand side is image
-    of the program's trace}
+    \caption{An example of the trace of a program (inspired from
+    Wikipedia). Left hand side is a python program and right hand side is an image
+    of the program's trace.}
 \end{figure}
 
 A tracing JIT makes assumptions such as:
@@ -227,7 +227,8 @@ A tracing JIT makes assumptions such as:
     \includegraphics[scale=0.2]{images/trace.pdf}
     \caption{\small In tracing JIT (which is the core of meta-tracing system), conditions are turned
     into guards. The guards are responsible for checking whether the conditions are
-    being met (i.e~they are true) or not. If the conditions are true, and a trace of it is
+    being met (i.e~they are true) or not. If the conditions are true, and a
+    trace of the execution path is
     already compiled then instead of interpreting the condition again, the compiled trace
     is used by the interpreter.}
     \label{tracing-jit}
@@ -308,13 +309,13 @@ how the interpreter traces a single user loop.
     \scalebox{0.5}{
         \includegraphics[scale=0.01, width=\linewidth]{images/yk_metatracer.pdf} 
     }
-    \caption{Figure shows how ykllvm introduces control-point and compile
+    \caption{Figure shows how ykllvm introduces control-point and compiles
         (yk)lua binary. The control-point is necessary so that the meta-tracing
-        system can identify at what point to start recording tracing. ykllvm
-        also add some additional data such as builtin tracer and LLVM IR into
-        the yklua binary as they are required to collect trace and map the
+        system can identify at what point to start recording the trace. ykllvm
+        also adds some additional data such as builtin tracer and LLVM IR into
+        the yklua binary, as they are required to collect the trace and map the
         collected trace to LLVM IR. The yk-interpreter binary then makes calls to yk when
-        it performs JIT compilations -> change the diagram.}
+        it performs JIT compilations.\iti{change the diagram?}}
     \label{meta-tracer}
 \end{figure}
 
@@ -356,15 +357,15 @@ affecting the program's correctness and performance.
     to compile the interpreter's source code into a binary. This binary has a built-in tracer, a jit
     compiler and LLVM IR. The LLVM IR is then used to get the tracing information
     from the binary. The binary is generated via ykllvm and is used to interpret the
-    user program. If the program has a loop, where a loop means the tracer comes
-    back to the point it started collecting trace from, then the builtin tacer
+    user program. If the program has a loop (loop meaning the tracer comes
+    back to the point it started collecting trace from), then the builtin tacer
     records this information. A trace starts getting collected when the meta-tracing
-    system detects control-point in the interpreter, which can be inserted by the
+    system detects the control-point in the interpreter, which can be inserted by the
     user initially. This control-point is later converted into a yk specific control
     point. After collecting the full trace, the trace is compiled which is called
     just-in-time compilation (or JIT compilation) and then executed as a part of the
-    meta-tracing system. If, while executing the user program, both loop and
-    complete traces are detected (which can be a later iteration of the loop) then
+    meta-tracing system. If, while executing the user program, both a loop and
+    complete traces are detected (which can be a later iteration of the loop), then
     instead of recording and compiling the trace again, the already compiled trace
     is used for execution.
     }
@@ -384,9 +385,9 @@ significantly even without the JIT being enabled.
 \begin{figure}[htbp] \centering
     \includegraphics[scale=0.2]{images/block-merge.pdf} \caption{\small High
         Level IR and Machine IR side by side after backend optimisation. After
-        enabling backend optimisations some basic blocks may get merged into
-        one. And the previous basic block which contained operations are either
-        empty or deleted. This results in wrong run-time behaviour of the
+        enabling backend optimisations, some basic blocks may get merged into
+        one. The previous basic block which contained operations are either
+        empty or deleted. This results in a wrong run-time behaviour of the
         yk-optimised interpreter.} \label{bb-merge}
 \end{figure}
 
@@ -950,10 +951,10 @@ lua (Baseline 2) & no & no & -O2 & 0.034 & 0.004 \\
 \bottomrule
 \end{tabular}
 \caption{The table shows the performance of the yklua interpreter built with and
-without a pass sequence obtained from a genetic algorithm with 95\% confidence
-intervals. The performance numbers are for 30 runs of \textit{db.lua} when the JIT is
+without a pass sequence obtained from the genetic algorithm, with a 95\% confidence
+interval (CI). The performance numbers are for 30 runs of \textit{db.lua} when the JIT is
 turned off. \textit{db.lua} is a lua program which tests lua's debug library.
-All of the performance numbers represent the cost of retrofitting yk
+All the performance numbers represent the cost of retrofitting yk
 onto the interpreter. The first row is yklua built without any pass sequence,
 and consecutive rows with adding prelink, postlink, or both pass sequences to
 -O0. The last two rows are yklua and non-yk lua compiled lua with -O2
@@ -1073,9 +1074,9 @@ baseline)}}{\text{\small (performance of row n)}}$$
 14 & \begin{tabular}[c]{@{}l@{}}—yk-no-fallthrough + —yk-block-disambiguate +\\ —yk-patch-control-point + —yk-insert-stackmaps +\\ —yk-split-blocks-after-calls\end{tabular} & 54.5ms & 0.003 \\
 \bottomrule
 \end{tabular}
-\caption{Shows performance we can win back when individual passes or
-    combinations of them are turned off with 95\% confidence interval (CI). Row
-    1 is the performance of baseline yklua binary compiled with -O2. Row 14 shows
+\caption{Shows the performance we can win back when individual passes or
+    combinations of them are turned off with a 95\% confidence interval (CI). Row
+    1 is the performance of the baseline yklua binary compiled with -O2. Row 14 shows
     maximum retrieval of performance when the passes in
     the row are turned off.}
 \label{table:c}
@@ -1202,9 +1203,8 @@ pm.lua & 0.050 & 0.050 & 0.047 & 0.036 & 0.022 & 0.009 \\
 \hline
 \end{tabular}
 }
-\caption{The table shows that performance of yklua binary varies when we start
-    compilation from -O0 versus that of -O2 and add/remove the same pass sequence.}
-\iti{rewrite the caption.}
+\caption{The table shows that the performance of yklua binary varies when we start
+    compilation from -O0 versus when we start from -O2, and add/remove the same pass sequence.}
 \end{table}
 
 Depending upon the optimisation level we start with, clang perform different
