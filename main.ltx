@@ -138,8 +138,6 @@ are discussed in Section \ref{results}.
 \section{Background}
 \label{background}
 
-IMPORTANT: https://github.com/softdevteam/softdev/blob/5c7ef8c3fc4149e0c7547879ed96df1d4f64a7e3/talks/hwmetatracer/hwmetatracer.ltx
-
 This section provides background on dynamically typed languages, just-in-time
 (JIT) compilation, the tracing JIT compilation technique, and meta-tracing. The
 highlight of this section is meta-tracing systems, as they are an important
@@ -162,14 +160,12 @@ code to accommodate various type. \iti{rephrase}
 Optimising implementation for dynamic languages is not as easy task as they are
 not usually designed for speed. This has resulted in years of research to
 bring the performance of dynamically typed languages to an
-acceptable performance level. Early results for Lisp [SJG93] and Smalltalk
-[DS84] involved extensive research around the Self language [CUE89, HU94, Hö94],
-which was later applied to the Hotspot VM [PVC01]. The common theme in all of
-this research was they used a JIT compiler [Ayc03] to compile and recompile
-parts of the program at runtime; this was done for the most executed parts of the
-program. JIT compilation gives advantages of interpretation with the performance
-benefits of compiled code, optimizing execution speed without compromising the
-flexibility that dynamic languages require.
+acceptable performance level, JIT compiler[Ayc03] being a common theme in them.
+The early results varying from Lisp [SJG93] to Smalltalk [DS84] revolved around 
+the SELF language [CUE89, HU94, Hö94] and were applied to the Hotspot VM
+[PVCO1]. These results showed that JIT compilation can give the advantages of
+interpretation with the performance benefits of compiled code without
+compromising the flexibility that dynamic languages require.
 
 However, the challenge with Just-in-time compilation is that it is not an easy
 implementation technique, especially when the language it targets is
