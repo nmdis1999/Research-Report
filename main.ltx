@@ -7,15 +7,15 @@
 \begin{abstract}
     \noindent
     Meta-tracing systems such as yk turn existing C interpreters into tracing
-    just-in-time(JIT) compilers, making it easier for developers to use the JIT
+    just-in-time (JIT) compilers, making it easier for developers to use the JIT
     without implementing one from scratch for their languages. However, yk at the
-    current stage does not support higher optimisation levels and
+    current stage does not support higher optimisation levels, and
     pessimistically disables all compiler optimisations. The cost of retrofitting
     yk onto the interpreter without any optimisation is a 5x slowdown as
     compared to non-yk interpreter. My work reduces this overhead to 3x by:
     using a genetic-algorithm to find yk-compatible compiler optimisation passes,
     and performing macro-optimisations on
-    both yk's compiler and the interpreter using yk. Additionally, I propose
+    both yk's compiler, and the interpreter using yk. Additionally, I propose
     solutions to modify yk and non-compatible optimisation passes which could
     further reduce this overhead of retrofitting yk onto interpreters,
     starting with the lua interpreter.
@@ -44,10 +44,10 @@ which can be very expensive in terms of space and time complexity.
 It has been stated that implementations of dynamically typed languages are often
 slower than the implementation of statically typed languages\cite{ltratt09}. 
 There has been continuous research on making
-interpreters faster which dates back to the Self project\cite{HU94} but they
+interpreters faster which dates back to the Self project\cite{HU94}, but they
 are not used as frequently as one would want. Most dynamically typed languages
 use a bytecode interpreter without any advanced optimisations such as just-in-time
-compilations. The reason for limited use of JIT compilers is the difficulty in their
+compilations. The reason for a limited use of JIT compilers is the difficulty in their
 implementations\cite{bolz2014meta}. A JIT compiler for a dynamically typed
 language would need to handle all the complex interactions of the language while
 simultaneously generating efficient code for the common cases. 
@@ -100,8 +100,8 @@ has a conspicuous cost.
 
 In this report, I discuss improvements I made which reduced the performance overhead
 when retrofitting yk onto an existing interpreter written in C. The aim of the report is to reduce the
-gap between performance of interpreter which is compiled via yk's modified
-implementation of LLVM called ykllvm and the interpreter which is compiled with
+gap between performance of the interpreter which is compiled via yk's modified
+implementation of LLVM called ykllvm, and the interpreter which is compiled with
 GCC or LLVM's clang.
 
 The main contributions of this report are:
@@ -132,13 +132,13 @@ better approach using a stochastic genetic algorithm, which not only found
 multiple compatible pass sequences but also yielded sequences that began to
 improve the interpreter's performance.
 
-There are a total of 3 hypothesis in this report, the second and third hypothesis
+There are a total of 3 hypotheses in this report, the second and third hypotheses
 are discussed in Section \ref{results}.
 
 \section{Background}
 \label{background}
 
-This section provides background on dynamically typed languages, just-in-time
+This section provides a background on dynamically typed languages, just-in-time
 (JIT) compilation, the tracing JIT compilation technique, and meta-tracing. The
 highlight of this section is meta-tracing systems, as they are an important
 component of this report. Additionally, this section provides details on
@@ -154,8 +154,8 @@ ease of development and flexibility they offer. However, interpreters
 inherently suffer from slower execution speeds.
 
 While dynamically typed languages can be compiled, they are often slower to
-run when compiled as compilers will have to generate more general and slower
-code to accommodate various type. \iti{rephrase}
+run when compiled as compilers have to generate general code to accommodate
+all possible data types, which subsequently results in slower program execution.
 
 Optimising implementation for dynamic languages is not as easy task as they are
 not usually designed for speed. This has resulted in years of research to
@@ -487,7 +487,7 @@ compilation. Image credit: \cite{lto-prepost}}
 \subsubsection{LTO Pipeline}
 The middle-end comprises LTO pipelines, which are split into a
 pre-link,  post-link optimisation and backend optimisation
-pipeline\cite{lto-prepost}.
+pipelines\cite{lto-prepost}.
 
 \begin{tcolorbox}[
     enhanced,
@@ -618,7 +618,7 @@ the right subset of passes is important for a program's performance either with
 respect to execution time, code size or both. A pass sequence is a subset of
 passes from the larger set, in a certain order, which means the position in
 which the passes are placed with respect to one another. However, with such a
-high number of passes (around 90) the search space becomes large: considering
+high number of passes (around 90), the search space becomes large: considering
 all possible subsets with a fixed ordering, the search space has $2^{90} - 1$
 points.
 
@@ -652,21 +652,21 @@ possible to enable them back in both -O0 and -O2 optimisation levels.
 \subsection{Methodology}
 \label{methodology}
 
-I had to use two separate machines for the work done, one for finding optimisation
-passes and the other to run the yk and non-yk lua's test
+I had to use two separate machines for the work done: one for finding optimisation
+passes, and the other to run the yk and non-yk lua's test
 suites for benchmarking. The first machine has an x86\_64 architecture with 72
 physical cores while the second machine has an x86\_64 architecture with 8
 physical cores.  
 
 As the search space of compiler optimisation passes is huge, running the genetic
 algorithm on an 8 core processor was quite slow. Using two machines made it faster
-to conduct the experiments and verify my hypothesis.
+to conduct the experiments and verify my hypotheses.
 
 \textbf{Machine I}: Intel Xeon, x86\_64 architecture, 72 physical cores,
                       Debian 5.10 \\
 
 \textbf{Machine II}: Intel Xeon Platinum, x86\_64 architecture, 8 physical cores,
-                        Debian 6.1 \\ 
+                        Debian 6.1 \\
 
 Machine I is used to run the algorithms discussed below and search for yk-compatible optimisation pass
 sequences.
@@ -675,6 +675,28 @@ algorithms and gather the benchmark data.
 
 To both collect pass sequences, and benchmark yklua's test suite I used
 ykllvm (version 18).
+
+I used two separate machines for the work done: one for finding optimisation
+passes, and the other to run the yk and non-yk lua's test suites for benchmarking.
+
+\textbf{Machine I}: Intel Xeon, x86\_64 architecture, 72 physical cores,
+                      Debian 5.10 \\
+
+\textbf{Machine II}: Intel Xeon Platinum, x86\_64 architecture, 8 physical cores,
+                        Debian 6.1 \\ 
+
+As the search space of compiler optimisation passes is huge, running the genetic
+algorithm on an 8 core processor was quite slow. Using two machines made it faster
+to conduct the experiments and verify my hypotheses.
+
+Machine I is used to run the algorithms discussed below and search for yk-compatible optimisation pass
+sequences.
+Machine II is used to compile yklua with the pass sequences obtained from the said
+algorithms and gather the benchmark data.
+
+To both collect pass sequences, and benchmark yklua's test suite I used
+ykllvm (version 18).
+\color{black}
 
 \subsection{Experiments}
 \label{experiments}
@@ -791,29 +813,29 @@ example}
     \begin{algorithm}[H]
         \begin{algorithmic}[1] % The [1] argument enables line numbering
         \small
-        \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
-        \State Fetch all available optimisation passes
-        \State \iti{how do we maintain the static ordered list of passes?}
+        \State Define structure for \textbf{PipelineConfig}
+        \State Fetch all available optimisation passes in the correct order.
+        \State Define an \textbf{Entity} as a list of \{pass\_name, on\} pairs maintaining the order.
 
         \Function{test\_pipeline}{PipelineConfig $pl$}
             \State Execute the pipeline with configuration $pl$
             \State Log the results
         \EndFunction
 
-        \Function{encode\_passes\_randomly}{Pass $root\_passes$}
+        \Function{encode\_passes\_randomly}{Entity $entity$}
             \State Recursively set `on' flag of each pass to 0 or 1 randomly
             \State Ensure at least one subpass is enabled if parent is enabled
             \State Return modified $root\_passes$
         \EndFunction
 
-        \Function{decode\_passes\_to\_string}{Pass $passes$}
+        \Function{decode\_passes\_to\_string}{Entity $entity$}
             \State Generate string representation of enabled passes and hierarchy
             \State Exclude passes with `on' set to 0
             \State Return the string representation
         \EndFunction
 
-        \Function{evaluate\_fitness}{Pass $passes$, ...}
-            \State Decode passes string into PipelineConfig $pl$
+        \Function{evaluate\_fitness}{Entity $entity$, ...}
+            \State Decode passes to string and feed into PipelineConfig $pl$
             \State Call $test\_pipeline(pl)$ to get execution time of a user program
             \State Add fitness score (execution time of user program) to shared list
         \EndFunction
@@ -823,30 +845,31 @@ example}
             \State Choose fitter one with probability $sp$ as parent
         \EndFunction
 
-        \Function{crossover}{Pass $parent1$, Pass $parent2$}
-            \State Create child passes by swapping random passes between parents
-            \State Return child passes
+        \Function{crossover}{Entity $parent1$, Entity $parent2$}
+            \State Create child entities by swapping random passes between parents
+            \State Return child entities
         \EndFunction
 
-        \Function{mutate}{Pass $entity$, float $mutation\_rate$}
+        \Function{mutate}{Entity $entity$, float $mutation\_rate$}
             \State Recursively flip `on' flag of each pass with probability $mutation\_rate$
-            \State Return mutated pass
+            \State Return mutated entity
         \EndFunction
 
         \Function{genetic\_algorithm}{string $parsed\_str$, ...}
-            \State Create initial population of randomly encoded passes
+            \State Create initial population as a list of entities.
+            \State Encode passes randomly for each entity.
             \For{$generation$ in $1$ to $generations$}
             \State Evaluate fitness of each entity in parallel
             \State Select elites (good fitness)
             \State Apply crossover and mutation to create new generation
             \EndFor
-            \State Return best entity (set of passes)
+            \State Return best entity (list of passes)
         \EndFunction
 
         \Function{main}{}
             \State Set up temporary directories
             \State Get available passes using `get\_all\_passes'
-            \State Run genetic algorithm to find best passes
+            \State Run genetic algorithm to find best entity
             \State Decode best entity and print final passes
         \EndFunction
         \end{algorithmic}
@@ -914,7 +937,7 @@ Baseline 2).
 \subsection{Effects of applying a meta-tracing compatible pass sequence on the yklua
 interpreter}
 
-In this section I'll be using a pass sequence obtained through genetic algorithm
+In this section I'll be using a pass sequence obtained through the genetic algorithm
 to improve performance of the yklua interpreter. Further, I will show that even
 after applying full -O2 optimisation level we are still 3x slower than non-yk
 lua partially due to yk-based flags interfering with optimisations which use the
@@ -1116,8 +1139,8 @@ IR.
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it is intrinsic. However, stackmaps are not needed before calls to
-unmappable functions expect from the control point\iti{reference to appendix}
-and yk\_promote\iti{reference to appendix}, as these are not traced and thus
+unmappable functions expect from the control point\ref{appendix:terms}
+and yk\_promote\ref{appendix:terms}, as these are not traced and thus
 never need de-optimisation. Example of unmappable functions are external calls
 and functions with no condition(s) inside them. This might claw back a few `ms'
 for this pass. 
@@ -1278,7 +1301,8 @@ behaviour.
 The second experiment, which I believe will need to be conducted in parallel, is
 to figure out the problematic passes which result in these test cases to fail. This
 can be done by fixing LLVM to overwrite backend optimisations. I can adjust
-TargetPassConfig in LLVM Codgen to do this with the help of llc. llc has an
+TargetPassConfig in LLVM Codgen to do this with the help of
+llc\ref{appendix:terms}. llc has an
 option to over-write backend passes with run-passes. After adjusting the
 TargetPassConfig, I will need to make adjustments to yk-config so that we
 overwrite the backend optimisations at the right stage. Once it is possible to
@@ -1355,7 +1379,7 @@ reduction in the overhead of embedding yk onto the C interpreters.
         \midrule
         \textbf{2024 June - August} & \begin{itemize} \item{Adjust LLVM's Legacy Pass Manager to overwrite the backend optimisation pipeline.} \item{Design a custom pipeline with yk-compatible optimisations.} \item{Perform macro-optimisation on yk-based passes in ykllvm, reducing their overhead.} \end{itemize} \\
         \textbf{2024 September - November} & \begin{itemize} \item{Profile and benchmark yk-retrofitted C interpreters when compiled with a yk-compatible custom optimisation level. This may introduce opportunities for further optimisations.} \end{itemize} \\
-        \textbf{2024 December - 2025 February} & \begin{itemize} \item{Conduct an in-depth literature review on optimization passes constructed for meta-tracing systems.} \item{Design experiments to explore introducing a new optimisation pass for the yk meta-tracing system, performing optimisations at JIT compilation time.} \end{itemize} \\
+        \textbf{2024 December - 2025 February} & \begin{itemize} \item{Conduct an in-depth literature review on optimisation passes constructed for meta-tracing systems.} \item{Design experiments to explore introducing a new optimisation pass for the yk meta-tracing system, performing optimisations at JIT compilation time.} \end{itemize} \\
         \bottomrule
     \end{tabular}
 }
@@ -1364,20 +1388,53 @@ reduction in the overhead of embedding yk onto the C interpreters.
 \bibliographystyle{plain}
 \bibliography{local.bib}
 
+\appendix
 \section{Appendix}
-\iti{APPENDIX}yk-config is a tool to apply yk-specific compiler and linker flags on the interpreter and other
-systems which use yk's meta-tracing system. yk-config makes
-configuring/compiling C interpreters easy by having the support to add `cflags'
-(compiler) and `ldflags' (linker), this can be used to add the prelink and
-postlink pass sequences found via the genetic algorithm by appending them to
-cflags and ldflags.
+\label{appendix:terms}
+\textbf{yk-config:}yk-config is a tool to apply yk-specific compiler and linker
+flags on the interpreter and other systems which use yk's meta-tracing system.
+yk-config makes configuring/compiling C interpreters easy by having the support
+to add `cflags' (compiler) and `ldflags' (linker), this can be used to add the
+prelink and postlink pass sequences found via the genetic algorithm by appending
+them to cflags and ldflags.
 
-\iti{APPENDIX}ykllvm is a modified version of LLVM
-which applied yk specific flags to the final binary.
+\textbf{ykllvm:} It is a modified version of LLVM which applies yk specific
+passes to add additional data such as LLVM IR, trace builder, control point etc.
+to the interpreter's binary executable.
 
-\iti{add what
-is control point and yk\_promote in the background section}
+\textbf{ykrt\_control-point:} a ``control point'' refers to a specific point in
+the program's execution where the meta-tracer can potentially start or stop
+tracing. Control points are used to define the boundaries of traced regions and
+to determine when to switch between interpreted mode and compiled mode.
+`ykrt\_control\_point' introduces a dummy control point that later gets replaced
+with a call to a new control point by ykllvm implementing the logic to drive the
+yk JIT.
 
-\iti{add about LLC}
+\textbf{yk\_promote:} Used to promote a value to a constant, further adds a
+guard that ensures de-optimisation if the promoted value deviated from the
+``baked-in'' constant. 
+promotion means
+that 
+When a program is being traced, the meta-tracer records the operations and
+branches taken during the execution of a particular code path. However, some
+values used in the traced code may be boxed or stored in a generic format, which
+can lead to slower execution.
+
+Promotion is the process of converting these boxed or generic values into
+unboxed or specific representations within the traced code. By promoting values,
+the JIT compiler can generate more efficient machine code that operates directly
+on the unboxed values, avoiding the overhead of boxing and unboxing operations.
+
+For example, consider a traced function that performs arithmetic operations on
+integers. Initially, the integers might be represented as boxed objects. During
+promotion, the JIT compiler analyzes the traced code and determines that the
+values can be safely promoted to unboxed integer representations. This allows
+the compiler to generate native machine code that directly operates on the
+integer values, resulting in faster execution.
+
+\textbf{llc}: llc stands for "LLVM static compiler" or "LLVM static backend." It
+is a command-line tool that is part of the LLVM toolchain and is used to compile
+LLVM Intermediate Representation (LLVM IR) into machine code for a specific
+target architecture.
 
 \end{document}
