@@ -70,6 +70,19 @@
 \definecolor{lightgray}{gray}{0.95}
 \definecolor{mediumgray}{gray}{0.9}
 
+% Define a new tcolorbox environment for Python code
+\newtcolorbox[auto counter, number within=section]{pseudocode}[2][]{%
+    enhanced jigsaw,
+    breakable, % Allow box to break across pages
+    colback=white, % Background color
+    colframe=black, % Frame color
+    title=Python code for the genetic algorithm: Listing~\thetcbcounter, % Title setup
+    label=#2,
+    listing only,
+    listing options={basicstyle=\ttfamily, language=Python},
+    #1
+}
+
 % Spacing and formatting
 \setlength{\parindent}{0pt} % Remove paragraph indentation
 \setlength{\parskip}{0.5em}
@@ -78,6 +91,27 @@
 \titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
 \titleformat{\subsubsection}{\bfseries}{\thesubsubsection}{1em}{}
 
+% Define custom colors for the code
+\definecolor{codebackground}{HTML}{F8F8F8}
+\definecolor{codecomment}{HTML}{008000}
+\definecolor{codestring}{HTML}{BA2121}
+\definecolor{codekeyword}{HTML}{1E90FF}
+
+% Set up the listing style
+\lstset{
+    language=Python,
+    backgroundcolor=\color{gray!10},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    frame=single,
+    captionpos=b
+}
 % Title, author, and date
 \title{18 Month Assessment Report}
 \author{Iti Shree}

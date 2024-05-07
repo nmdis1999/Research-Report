@@ -80,7 +80,7 @@ representation. In yk, when the yk interpreter switches from JIT compilation to
 interpretation, the yk system tries to map back machine basic blocks to LLVM IR
 basic blocks. The yk passes makes sure that the mapping is accurate else the
 correctness and efficiency of the meta-tracing system will be compromised. We
-discuss this further in \ref{background}.
+discuss this further in Section \ref{background}.
 
 The result of yk pessimistically turning off all of the optimisation passes is
 that the performance of yk compiled interpreter is significantly slow even when
@@ -294,15 +294,15 @@ loop in the user program; a loop is called hot when the interpreter's program
 counter reaches the same value multiple times indicating multiple iterations of
 the same loop.
 
-\iti{rewrite?}
-The program counter is stored in one of the several variables in the interpreter. To
-figure out which variable holds value for the program counter, the MetaJIT needs
-hints (via a dummy control point). Since LLVM is Static-Single-Assignment (SSA),
-it also adds temporary variables while generating the Intermediate
-Representation(IR). The dummy control point is later(at runtime) replaced by the
-original control-point. The loop is considered closed only when all the
-variables that make up the program counter \iti{all the variables?} are same in the second iteration. This is
-how the interpreter traces a single user loop.
+yk has a location array which is by default initialised with `NULL' value. The
+location array is used to store the location for all the opcode in the user
+program, and is later sent to dummy control point indicating the location of the
+program counter. As LLVM is Static-Single-Assignment (SSA), it also adds
+temporary variables while generating the Intermediate Representation(IR). The
+dummy control point is later(at runtime) replaced by the original control-point.
+The loop is considered closed only when program counter reaches the same value
+it started with before the main interpreter loop was executed. This is how the
+interpreter traces a single user program loop.
 
 \begin{figure}[htbp]
     \centering
@@ -325,10 +325,9 @@ how the interpreter traces a single user loop.
 yk uses Intel PT as its hardware tracer. However, Intel PT can only store a
 stream of basic blocks and give their virtual addresses~\cite{intel-pt}. So,
 block mapping is used in hardware tracing to get from a traced virtual address
-to a file offset in the binary, to the LLVM IR block. The trace IR we get can
-also be called the JIT IR. The yk meta-tracing system depends on loader API and a
-special LLVM section to do this. This section is emitted just before backend
-optimisation.
+to a file offset in the binary, to the LLVM IR block. The yk meta-tracing system
+depends on loader API and a special LLVM section to do this. This section is
+emitted just before backend optimisation.
 \end{samepage}
 
 As trace represents one of many possible paths a program can take, to ensure
@@ -372,14 +371,15 @@ affecting the program's correctness and performance.
 \label{yk-flow}
 \end{figure}
 
-However, some LLVM optimisation passes mess with the basic-block mapping (that
-is the JIT IR). One such example is when the basic blocks are merged, some blocks
-may be left unaccounted for in the trace. Additionally, LLVM applies some passes
-at different stages of the pipeline, even after the final IR has been generated
-(target specific optimisations). This again interferes with the mapping and creates
-problems for the meta-tracer. To avoid this problem, the yk meta-tracing system
-turns off all the optimisations by default, which slows down the interpreter
-significantly even without the JIT being enabled.
+However, some LLVM optimisation passes mess with the basic-block mapping of the
+IR (i.e the IR we get from mapping blocks recorded by hardware tracer to LLVM
+IR). One such example is when the basic blocks are merged, some blocks may be
+left unaccounted for in the trace. Additionally, LLVM applies some passes at
+different stages of the pipeline, even after the final IR has been generated
+(e.g target specific optimisations). This again interferes with the mapping and
+creates problems for the meta-tracer. To avoid this problem, the yk meta-tracing
+system turns off all the optimisations by default, which slows down the
+interpreter significantly even without the JIT being enabled.
 
 
 \begin{figure}[htbp] \centering
@@ -409,7 +409,8 @@ the passes are turned off and an expert can choose to turn on and off passes
 accordingly~\cite{kulkarni}. 
 
 Choosing a right optimisation level for meta-tracing systems such as yk is not
-an easy task. As mentioned earlier some optimisation passes change the JIT IR resulting in
+an easy task. As mentioned earlier some optimisation passes change the LLVM IR
+(the one we get from mapping basic block virtual address to LLVM IR) resulting in
 wrong run-time behaviour of a program. Identifying the problematic passes either to
 disable them or fix the problem is an important step in making yk faster. LLVM
 has a number of compiler optimisation levels, and each level has an optimisation
@@ -523,7 +524,6 @@ pipelines\cite{lto-prepost}.
 optimisation passes. Image credit: \cite{lto-prepost}}
 \end{tcolorbox}
 
-\iti{rewrite with stephen's comments}
 In the LLVM LTO pipeline, module simplification includes pre-link optimisations
 such as initial cleanup, inlining of functions, and call graph optimisation to
 refine the modules for additional optimisation processes. Following
@@ -537,7 +537,7 @@ Now that we know about the optimisation pipelines, the question rises: what can 
 to figure out which pass to keep and which to disable for yk? In this report
 I have used two algorithms to explore the search space for yk-compatible pass
 sequence: a divide-and-conquer algorithm and a genetic-algorithm. I will be 
-explaining both of the algorithm in Section\ref{experiments}. However, I would still
+explaining both of the algorithm in Section \ref{experiments}. However, I would still
 like to introduce some terminologies for genetic-algorithm in the next
 subsection.
 
@@ -720,43 +720,50 @@ both the constraints, and emitted the most performant sequence at the end.
 In all of the experiments done below, we use yk as the meta-tracing system and yklua as
 the C interpreter being optimised.
 
-\subsubsection{Divide-and-conquer algorithm for phase ordering problem}
-\scalebox{0.65}{
-\label{dac-algo}
-\begin{tcolorbox}
-    \begin{algorithmic}[1] % The [1] argument enables line numbering
-    \small
-    \State Define structures for \textbf{Pass} and \textbf{PipelineConfig}
-    \State Fetch all available optimisation passes
+\begin{tcolorbox}[breakable, boxrule=0pt, colback=white, colframe=white, arc=0pt, outer arc=0pt, title=\null, label=dac-algo]
+\begin{lstlisting}
 
-    \Function{test\_pipeline}{PipelineConfig}
-        \State Execute the pipeline with the specified configuration
-        \State Log the results
-    \EndFunction
+def get_all_passes():
+    # Fetch all available optimization passes
+    pass
 
-    \Function{attempt1}{passes}
-        \State Test each pass in isolation
-        \State Log which passes succeed and which fail
-    \EndFunction
+def test_pipeline(pipeline_config):
+    # Execute the pipeline with the specified configuration
+    # Log the results
+    pass
 
-    \Function{attempt2}{passes}
-        \State Start with an empty set of okay passes
-        \State Recursively test combinations of passes
-        \If{a combination is successful}
-            \State Add it to the set of okay passes
-        \EndIf
-        \If{a combination with more than one pass fails}
-            \State Split and test subsets
-        \EndIf
-    \EndFunction
+def attempt1(passes):
+    # Test each pass in isolation
+    for pass_ in passes:
+        pass
 
-    \Function{main}{}
-        \State Fetch all passes
-        \State Perform initial testing of passes in isolation (\textbf{attempt1})
-        \State Perform combined testing of passes (\textbf{attempt2})
-    \EndFunction
-    \end{algorithmic} 
-\end{tcolorbox}}
+def attempt2(passes):
+    okay_passes = set()  # Start with an empty set of okay passes
+    
+    def recursive_test(combination):
+        # Recursively test combinations of passes
+        if test_pipeline(combination):
+            # Add the combination to the set of okay passes
+            okay_passes.add(combination)
+        else:
+            if len(combination) > 1:
+                # Split and test subsets
+                subset1, subset2 = split(combination)
+                recursive_test(subset1)
+                recursive_test(subset2)
+    
+    recursive_test(passes)
+    return okay_passes
+
+def main():
+    # Fetch all passes
+    passes = get_all_passes()
+    
+    attempt1(passes)
+    okay_passes = attempt2(passes)
+    pass
+\end{lstlisting}
+\end{tcolorbox}
 
 This algorithm has two functions: attempt1 tries each pass
 individually to see which passes succeed and which ones fail in isolation. It
@@ -803,78 +810,101 @@ next generation of population. The process iterates through generations to impro
 sequence combinations (evolve) until the optimal set of passes, leading to the best
 interpreter performance is identified.
 
-\laurie{this is a fairly weird way to define an algorithm: why not use more
-conventional pseudocode? see e.g. Fig 6 in the ``don't panic!'' paper as an
-example}
 
-\scalebox{0.65}{
-\label{pseudocode-genetic}
-\begin{tcolorbox}
-    \begin{algorithm}[H]
-        \begin{algorithmic}[1] % The [1] argument enables line numbering
-        \small
-        \State Define structure for \textbf{PipelineConfig}
-        \State Fetch all available optimisation passes in the correct order.
-        \State Define an \textbf{Entity} as a list of \{pass\_name, on\} pairs maintaining the order.
+\begin{tcolorbox}[breakable, boxrule=0pt, colback=white, colframe=white,
+    arc=0pt, outer arc=0pt, title=\null, label=pseudocode-genetic]
+    \begin{lstlisting}
+def encode_passes_randomly(entity):
+    def recursive_encode(passes):
+        for pass_ in passes:
+            pass_[on] = random.randint(0, 1)
+            if subpasses in pass_:
+                recursive_encode(pass_[subpasses])
+                if pass_[on] == 1:
+                    # Ensure at least one subpass is enabled if parent is enabled
+                    enabled_subpasses = [subpass for subpass in pass_[subpasses] if subpass[on] == 1]
+                    if not enabled_subpasses:
+                        pass_[subpasses][0][on] = 1
+    recursive_encode(entity.passes)
+    return entity.passes
 
-        \Function{test\_pipeline}{PipelineConfig $pl$}
-            \State Execute the pipeline with configuration $pl$
-            \State Log the results
-        \EndFunction
+def decode_passes_to_string(entity):
+    def recursive_decode(passes, indent=``''):
+        result = []
+        for pass_ in passes:
+            if pass_[on] == 1:
+                result.append(f``{indent}{pass_[name]}'')
+                if subpasses in pass_:
+                    result.extend(recursive_decode(pass_[subpasses], indent + ``
+                    ''))
+        return result
+    return '\n'.join(recursive_decode(entity.passes))
 
-        \Function{encode\_passes\_randomly}{Entity $entity$}
-            \State Recursively set `on' flag of each pass to 0 or 1 randomly
-            \State Ensure at least one subpass is enabled if parent is enabled
-            \State Return modified $root\_passes$
-        \EndFunction
+def evaluate_fitness(entity, shared_fitness_list):
+    pl = PipelineConfig()
+    pl.passes_str = decode_passes_to_string(entity)
+    execution_time = test_pipeline(pl)
+    shared_fitness_list.append(execution_time)
 
-        \Function{decode\_passes\_to\_string}{Entity $entity$}
-            \State Generate string representation of enabled passes and hierarchy
-            \State Exclude passes with `on' set to 0
-            \State Return the string representation
-        \EndFunction
+def tournament(population, fitness, sp):
+    parent1, parent2 = random.sample(population, 2)
+    if random.random() < sp:
+        return parent1 if fitness[population.index(parent1)] < fitness[population.index(parent2)] else parent2
+    else:
+        return parent2 if fitness[population.index(parent1)] < fitness[population.index(parent2)] else parent1
 
-        \Function{evaluate\_fitness}{Entity $entity$, ...}
-            \State Decode passes to string and feed into PipelineConfig $pl$
-            \State Call $test\_pipeline(pl)$ to get execution time of a user program
-            \State Add fitness score (execution time of user program) to shared list
-        \EndFunction
+def crossover(parent1, parent2):
+    def recursive_crossover(passes1, passes2):
+        for i in range(len(passes1)):
+            if random.random() < 0.5:
+                passes1[i], passes2[i] = passes2[i], passes1[i]
+            if subpasses in passes1[i] and 'subpasses' in passes2[i]:
+                recursive_crossover(passes1[i]['subpasses'], passes2[i]['subpasses'])
+    child1 = Entity(parent1.passes.copy())
+    child2 = Entity(parent2.passes.copy())
+    recursive_crossover(child1.passes, child2.passes)
+    return child1, child2
 
-        \Function{tournament}{list $population$, list $fitness$, float $sp$}
-            \State Select two individuals randomly
-            \State Choose fitter one with probability $sp$ as parent
-        \EndFunction
+def mutate(entity, mutation_rate):
+    def recursive_mutate(passes):
+        for pass_ in passes:
+            if random.random() < mutation_rate:
+                pass_[on] = 1 - pass_[on]
+            if subpasses in pass_:
+                recursive_mutate(pass_[subpasses])
+    recursive_mutate(entity.passes)
+    return entity
 
-        \Function{crossover}{Entity $parent1$, Entity $parent2$}
-            \State Create child entities by swapping random passes between parents
-            \State Return child entities
-        \EndFunction
-
-        \Function{mutate}{Entity $entity$, float $mutation\_rate$}
-            \State Recursively flip `on' flag of each pass with probability $mutation\_rate$
-            \State Return mutated entity
-        \EndFunction
-
-        \Function{genetic\_algorithm}{string $parsed\_str$, ...}
-            \State Create initial population as a list of entities.
-            \State Encode passes randomly for each entity.
-            \For{$generation$ in $1$ to $generations$}
-            \State Evaluate fitness of each entity in parallel
-            \State Select elites (good fitness)
-            \State Apply crossover and mutation to create new generation
-            \EndFor
-            \State Return best entity (list of passes)
-        \EndFunction
-
-        \Function{main}{}
-            \State Set up temporary directories
-            \State Get available passes using `get\_all\_passes'
-            \State Run genetic algorithm to find best entity
-            \State Decode best entity and print final passes
-        \EndFunction
-        \end{algorithmic}
-    \end{algorithm}
-\end{tcolorbox}}
+def genetic_algorithm(parsed_str, generations, population_size, elite_size, mutation_rate, selection_pressure):
+    root_passes = get_all_passes(parsed_str)
+    population = [Entity(root_passes.copy()) for _ in range(population_size)]
+    for entity in population:
+        encode_passes_randomly(entity)
+    
+    for generation in range(generations):
+        shared_fitness_list = []
+        for entity in population:
+            evaluate_fitness(entity, shared_fitness_list)
+        
+        fitness = shared_fitness_list
+        elite_indices = sorted(range(len(fitness)), key=lambda i: fitness[i])[:elite_size]
+        elites = [population[i] for i in elite_indices]
+        
+        new_population = elites.copy()
+        while len(new_population) < population_size:
+            parent1 = tournament(population, fitness, selection_pressure)
+            parent2 = tournament(population, fitness, selection_pressure)
+            child1, child2 = crossover(parent1, parent2)
+            new_population.append(mutate(child1, mutation_rate))
+            if len(new_population) < population_size:
+                new_population.append(mutate(child2, mutation_rate))
+        
+        population = new_population
+    
+    best_entity = min(population, key=lambda entity: evaluate_fitness(entity, []))
+    return best_entity.passes
+    \end{lstlisting}
+    \end{tcolorbox}
 
 \subsection{Algorithm's speed up after parallelisation}
 
@@ -1056,7 +1086,7 @@ with intended backend optimisations.
 This prevents us from exploring the performance gains we could have gotten from
 the blocked passes. However, we cannot remove the `optnone'
 and `noinline' attributes from the lto backend, as removing them allows all
-backend optimisations to run which change the JIT IR such that compiling the IR
+backend optimisations to run which change the LLVM IR such that compiling the IR
 results in a wrong runtime behaviour.
 
 The easiest way to remove these attributes from lto backend while still
@@ -1116,7 +1146,7 @@ baseline)}}{\text{\small (performance of row n)}}$$
 From Table \ref{table:c} we can see that yklua after applying -O2 optimisations
 is 3x slower than Baseline 2. It is clear that yk-based passes contribute upto
 50\% of total slowdown in yklua. Some passes cannot be further optimised as they
-change the AOT IR making them compatible for meta-tracing system (e.g adding
+change the LLVM IR making them compatible for meta-tracing system (e.g adding
 patch points and block-disambiguate pass). In the next subsection I'll elaborate
 on how much performance can be retrieved back by optimising some of the most
 expensive yk passes shown in table above. 
@@ -1127,20 +1157,21 @@ expensive yk passes shown in table above.
 
 Stackmaps describe how the stack looks like i.e~ where the variables are stored
 i.e~ either in the register or the stack slot. During JIT compilation when the
-guard fails very often (i.e~ when the failure hits threshold set by yk) the
+guard fails  the
 meta-tracer starts de-optimising the trace. De-optimisation is process of going
-back to the start of the loop and rebuilding the trace with new guards. During
+back to interpreting the user program. During
 JIT compilation, the trace builder inlines functions into a trace which results
 in the changed structure of stack. With the help of Stackmaps, yk is able to
-get back the exact trace that it saw at the beginning of loop.
-
+get back the exact trace that it saw at the beginning of loop when iterating.
+%as if it never compiled the wrong trace
 The `yk-insert-stackmaps' pass is responsible for adding stackmaps to the JIT
 IR.
 
 Currently in yk-insert-stackmaps, stackmaps are inserted before every function
 unless it is intrinsic. However, stackmaps are not needed before calls to
-unmappable functions expect from the control point\ref{appendix:terms}
-and yk\_promote\ref{appendix:terms}, as these are not traced and thus
+unmappable functions expect from the control point (elaborated in Appendix
+\ref{appendix:terms})
+and yk\_promote (elaborated in Appendix \ref{appendix:terms}), as these are not traced and thus
 never need de-optimisation. Example of unmappable functions are external calls
 and functions with no condition(s) inside them. This might claw back a few `ms'
 for this pass. 
@@ -1189,7 +1220,8 @@ information about merged basic blocks. LLVM has a special code which provides
 information about how blocks are merged (such as ``merged\_bb\!''). If we can
 store the information about how many blocks are merged and transfer this
 information to the hardware tracer, then we can tell which blocks were single
-basic blocks and which have been merged when mapping back from JIT IR to AOT IR.
+basic blocks and which have been merged when mapping back calls from hardware
+tracer collected virtual address to LLVM IR.
 
 \subsection{An Optimisation to yklua}
 One of the macro optimisations I made while benchmarking yklua was directly to
@@ -1255,13 +1287,14 @@ making it the default compilation level.
 
 \subsection{Backend optimisations and runtime behaviour}
 
-The oracle we use has broadly two parts. The first part of the oracle checks whether we are able to find compiler
-optimisation passes which result in successful compilation and run-time
-behaviour of yklua's test suite when the JIT was turned off. This helped us
-analyse the cost of embedding yk onto the interpreter. My work reduced the
-overhead of retrofitting yk onto the lua interpreter from 5x to 3x. However, to further 
-reduce this overhead I will need to figure out what component in yk is preventing the optimisation
-passes from producing correct run-time behaviour for the second part of the oracle.
+The oracle we use has broadly two parts. The first part of the oracle checks
+whether we are able to find compiler optimisation passes which result in
+successful compilation and run-time behaviour of yklua's test suite when the JIT
+was turned off. This helped us analyse the cost of embedding yk onto the
+interpreter. My work reduced the overhead of retrofitting yk onto the lua
+interpreter from 5x to 3x. However, to further reduce this overhead I will need
+to figure out what component in yk is preventing the optimisation passes from
+producing correct run-time behaviour for the second part of the oracle.
 
 The second part of the oracle expects yk's test suite to be successful when we
 enable optimisation passes at different levels with JIT turned on.
@@ -1280,9 +1313,9 @@ which optimisation is responsible for changing the IR in a way that yk (or
 particularly ykllvm) does not expect.
 
 My earlier work assumed that only backend optimisation passes interfere with
-the IR in a manner which results in wrong mapping from JIT IR back to the AOT IR,
+the IR in a manner which results in generating wrong IR,
 as we switched from JIT compilation back to AOT compiled interpreter. However, it
-turns out that some postlink optimisations also result in changing the AOT IR
+turns out that some postlink optimisations also result in changing the LLVM IR
 in a way that is not compatible with yk-based passes. Which essentially means
 that when we are adjusting the IR at code generation stage (e.g adding Stackmap passes,
 splitting blocks after calls etc) we might be changing the IR in a way that is
@@ -1299,16 +1332,16 @@ that LLVM optimisations at backend generate IR which results in correct run-time
 behaviour.
 
 The second experiment, which I believe will need to be conducted in parallel, is
-to figure out the problematic passes which result in these test cases to fail. This
-can be done by fixing LLVM to overwrite backend optimisations. I can adjust
-TargetPassConfig in LLVM Codgen to do this with the help of
-llc\ref{appendix:terms}. llc has an
-option to over-write backend passes with run-passes. After adjusting the
-TargetPassConfig, I will need to make adjustments to yk-config so that we
-overwrite the backend optimisations at the right stage. Once it is possible to
-overwrite backend optimisations, we can use the genetic algorithm described in
-Section\ref{experiments} to find the problematic passes and study their fixes (or
-if we need to completely disable them).
+to figure out the problematic passes which result in these test cases to fail.
+This can be done by fixing LLVM to overwrite backend optimisations. I can adjust
+TargetPassConfig in LLVM Codgen to do this with the help of llc(Appendix
+\ref{appendix:terms}). llc has an option to over-write backend passes with
+run-passes. After adjusting the TargetPassConfig, I will need to make
+adjustments to yk-config so that we overwrite the backend optimisations at the
+right stage. Once it is possible to overwrite backend optimisations, we can use
+the genetic algorithm described in Section \ref{experiments} to find the
+problematic passes and study their fixes (or if we need to completely disable
+them).
 
 \section{Related Work}
 \label{related-work}
@@ -1353,8 +1386,9 @@ experiment would be to change LLVM's legacy pass manager so that we can easily
 overwrite the backend optimisation pipeline at any optimisation level. 
 
 After the change mentioned above, we can use the genetic algorithm to find a combination of
-pass sequences which does not modify the JIT IR in a non-compatible
-way. Meaning when we are mapping back the JIT IR to the AOT IR, the compiled IR results
+pass sequences which does not modify the LLVM IR in a non-compatible
+way. Meaning when we are mapping back the virtual address collected from
+hardware tracer back to the LLVM IR, the compiled IR results
 in the correct run-time behaviour of the code.
 Alternatively, we can turn off the parts of the optimisations which interfere with the
 IR in an unwanted way for the meta-tracer. For example, one way could be to tweak the passes
@@ -1389,7 +1423,7 @@ reduction in the overhead of embedding yk onto the C interpreters.
 \bibliography{local.bib}
 
 \appendix
-\section{Appendix}
+\section{Terminologies}
 \label{appendix:terms}
 \textbf{yk-config:}yk-config is a tool to apply yk-specific compiler and linker
 flags on the interpreter and other systems which uses yk's meta-tracing system.
